@@ -77,7 +77,8 @@ router.post(
 
     // Controller
     (req, res, next) => {
-        models.User.auth(req.form.email,  req.form.password);
+        models.User.auth(req.form.email,  req.form.password)
+                .then(()=>{});
     }
 );
 

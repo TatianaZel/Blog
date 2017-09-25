@@ -2,7 +2,7 @@
 const router = require('express').Router();
 
 const HttpError = require("../helpers/HttpError");
-//const Session = require("../helpers/Session");
+const Session = require("../helpers/Session");
 
 router.use((req, res, next) => {
     res.header('Content-Type', 'application/json');
@@ -19,7 +19,7 @@ router.use(HttpError.middleware);
 ///**
 // * Define session handler
 // */
-//router.use(Session.middleware);
+router.use(Session.middleware);
 
 router.options('/*',function(req, res, next) {
     res.statusCode = 200;
