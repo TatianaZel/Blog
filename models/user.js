@@ -1,5 +1,8 @@
 "use strict";
 
+const HttpError = require("../helpers/HttpError");
+const uuidv1 = require('uuid/v1');
+
 module.exports = function (sequelize, DataTypes) {
     var User = sequelize.define("User", {
         name: {
@@ -19,11 +22,11 @@ module.exports = function (sequelize, DataTypes) {
             notEmpty: true
         },
         status: {
-            type: sequelize.ENUM('active', 'inactive'),
+            type: DataTypes.ENUM('active', 'inactive'),
             defaultValue: 'active'
         },
         session: {
-            type: sequelize.UUID
+            type: DataTypes.UUID
         }
     });
 
@@ -33,15 +36,14 @@ module.exports = function (sequelize, DataTypes) {
 
     User.prototype.auth = function (email, password) {
         return new Promise((resolve, reject) => {
-
-            this.findOne({
+            User.findOne({
                 where: {
                     email: email,
                     password: password
                 }
             }).then((user) => {
                 if (user) {
-                    resolve(user._id);
+                    resolve(user.id);
                 }
                 reject(new HttpError(403, "Wrong email or password"));
             });
@@ -49,15 +51,38 @@ module.exports = function (sequelize, DataTypes) {
         });
     };
 
-    User.prototype.setSession = function (userId) {
+    User.prototype.setSession = function () {
         return new Promise((resolve, reject) => {
-            this.findOne({
-                where: {
-                    _id: userId
-                }
-            }).then(() => {
-                
-            });
+            if (!this.session) {
+                this.session = uuidv1();
+
+                this
+                        .save()
+                        .then(() => {
+                            resolve(this.session);
+                        },
+                                reject
+                                );
+            } else {
+                resolve(this.session);
+            }
+        });
+    };
+
+    User.prototype.removeSession = function () {
+        return new Promise((resolve, reject) => {
+            console.log('sfssdsdssdfsdsfdsdfsdsdfs');
+            this.session = null;
+
+            this
+                    .save()
+                    .then(() => {
+                        resolve();
+                    },
+                            reject
+                            );
+
+            return;
         });
     };
 

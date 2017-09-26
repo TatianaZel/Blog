@@ -1,8 +1,10 @@
 'use strict';
 
 const router = require('express').Router();
-const models = require("../models");
-const HttpError = require("helpers/HttpError");
+const Users = require("../models").User;
+const Session = require("../helpers/Session");
+const ACL = require('../helpers/ACL');
+const HttpError = require("../helpers/HttpError");
 const form = require('express-form2');
   var field   = form.field;
 
@@ -32,7 +34,7 @@ router.post(
             return next(new HttpError(412, "Invalid input data", req.form.errors));
         }
 
-        models.User
+        Users
             .findOne({
                 where: {
                     email: req.form.email
@@ -45,7 +47,7 @@ router.post(
                 return null;
             })
             .then(() => {
-                models.User.
+                Users.
                     create({
                         name: req.form.name,
                         surname: req.form.surname,
@@ -77,8 +79,38 @@ router.post(
 
     // Controller
     (req, res, next) => {
-        models.User.auth(req.form.email,  req.form.password)
-                .then(()=>{});
+        if (!req.form.isValid) {
+            return next(new HttpError(412, "Invalid input data", req.form.errors));
+        }
+
+        Users.prototype
+            .auth(req.form.email, req.form.password)
+            .then((userId) => {
+                return Session.create(userId);
+            })
+            .then((token) => {
+                res.send({
+                    token
+                });
+            })
+            .catch(next);
+    }
+);
+
+router.post(
+    ['/logout'],
+
+    ACL('auth.logout'),
+
+    // Controller
+    (req, res, next) => {
+        Session
+            .kill(req.session)
+            .then(() => {
+                res.statusCode = 202;
+                res.send();
+            })
+            .catch(next);
     }
 );
 

@@ -7,16 +7,26 @@
         <script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
     </head>
     <body>
-        <div>TODO write content</div>
-
-        <form method="post" action="/api/auth/signup/">
+        <p>Sign up</p>
+        <form class="signUp" method="post" action="/api/auth/signup/">
             <input type="text" value="Submit" name="name"/>
             <input type="text" value="Submit" name="password"/>
             <button type="submit">submit</button>
         </form>
 
+        <p>Sign in</p>
+        <form class="signIn" method="post" action="/api/auth/signin/">
+            <input type="text" value="Submit" name="name"/>
+            <input type="text" value="Submit" name="password"/>
+            <button type="submit">submit</button>
+        </form>
+
+        <div></div>
+        <button class="logout">logout</button>
         <script>
-            $("form").submit(function (e) {
+            var token;
+
+            $("form.signUp").submit(function (e) {
 
                 e.preventDefault();
 
@@ -40,6 +50,58 @@
                     data: form_data,
                     success: function () {
                         console.log('success');
+                    },
+                    error: function () {
+                        console.log('error');
+                    }
+                });
+            });
+
+            $("form.signIn").submit(function (e) {
+
+                e.preventDefault();
+
+                var form_data = JSON.stringify({
+                    email: 't.e.zll@gam.cio',
+                    password: 'sfdfafdgfdg'
+                });
+
+                console.log(form_data);
+
+                var form_url = $(this).attr("action");
+                var form_method = $(this).attr("method").toUpperCase();
+
+                $.ajax({
+                    url: form_url,
+                    type: form_method,
+                    contentType: "application/json",
+                    dataType: 'json',
+                    data: form_data,
+                    success: function (response) {
+                        token = response.token;
+                        console.log(response);
+                    },
+                    error: function () {
+                        console.log('error');
+                    }
+                });
+            });
+
+            $(".logout").click(function (e) {
+
+                var form_url = '/api/auth/logout/';
+                var headers = {
+                    "token" : token
+                };
+
+                $.ajax({
+                    url: form_url,
+                    type: "POST",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    success: function (response) {
+                        console.log(response);
                     },
                     error: function () {
                         console.log('error');

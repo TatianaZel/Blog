@@ -10,7 +10,7 @@
 
 const Users = require("../models").User;
 
-const HttpError = require("../helpers/HttpError");
+//const HttpError = require("HttpError");
 
 var Session = {
     /**
@@ -21,9 +21,9 @@ var Session = {
      */
     middleware(req, res, next) {
         Session
-            .check(req)
-            .then(
-                (user) => {
+                .check(req)
+                .then(
+                        (user) => {
                     console.log(user);
 
                     req.userId = user._id;
@@ -32,10 +32,10 @@ var Session = {
 
                     next();
                 }
-            )
-            .catch((err) => {
-                next();
-            });
+                )
+                .catch((err) => {
+                    next();
+                });
     },
     /**
      * Check session by token header in `req.headers.token`
@@ -62,10 +62,11 @@ var Session = {
      */
     create(userId) {
         return Users
-            .findById(userId)
-            .then((user) => {
-                return user.setSession();///////////////
-            });
+                .findById(userId)
+                .then((user) => {
+
+                    return user.setSession();
+                });
     },
     /**
      * Returns all sessions of user
@@ -74,7 +75,8 @@ var Session = {
      * @returns {Promise ~resolve => session Object}
      */
     get(token) {
-        return  Users.findOne({
+        return  Users
+                .findOne({
                     where: {
                         session: token
                     }
@@ -94,14 +96,14 @@ var Session = {
      */
     kill(token) {
         return Users
-            .findOne({
-                where: {
-                    session: token
-                }
-            })
-            .then((user) => {
-                return user.removeSession(token);////////////////////
-            });
+                .findOne({
+                    where: {
+                        session: token
+                    }
+                })
+                .then((user) => {
+                    return user.removeSession();
+                });
     },
     /**
      * Kill all sessions of user
@@ -111,10 +113,10 @@ var Session = {
      */
     killall(userId) {
         return Users
-            .findById(userId)
-            .then((user) => {
-                return user.cleanSession();
-            });
+                .findById(userId)
+                .then((user) => {
+//                return user.cleanSession();
+                });
     }
 };
 
