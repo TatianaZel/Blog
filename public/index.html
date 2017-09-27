@@ -33,7 +33,7 @@
                 var form_data = JSON.stringify({
                     name: 'tddfanya',
                     surname: 'tddfanya',
-                    email: 't.e.zll@gam.cio',
+                    email: 't.e.zkutl@gam.cio',
                     password: 'sfdfafdgfdg'
                 });
 
@@ -51,8 +51,8 @@
                     success: function () {
                         console.log('success');
                     },
-                    error: function () {
-                        console.log('error');
+                    error: function (err) {
+                        console.log(err);
                     }
                 });
             });
@@ -62,11 +62,9 @@
                 e.preventDefault();
 
                 var form_data = JSON.stringify({
-                    email: 't.e.zll@gam.cio',
+                    email: 't.e.zkutl@gam.cio',
                     password: 'sfdfafdgfdg'
                 });
-
-                console.log(form_data);
 
                 var form_url = $(this).attr("action");
                 var form_method = $(this).attr("method").toUpperCase();
@@ -81,8 +79,8 @@
                         token = response.token;
                         console.log(response);
                     },
-                    error: function () {
-                        console.log('error');
+                    error: function (err) {
+                        console.log(err);
                     }
                 });
             });

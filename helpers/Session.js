@@ -9,6 +9,7 @@
 'use strict';
 
 const Users = require("../models").User;
+const Sessions = require("../models").Session;
 
 //const HttpError = require("HttpError");
 
@@ -20,22 +21,14 @@ var Session = {
      * if sesson not defined, expires, ect
      */
     middleware(req, res, next) {
-        Session
-                .check(req)
-                .then(
-                        (user) => {
-                    console.log(user);
-
-                    req.userId = user._id;
-                    req.user = user;
-                    req.session = req.headers.token;
-
-                    next();
-                }
-                )
-                .catch((err) => {
-                    next();
-                });
+        Session.check(req).then((user) => {
+            req.userId = user._id;
+            req.user = user;
+            req.session = req.headers.token;
+            next();
+        }).catch((err) => {
+            next();
+        });
     },
     /**
      * Check session by token header in `req.headers.token`
@@ -61,12 +54,7 @@ var Session = {
      * @returns {Promise ~resolve => session Object}
      */
     create(userId) {
-        return Users
-                .findById(userId)
-                .then((user) => {
-
-                    return user.setSession();
-                });
+        return Sessions.prototype.setSession(userId);
     },
     /**
      * Returns all sessions of user
@@ -74,19 +62,23 @@ var Session = {
      * @param token {TokenId} token
      * @returns {Promise ~resolve => session Object}
      */
-    get(token) {
-        return  Users
-                .findOne({
-                    where: {
-                        session: token
-                    }
-                })
-                .then((user) => {
-                    if (user) {
+    get(token) {///???
+        console.log('get');
+
+        Sessions.findOne({
+            where: {
+                token: token
+            }
+        }).then((session) => {
+            if (session) {
+                Users.findById(session.UserId).then((user) => {
+                    if(user)
                         return user;
-                    }
                     throw "user not found";
                 });
+            }
+        });
+        
     },
     /**
      * Kill the session
@@ -95,28 +87,7 @@ var Session = {
      * @returns {Promise ~resolve => session Object}
      */
     kill(token) {
-        return Users
-                .findOne({
-                    where: {
-                        session: token
-                    }
-                })
-                .then((user) => {
-                    return user.removeSession();
-                });
-    },
-    /**
-     * Kill all sessions of user
-     *
-     * @param userId {ObjectId} users id
-     * @returns {Promise ~resolve => session Object}
-     */
-    killall(userId) {
-        return Users
-                .findById(userId)
-                .then((user) => {
-//                return user.cleanSession();
-                });
+        return Sessions.removeSession(token);
     }
 };
 

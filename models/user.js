@@ -1,7 +1,6 @@
 "use strict";
 
 const HttpError = require("../helpers/HttpError");
-const uuidv1 = require('uuid/v1');
 
 module.exports = function (sequelize, DataTypes) {
     var User = sequelize.define("User", {
@@ -24,18 +23,18 @@ module.exports = function (sequelize, DataTypes) {
         status: {
             type: DataTypes.ENUM('active', 'inactive'),
             defaultValue: 'active'
-        },
-        session: {
-            type: DataTypes.UUID
         }
     });
 
     User.associate = function (models) {
         User.hasMany(models.Post);
+        User.hasMany(models.Session);
     };
 
     User.prototype.auth = function (email, password) {
         return new Promise((resolve, reject) => {
+            console.log('auth');
+
             User.findOne({
                 where: {
                     email: email,
@@ -48,41 +47,6 @@ module.exports = function (sequelize, DataTypes) {
                 reject(new HttpError(403, "Wrong email or password"));
             });
 
-        });
-    };
-
-    User.prototype.setSession = function () {
-        return new Promise((resolve, reject) => {
-            if (!this.session) {
-                this.session = uuidv1();
-
-                this
-                        .save()
-                        .then(() => {
-                            resolve(this.session);
-                        },
-                                reject
-                                );
-            } else {
-                resolve(this.session);
-            }
-        });
-    };
-
-    User.prototype.removeSession = function () {
-        return new Promise((resolve, reject) => {
-            console.log('sfssdsdssdfsdsfdsdfsdsdfs');
-            this.session = null;
-
-            this
-                    .save()
-                    .then(() => {
-                        resolve();
-                    },
-                            reject
-                            );
-
-            return;
         });
     };
 
