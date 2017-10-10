@@ -20,21 +20,19 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.STRING,
             notEmpty: true
         },
-        status: {
-            type: DataTypes.ENUM('active', 'inactive'),
-            defaultValue: 'active'
+        description: {
+            type: DataTypes.STRING
         }
     });
 
     User.associate = function (models) {
         User.hasMany(models.Post);
         User.hasMany(models.Session);
+        User.belongsToMany(models.Chat, {through: models.Membership});
     };
 
     User.prototype.auth = function (email, password) {
         return new Promise((resolve, reject) => {
-            console.log('auth');
-
             User.findOne({
                 where: {
                     email: email,
@@ -46,7 +44,6 @@ module.exports = function (sequelize, DataTypes) {
                 }
                 reject(new HttpError(403, "Wrong email or password"));
             });
-
         });
     };
 

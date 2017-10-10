@@ -22,9 +22,11 @@ var Session = {
      */
     middleware(req, res, next) {
         Session.check(req).then((user) => {
-            req.userId = user._id;
-            req.user = user;
-            req.session = req.headers.token;
+            if (user) {
+                req.userId = user.id;
+                req.user = user;
+                req.session = req.headers.token;
+            }
             next();
         }).catch((err) => {
             next();
@@ -40,9 +42,9 @@ var Session = {
         return new Promise((resolve, reject) => {
             let token = req.headers.token || null;
             if (token) {
-                return Session.get(token).then(resolve, reject);
-            }
-            reject(null);
+                Session.get(token).then(resolve, reject);
+            } else
+                reject(null);
         });
     },
     /**
@@ -62,24 +64,18 @@ var Session = {
      * @param token {TokenId} token
      * @returns {Promise ~resolve => session Object}
      */
-    get(token) {///???
-        console.log('get');
-
-        Sessions.findOne({
+    get(token) {
+        return Sessions.findOne({
             where: {
                 token: token
             }
         }).then((session) => {
             if (session) {
-                Users.findById(session.UserId).then((user) => {
-                    if(user)
-                        return user;
-                    throw "user not found";
-                });
+                return Users.findById(session.UserId);
             }
         });
-        
     },
+
     /**
      * Kill the session
      *
@@ -87,7 +83,7 @@ var Session = {
      * @returns {Promise ~resolve => session Object}
      */
     kill(token) {
-        return Sessions.removeSession(token);
+        return Sessions.prototype.removeSession(token);
     }
 };
 

@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express').Router();
+
 const Users = require("../models").User;
 const Session = require("../helpers/Session");
 const ACL = require('../helpers/ACL');
@@ -17,14 +18,19 @@ router.post(
             .required()
             .minLength(8)
             .maxLength(40),
+
         field('name')
             .required(),
+
         field('surname')
             .required(),
+
         field('email')
             .required()
             .trim()
-            .isEmail()
+            .isEmail(),
+
+        field('description')
     ),
 
     // Controller
@@ -42,20 +48,24 @@ router.post(
             })
             .then((user) => {
                 if (user) {
-                    throw new HttpError(409);
+                    throw new HttpError("Email alredy exists", 409);
                 }
                 return null;
             })
             .then(() => {
-                Users.
-                    create({
+
+                let user = new User({
                         name: req.form.name,
                         surname: req.form.surname,
                         email: req.form.email,
-                        password: req.form.password
-                    })
+                        password: req.form.password,
+                        description: req.form.description
+                    });
+
+                user.
+                    save()
                     .then(() => {
-                        res.send();
+                        res.send({});
                     })
                     .catch(next);
             });
@@ -107,8 +117,7 @@ router.post(
         Session
             .kill(req.session)
             .then(() => {
-                res.statusCode = 202;
-                res.send();
+                res.send({});
             })
             .catch(next);
     }

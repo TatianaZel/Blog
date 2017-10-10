@@ -23,6 +23,31 @@
 
         <div></div>
         <button class="logout">logout</button>
+
+        <div></div>
+        <button class="create">create</button>
+
+        <div></div>
+        <button class="get">get</button>
+
+        <div></div>
+        <button class="delete">delete</button>
+
+        <div></div>
+        <button class="update">update</button>
+
+        <div></div>
+        <button class="users">users</button>
+
+        <div></div>
+        <button class="user">user</button>
+
+        <div></div>
+        <button class="posts">posts</button>
+
+        <div></div>
+        <button class="test">test</button>
+        
         <script>
             var token;
 
@@ -31,9 +56,9 @@
                 e.preventDefault();
 
                 var form_data = JSON.stringify({
-                    name: 'tddfanya',
+                    name: 'tfanya',
                     surname: 'tddfanya',
-                    email: 't.e.zkutl@gam.cio',
+                    email: 't.e.zlijtl@gam.cio',
                     password: 'sfdfafdgfdg'
                 });
 
@@ -52,11 +77,12 @@
                         console.log('success');
                     },
                     error: function (err) {
-                        console.log(err);
+                        console.log('err');
                     }
                 });
             });
 
+/////////////////////////
             $("form.signIn").submit(function (e) {
 
                 e.preventDefault();
@@ -77,19 +103,20 @@
                     data: form_data,
                     success: function (response) {
                         token = response.token;
-                        console.log(response);
+                        console.log('success');
                     },
                     error: function (err) {
-                        console.log(err);
+                        console.log('err');
                     }
                 });
             });
 
+/////////////////////////////
             $(".logout").click(function (e) {
 
                 var form_url = '/api/auth/logout/';
                 var headers = {
-                    "token" : token
+                    "token": token
                 };
 
                 $.ajax({
@@ -99,10 +126,228 @@
                     dataType: 'json',
                     headers: headers,
                     success: function (response) {
+                        console.log('success');
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+
+//////////////////////////////
+            $(".create").click(function (e) {
+
+                var form_url = '/api/post/';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text text text'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "POST",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    data: form_data,
+                    success: function (response) {
                         console.log(response);
                     },
-                    error: function () {
-                        console.log('error');
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+
+////////////////////////////////
+            $(".get").click(function (e) {
+
+                var form_url = '/api/post/9';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text text text'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "GET",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+
+///////////////////////////////////
+            $(".delete").click(function (e) {
+
+                var form_url = '/api/post/9';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text text text'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "DELETE",
+                    contentType: "application/json",
+                    headers: headers,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+
+//////////////////////////////
+            $(".update").click(function (e) {
+
+                var form_url = '/api/post/9';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text1 text1 text1'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "PUT",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    data: form_data,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+//////////////////////////////
+            $(".users").click(function (e) {
+
+                var form_url = '/api/user/';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text1 text1 text1'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "GET",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    data: form_data,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+//////////////////////////////
+            $(".user").click(function (e) {
+
+                var form_url = '/api/user/1';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text1 text1 text1'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "GET",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    data: form_data,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+//////////////////////////////
+            $(".posts").click(function (e) {
+
+                var form_url = '/api/blog/2';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text1 text1 text1'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "GET",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    data: form_data,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
+                    }
+                });
+            });
+
+//////////////////////////////
+            $(".test").click(function (e) {
+
+                var form_url = '/api/test';
+                var headers = {
+                    "token": token
+                };
+                var form_data = JSON.stringify({
+                    title: 'title',
+                    text: 'text1 text1 text1'
+                });
+
+                $.ajax({
+                    url: form_url,
+                    type: "GET",
+                    contentType: "application/json",
+                    dataType: 'json',
+                    headers: headers,
+                    data: form_data,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (err) {
+                        console.log('err');
                     }
                 });
             });

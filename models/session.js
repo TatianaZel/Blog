@@ -19,15 +19,16 @@ module.exports = function (sequelize, DataTypes) {
 
     Session.prototype.setSession = function (userId) {
         return new Promise((resolve, reject) => {
-            let token = uuidv1();
-
-            Session.create({
-                token: token,
+            let session = new Session({
+                token: uuidv1(),
                 UserId: userId
-            }).then(() => {
-                resolve(token);
-            }, reject);
+            });
 
+            session
+                .save()
+                .then(() => {
+                    resolve(session.token);
+                }, reject);
         });
     };
 
