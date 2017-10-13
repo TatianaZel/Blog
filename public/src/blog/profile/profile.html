@@ -1,0 +1,5 @@
+<request-errors errors="$ctrl.errorGettingMessages"></request-errors>
+<h1>{{$ctrl.info.name}}&nbsp{{$ctrl.info.surname}}</h1>
+<p ng-if="$ctrl.info.description">{{$ctrl.info.description}}</p>
+<a ng-if="$ctrl.info && $ctrl.info.id == $ctrl.authData.userId" ui-sref="editProfile">edit</a>
+<hr ng-if="$ctrl.info.id">

@@ -1,0 +1,33 @@
+<form name="$ctrl.profileForm" ng-submit="$ctrl.submitFunction($ctrl.profile)" class="authForm">
+    <h3>Edit profile</h3>
+    <div class="form-group">
+        <label>Name</label>
+        <input autocomplete="off" name="name" ng-model="$ctrl.profile.name" type="text" required class="form-control" placeholder="Enter name">
+        <validate-errors errors="$ctrl.signUpForm.name.$error" show="!$ctrl.signUpForm.name.$pristine"></validate-errors>
+    </div>
+    <div class="form-group">
+        <label>Surneme</label>
+        <input autocomplete="off" name="surname" ng-model="$ctrl.profile.surname" type="text" required class="form-control" placeholder="Enter surname">
+        <validate-errors errors="$ctrl.profileForm.surname.$error" show="!$ctrl.signUpForm.surname.$pristine"></validate-errors>
+    </div>
+    <div class="form-group">
+        <label>Email address</label>
+        <input autocomplete="off" name="email" ng-model="$ctrl.profile.email" type="email" required class="form-control" placeholder="Enter email">
+        <validate-errors errors="$ctrl.profileForm.email.$error" show="!$ctrl.signUpForm.email.$pristine"></validate-errors>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input name="password" ng-model="$ctrl.profile.password" ng-minlength="8" ng-maxlength="40" required type="password" class="form-control" placeholder="Password">
+        <validate-errors errors="$ctrl.profileForm.password.$error" show="!$ctrl.signUpForm.password.$pristine"></validate-errors>
+    </div>
+    <div class="form-group">
+        <label>Confirm password</label>
+        <input name="confirmPassword" ng-model="$ctrl.profile" required compare-to="$ctrl.editedProfile.password" type="password" class="form-control" placeholder="Confirm password">
+        <validate-errors errors="$ctrl.profileForm.confirmPassword.$error" show="!$ctrl.signUpForm.confirmPassword.$pristine"></validate-errors>
+    </div>
+    <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" ng-model="$ctrl.profile.description" type="text" class="form-control" placeholder="Enter description"></textarea>
+    </div>
+    <button ng-disabled="!$ctrl.profileForm.$valid" type="submit" class="btn btn-primary">Submit</button>
+</form>

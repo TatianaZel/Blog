@@ -31,6 +31,7 @@ router.post(
             .isEmail(),
 
         field('description')
+            .trim()
     ),
 
     // Controller
@@ -40,21 +41,10 @@ router.post(
             return next(new HttpError(412, "Invalid input data", req.form.errors));
         }
 
-        Users
-            .findOne({
-                where: {
-                    email: req.form.email
-                }
-            })
-            .then((user) => {
-                if (user) {
-                    throw new HttpError("Email alredy exists", 409);
-                }
-                return null;
-            })
+        Users.prototype
+            .checkEmail(req.form.email, 0)
             .then(() => {
-
-                let user = new User({
+                let user = new Users({
                         name: req.form.name,
                         surname: req.form.surname,
                         email: req.form.email,
@@ -67,8 +57,9 @@ router.post(
                     .then(() => {
                         res.send({});
                     })
-                    .catch(next);
-            });
+                    .catch(next);//?
+            })
+            .catch(next);
     }
 );
 
@@ -93,14 +84,18 @@ router.post(
             return next(new HttpError(412, "Invalid input data", req.form.errors));
         }
 
+        let userId;
+
         Users.prototype
             .auth(req.form.email, req.form.password)
-            .then((userId) => {
+            .then((id) => {
+                userId = id;
                 return Session.create(userId);
             })
             .then((token) => {
                 res.send({
-                    token
+                    token,
+                    userId
                 });
             })
             .catch(next);

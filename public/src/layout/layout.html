@@ -1,0 +1,26 @@
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand pull-left" ui-sref="member({userId: $ctrl.authData.userId})">{{$ctrl.authData.email}}</a>
+        <div class="navbar-header pull-right">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-2">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="membersLink"><a ui-sref="members">Members</a></li>
+                <li class="signOut cursorPointer" ng-show="$ctrl.authData.token" ng-click="$ctrl.signOut()"><a>Sign out</a></li>
+                <li class="signIn" ng-show="!$ctrl.authData.token"><a ui-sref="auth">Sign in</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container logoutErrors zeroPadding">
+    <request-errors errors="$ctrl.errorSignOutMessages"></request-errors>
+</div>
+<div class="container">
+    <ui-view></ui-view>
+</div>

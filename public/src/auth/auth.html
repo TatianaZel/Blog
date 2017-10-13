@@ -1,0 +1,16 @@
+<form name="$ctrl.signInForm" ng-submit="$ctrl.signIn($ctrl.user)" class="authForm">
+    <request-errors errors="$ctrl.errorSignInMessages"></request-errors>
+    <h3>Sign in</h3>
+    <div class="form-group">
+        <label>Email address</label>
+        <input name="email" ng-model="$ctrl.user.email" ng-readonly="$ctrl.reqAuthData.isSendingNow" required type="email" class="form-control" placeholder="Enter email">
+        <validate-errors errors="$ctrl.signInForm.email.$error" show="!$ctrl.signInForm.email.$pristine"></validate-errors>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input name="password" ng-model="$ctrl.user.password" ng-minlength="8" ng-maxlength="40" ng-readonly="$ctrl.reqAuthData.isSendingNow" required type="password" class="form-control" placeholder="Password">
+        <validate-errors errors="$ctrl.signInForm.password.$error" show="!$ctrl.signInForm.password.$pristine"></validate-errors>
+    </div>
+    <button ng-disabled="!$ctrl.signInForm.$valid || $ctrl.reqAuthData.isSendingNow" type="submit" class="btn btn-primary">Sign in</button>
+</form>
+<profile-form errors="$ctrl.errorSignUpMessages" title="Sign up" submit-func="$ctrl.signUp" is-sending-now="$ctrl.reqAuthData.isSendingNow" profile=""></profile-form>

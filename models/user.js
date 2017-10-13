@@ -4,26 +4,26 @@ const HttpError = require("../helpers/HttpError");
 
 module.exports = function (sequelize, DataTypes) {
     var User = sequelize.define("User", {
-        name: {
-            type: DataTypes.STRING,
-            notEmpty: true
-        },
-        surname: {
-            type: DataTypes.STRING,
-            notEmpty: true
-        },
-        email: {
-            type: DataTypes.STRING,
-            notEmpty: true
-        },
-        password: {
-            type: DataTypes.STRING,
-            notEmpty: true
-        },
-        description: {
-            type: DataTypes.STRING
-        }
-    });
+            name: {
+                type: DataTypes.STRING,
+                notEmpty: true
+            },
+            surname: {
+                type: DataTypes.STRING,
+                notEmpty: true
+            },
+            email: {
+                type: DataTypes.STRING,
+                notEmpty: true
+            },
+            password: {
+                type: DataTypes.STRING,
+                notEmpty: true
+            },
+            description: {
+                type: DataTypes.STRING
+            }
+        });
 
     User.associate = function (models) {
         User.hasMany(models.Post);
@@ -44,6 +44,25 @@ module.exports = function (sequelize, DataTypes) {
                 }
                 reject(new HttpError(403, "Wrong email or password"));
             });
+        });
+    };
+
+    User.prototype.checkEmail = function (email, id) {
+
+        return new Promise((resolve, reject) => {
+            return User.findOne({
+                        where: {
+                            email: email,
+                            id: {
+                                $not: id
+                            }
+                        }
+                    }).then((user) => {
+                        if (user) {
+                            reject(new HttpError(403, "Email alredy exists"));
+                        }
+                        resolve();
+                    });
         });
     };
 

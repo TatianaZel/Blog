@@ -1,0 +1,13 @@
+<button ng-click="$ctrl.openCreatingModal()" ng-if="$ctrl.userId == $ctrl.authData.userId">Create post</button>
+
+<div ng-repeat="post in $ctrl.posts" class="panel panel-default breakWord" ng-class="{'transparentPost' : $ctrl.reqBlogData.removedPost === post.id}">
+    <div class="panel-heading subPanel">
+        <strong class="cursorPointer"><a ui-sref="article({postId: post.id})">{{post.title}}</a></strong>
+        <span ng-if="$ctrl.userId == $ctrl.authData.userId" ng-click="$ctrl.removePost(post.id)" class="pull-right cursorPointer removeBtn">remove</span>
+        <span ng-if="$ctrl.userId == $ctrl.authData.userId" ng-click="$ctrl.editPost(post)" class="pull-right cursorPointer removeBtn">edit&nbsp;</span>
+    </div>
+    <div class="panel-body">{{post.text}}</div>
+    <div class="panel-footer subPanel">
+        <span>{{post.createdAt| date:'yyyy-MM-dd'}}</span>
+    </div>
+</div>

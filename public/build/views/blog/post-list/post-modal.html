@@ -1,0 +1,20 @@
+<form name="$ctrl.postForm" class="modal-content" ng-submit="$ctrl.createPost()">
+    <div class="modal-header">
+        <button type="button" class="close" ng-click="$ctrl.close()" aria-hidden="true">&times;</button>
+        <div class="form-group">
+            <label>Title</label>
+            <input autocomplete="off" name="postTitle" ng-model="$ctrl.postData.title" type="text" required ng-minlength="3" ng-maxlength="255" class="form-control" ng-readonly="$ctrl.blogReqData.isCreatingNow">
+            <validate-errors errors="$ctrl.postForm.postTitle.$error" show="!$ctrl.postForm.postTitle.$pristine"></validate-errors>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label>Text</label>
+            <textarea name="postText" ng-model="$ctrl.postData.text" type="text" required class="form-control" rows="15" ng-readonly="$ctrl.blogReqData.isCreatingNow"></textarea>
+            <validate-errors errors="$ctrl.postForm.postText.$error" show="!$ctrl.postForm.postText.$pristine"></validate-errors>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-default create" ng-disabled="$ctrl.blogReqData.isCreatingNow || !$ctrl.postForm.$valid">Ok</button>
+    </div>
+</form>

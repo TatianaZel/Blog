@@ -1,0 +1,9 @@
+<h1>Member list</h1>
+<hr>
+<div ng-repeat="member in $ctrl.members">
+    <div class="clearfix">
+        <a ui-sref="member({userId: member.id})" class=""><span class="memberName">{{member.name}}&nbsp{{member.surname}}</span></a>
+        <button class="pull-right" style="">Send message</button>
+    </div>
+    <hr>
+</div>
