@@ -8,7 +8,5 @@ function memberListController(memberListService) {
 
     $ctrl.members = memberListService.members;
 
-    memberListService.getMembers().then(() => {
-        console.log($ctrl.members);
-    });
+    memberListService.getMembers();
 }

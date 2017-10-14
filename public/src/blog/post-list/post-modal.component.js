@@ -4,13 +4,15 @@ app.component('postModal', {
         resolve: '<',
         close: '&'
     },
-    controller: ['postListService', function (postListService) {
-        const $ctrl = this;
+    controller: ['postListService', (postListService) => {
+            const $ctrl = this;
 
-        $ctrl.blogReqData = postListService.reqData;
+            $ctrl.blogReqData = postListService.reqData;
+                console.log($ctrl.resolve);
+            $ctrl.submit = function () {
 
-        $ctrl.createPost = function () {
-            postListService.createPost($ctrl.postData).then($ctrl.close);
-        };
-    }]
+                $ctrl.resolve.submitFunc($ctrl.postData).then($ctrl.close);
+            };
+        }
+    ]
 });

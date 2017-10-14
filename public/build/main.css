@@ -1,4 +1,6 @@
-a{cursor:pointer}.authForm{width:50%;margin:auto auto 30px}
+a{cursor:pointer}.authForm{width:50%;margin:auto auto 30px}.blackBorder{border-radius:5px;border:1px solid #000}.list{margin-top:20px}blockquote{word-break:break-all}blockquote p{margin-top:10px}
 
 .container{width:50%}.logoutErrors{margin-top:60px}
 .memberName{font-size:16px;font-weight:700}
+.createLink{margin-left:5px}
+.descroption,.editLink{margin-left:5px}

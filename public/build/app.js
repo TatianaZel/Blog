@@ -203,7 +203,6 @@ app.constant("urls", urls);
 
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
     var posts = [],
-        currentPost = {},
         errorMessages = {},
         reqData = {
             isCreatingNow: false,
@@ -218,21 +217,19 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
     return {
         getPosts: getPosts,
         posts: posts,
-//        reqData: reqData,
-//        currentPost: currentPost,
-//        errorMessages: errorMessages,
-//        getPost: getPost,
-//        removePost: removePost,
+        reqData: reqData,
+        errorMessages: errorMessages,
+        removePost: removePost,
         createPost: createPost
     };
 
     function getPosts(userId) {
         return new Promise((resolve, reject) => {
+            posts.splice(0, posts.length);
             requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
-
             function getPostsSuccess(res) {
                 if (res.data) {
-                    !posts.length ? Array.prototype.push.apply(posts, res.data) : '';
+                    Array.prototype.push.apply(posts, res.data);
                     resolve();
                 } else {
                     errorMessages.gettingPosts = 'No available posts.';
@@ -278,70 +275,35 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
         });
     }
 
-//    function removePost(postId) {
-//        return new Promise(function (resolve, reject) {
-//            if (!confirm("Are you sure you want to remove the post?"))
-//                return;
-//
-//            var headers = {
-//                'Token': authService.authData.token
-//            };
-//
-//            reqData.removedPost = postId;
-//
-//            requestService.sendRequest(urls.blog + postId, 'delete', headers).then(removePostSuccess, removePostError);
-//
-//            function removePostSuccess() {
-//                errorMessages.removingPost = '';
-//                for (var i = 0; i < posts.length; i++) {
-//                    if (posts[i].id === reqData.removedPost) {
-//                        posts.splice(i, 1);
-//                    }
-//                }
-//                resolve();
-//            }
-//
-//            function removePostError(response) {
-//                errorMessages.removingPost = response;
-//                reject();
-//            }
-//        });
-//    }
-//
-//    function getPost(postId) {
-//        return new Promise(function (resolve, reject) {
-//            var headers = {
-//                'Token': authService.authData.token
-//            };
-//
-//            requestService.sendRequest(urls.blog + postId, 'get', headers).then(getPostSuccess, getPostError);
-//
-//            function getPostSuccess(response) {
-//                if (response.data) {
-//                    for (var key in response.data) {
-//                        currentPost[key] = response.data[key];
-//                    }
-//                    resolve();
-//                } else {
-//                    cleanObject(currentPost);
-//                    errorMessages.gettingPost = 'Can not get this post.';
-//                    reject();
-//                }
-//            }
-//
-//            function getPostError(response) {
-//                cleanObject(currentPost);
-//                errorMessages.gettingPost = response;
-//                reject();
-//            }
-//        });
-//    }
-//
-//    function cleanObject(obj) {
-//        for (var key in obj) {
-//            obj[key] = '';
-//        }
-//    }
+    function removePost(postId) {
+        return new Promise(function (resolve, reject) {
+            if (!confirm("Are you sure you want to remove the post?"))
+                return;
+
+            var headers = {
+                'Token': authService.authData.token
+            };
+
+            reqData.removedPost = postId;
+
+            requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
+
+            function removePostSuccess() {
+                errorMessages.removingPost = '';
+                for (var i = 0; i < posts.length; i++) {
+                    if (posts[i].id === reqData.removedPost) {
+                        posts.splice(i, 1);
+                    }
+                }
+                resolve();
+            }
+
+            function removePostError(response) {
+                errorMessages.removingPost = response;
+                reject();
+            }
+        });
+    }
 }]);
 
 app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService', function (requestService, urls, authService, localStorageService) {
@@ -561,9 +523,7 @@ function memberListController(memberListService) {
 
     $ctrl.members = memberListService.members;
 
-    memberListService.getMembers().then(() => {
-        console.log($ctrl.members);
-    });
+    memberListService.getMembers();
 }
 
 app.component('postList', {
@@ -575,17 +535,31 @@ app.component('postList', {
 });
 
 function postListController(postListService, $stateParams, $uibModal) {
-    postListService.getPosts($stateParams.userId).then(() => {
-        console.log($ctrl.posts);
-    });
+
+    postListService.getPosts($stateParams.userId);
 
     const $ctrl = this;
 
     $ctrl.posts = postListService.posts;
     $ctrl.userId = $stateParams.userId;
+    $ctrl.removePost = postListService.removePost;
     $ctrl.openCreatingModal = openCreatingModal;
+    $ctrl.openEdditingModal = openEdditingModal;
+
 
     function openCreatingModal() {
+        $uibModal.open({
+            component: 'postModal',
+            resolve: {
+                submitFunc: ['postListService', (postListService) => {
+                        return postListService.createPost;
+                    }
+                ]
+            }
+        });
+    }
+
+    function openEdditingModal() {
         $uibModal.open({
             component: 'postModal'
         });
@@ -598,15 +572,17 @@ app.component('postModal', {
         resolve: '<',
         close: '&'
     },
-    controller: ['postListService', function (postListService) {
-        const $ctrl = this;
+    controller: ['postListService', (postListService) => {
+            const $ctrl = this;
 
-        $ctrl.blogReqData = postListService.reqData;
+            $ctrl.blogReqData = postListService.reqData;
+                console.log($ctrl.resolve);
+            $ctrl.submit = function () {
 
-        $ctrl.createPost = function () {
-            postListService.createPost($ctrl.postData).then($ctrl.close);
-        };
-    }]
+                $ctrl.resolve.submitFunc($ctrl.postData).then($ctrl.close);
+            };
+        }
+    ]
 });
 
 app.component('profile', {

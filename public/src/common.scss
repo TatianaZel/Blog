@@ -7,3 +7,19 @@ a {
     margin: auto;
     margin-bottom: 30px;
 }
+
+.blackBorder {
+    border-radius: 5px;
+    border: 1px solid #000;
+}
+
+.list {
+    margin-top: 20px;
+}
+
+blockquote {
+    word-break: break-all;
+    p {
+        margin-top: 10px;
+    }
+}
