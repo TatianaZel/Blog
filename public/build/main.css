@@ -1,6 +1,7 @@
-a{cursor:pointer}.authForm{width:50%;margin:auto auto 30px}.blackBorder{border-radius:5px;border:1px solid #000}.list{margin-top:20px}blockquote{word-break:break-all}blockquote p{margin-top:10px}
+a{cursor:pointer}.authForm{width:50%;margin:auto auto 30px}.blackBorder{border-radius:5px;border:1px solid #d3d3d3}.list{margin-top:20px}blockquote p{margin-top:10px}textarea{resize:none}.breakWord{word-wrap:break-word}
 
+.filter{display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-ms-flex-wrap:wrap;flex-wrap:wrap}.checkbox{height:100%}
 .container{width:50%}.logoutErrors{margin-top:60px}
 .memberName{font-size:16px;font-weight:700}
-.createLink{margin-left:5px}
+.createLink{margin-left:5px}.transparentPost{opacity:.75}.controlBtn{cursor:pointer}
 .descroption,.editLink{margin-left:5px}

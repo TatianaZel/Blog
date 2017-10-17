@@ -1,6 +1,14 @@
-app.config(['$stateProvider', function ($stateProvider) {
-    $stateProvider.state('members', {
-        url: "/",
-        component: 'memberList'
-    });
-}]);
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('members', {
+            url: "/",
+            component: 'memberList',
+            resolve: {
+                authData: ['authService', (authService) => {
+                        return authService.authData;
+                    }
+                ]
+            }
+        });
+    }
+]);

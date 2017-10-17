@@ -1,3 +1,5 @@
-app.config(['$urlRouterProvider', function ($urlRouterProvider) {
-    $urlRouterProvider.otherwise('/');
-}]);
+app.config(['$urlRouterProvider',
+    ($urlRouterProvider) => {
+        $urlRouterProvider.otherwise('/');
+    }
+]);

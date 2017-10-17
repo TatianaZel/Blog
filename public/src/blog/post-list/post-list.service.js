@@ -1,23 +1,26 @@
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
-    var posts = [],
-        errorMessages = {},
-        reqData = {
-            isCreatingNow: false,
-            removedPost: ''
-        },
-        config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+        var posts = [],
+            errorMessages = {},
+            reqData = {
+                isCreatingNow: false,
+                removedPost: ''
+            },
+            editedPost = {},
+            config = {
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
     return {
         getPosts: getPosts,
         posts: posts,
         reqData: reqData,
+        editedPost: editedPost,
         errorMessages: errorMessages,
         removePost: removePost,
-        createPost: createPost
+        createPost: createPost,
+        editPost: editPost
     };
 
     function getPosts(userId) {
@@ -27,6 +30,7 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
             function getPostsSuccess(res) {
                 if (res.data) {
                     Array.prototype.push.apply(posts, res.data);
+                    errorMessages.gettingPosts = '';
                     resolve();
                 } else {
                     errorMessages.gettingPosts = 'No available posts.';
@@ -44,8 +48,8 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
     function createPost(sendData) {
         return new Promise((resolve, reject) => {
             var headers = {
-                    'Token': authService.authData.token
-                };
+                'Token': authService.authData.token
+            };
 
             reqData.isCreatingNow = true;
 
@@ -56,7 +60,6 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
                 if (res.data) {
                     posts.push(res.data);
                     errorMessages.creatingPost = '';
-                    errorMessages.gettingPosts = '';
                     resolve();
                 } else {
                     errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
@@ -66,6 +69,30 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
 
             function createPostError(err) {
                 errorMessages.creatingPost = err;
+                reqData.isCreatingNow = false;
+                reject();
+            }
+        });
+    }
+
+    function editPost(id, sendData) {
+        return new Promise((resolve, reject) => {
+            var headers = {
+                'Token': authService.authData.token
+            };
+
+            reqData.isCreatingNow = true;
+
+            requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
+
+            function editPostSuccess(res) {
+                reqData.isCreatingNow = false;
+                errorMessages.creatingPost = '';
+                resolve();
+            }
+
+            function editPostError(err) {
+                errorMessages.edditingPost = err;
                 reqData.isCreatingNow = false;
                 reject();
             }

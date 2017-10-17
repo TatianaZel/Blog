@@ -18,12 +18,12 @@
     </div>
     <div class="form-group">
         <label>Password</label>
-        <input name="password" ng-model="$ctrl.profile.password" ng-readonly="$ctrl.isSendingNow" ng-minlength="8" ng-maxlength="40" required type="password" class="form-control" placeholder="Password">
+        <input name="password" ng-model="$ctrl.profile.password" ng-init="$ctrl.profile.confirm = $ctrl.profile.password" ng-readonly="$ctrl.isSendingNow" ng-minlength="8" ng-maxlength="40" required type="password" class="form-control" placeholder="Password">
         <validate-errors errors="$ctrl.profileForm.password.$error" show="!$ctrl.profileForm.password.$pristine"></validate-errors>
     </div>
     <div class="form-group">
         <label>Confirm password</label>
-        <input ng-init="$ctrl.profile.confirm = $ctrl.profile.password" name="confirmPassword" ng-model="$ctrl.profile.confirm" ng-readonly="$ctrl.isSendingNow" required compare-to="$ctrl.profile.password" type="password" class="form-control" placeholder="Confirm password">
+        <input name="confirmPassword" ng-model="$ctrl.profile.confirm" ng-init="$ctrl.profile.confirm = $ctrl.profile.password" ng-readonly="$ctrl.isSendingNow" required compare-to="$ctrl.profile.password" type="password" class="form-control" placeholder="Confirm password">
         <validate-errors errors="$ctrl.profileForm.confirmPassword.$error" show="!$ctrl.profileForm.confirmPassword.$pristine"></validate-errors>
     </div>
     <div class="form-group">

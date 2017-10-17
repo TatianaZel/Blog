@@ -13,14 +13,14 @@ function authController(authService, $state) {
     $ctrl.signUp = signUp;
 
     function signUp(userData) {
-        authService.signUp(userData).then(function () {
-            $state.go('member', {userId: authService.authData.userId})
+        authService.signUp(userData).then(() => {
+            $state.go('member', {userId: authService.authData.userId});
         });
     }
 
     function signIn(userData) {
-        authService.signIn(userData).then(function () {
-            $state.go('member', {userId: authService.authData.userId})
+        authService.signIn(userData).then(() => {
+             $state.go('member', {userId: authService.authData.userId})
         });
     }
 }

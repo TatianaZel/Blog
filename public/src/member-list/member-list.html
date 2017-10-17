@@ -1,9 +1,32 @@
 <h1>Member list</h1>
 <div class="list">
-    <blockquote ng-repeat="member in $ctrl.members" class="blackBorder">
+    <div class="filter form-inline">
+        <div>
+            <label>Search by :</label>
+            <select class="form-control searchBy" ng-model="$ctrl.filterParams.searchBy" ng-init="$ctrl.filterParams.searchBy = 'any'">
+                <option value="any">any</option>
+                <option ng-repeat="option in $ctrl.filterParams.searchOptions" value="{{option}}">{{option}}</option>
+            </select>
+            <input class="form-control searchText" ng-model="$ctrl.filterParams.searchText">
+        </div>
+        <div>
+            <label class="checkbox-inline"><input class="checkbox" type="checkbox" ng-model="$ctrl.filterParams.caseSensetive">Case sensetive</label>
+            <label class="checkbox-inline"><input class="checkbox" type="checkbox" ng-model="$ctrl.filterParams.fullMatch">Full match</label>
+            <label class="checkbox-inline"><input class="checkbox" type="checkbox" ng-model="$ctrl.filterParams.negative">Negative search</label>
+        </div>
+<!--        <div>
+            <select class="form-control orderBy" ng-model="$ctrl.orderOptionIdx">
+                <option ng-repeat="option in $ctrl.orderOptions" value="{{$index}}">{{option.textOption}}</option>
+            </select>
+        </div>-->
+    </div>
+</div>
+<div class="list">
+    <!--    <blockquote ng-repeat="member in $ctrl.members| filter :  $ctrl.filterParams | orderBy : $ctrl.orderOptions[$ctrl.orderOptionIdx * 1].nameOption" class="blackBorder breakWord">-->
+    <blockquote ng-repeat="member in $ctrl.members| filter :  $ctrl.filterParams" class="blackBorder breakWord">
         <div class="clearfix">
             <a ui-sref="member({userId: member.id})" class=""><span class="memberName">{{member.name}}&nbsp{{member.surname}}</span></a>
-            <a class="pull-right" style="">Send message</a>
+            <a class="pull-right" ng-if="$ctrl.authData.token"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>
         </div>
     </blockquote>
 </div>

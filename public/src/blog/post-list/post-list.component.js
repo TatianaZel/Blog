@@ -15,25 +15,20 @@ function postListController(postListService, $stateParams, $uibModal) {
     $ctrl.posts = postListService.posts;
     $ctrl.userId = $stateParams.userId;
     $ctrl.removePost = postListService.removePost;
+
     $ctrl.openCreatingModal = openCreatingModal;
     $ctrl.openEdditingModal = openEdditingModal;
 
-
     function openCreatingModal() {
         $uibModal.open({
-            component: 'postModal',
-            resolve: {
-                submitFunc: ['postListService', (postListService) => {
-                        return postListService.createPost;
-                    }
-                ]
-            }
+            component: 'postModal'
         });
     }
 
-    function openEdditingModal() {
+    function openEdditingModal(post) {
+        postListService.editedPost = post;
         $uibModal.open({
-            component: 'postModal'
+            component: 'editModal'
         });
     }
 }
