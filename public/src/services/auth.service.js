@@ -1,10 +1,11 @@
-app.factory('authService', ['localStorageService', 'requestService', 'urls',
-    (localStorageService, requestService, urls) => {
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
+    (localStorageService, requestService, urls, chatService) => {
+
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
                 token: localStorageService.cookie.get('token'),
@@ -30,7 +31,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
         };
 
         function signIn(sendData, signUpResolve) {
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 reqData.isSendingNow = true;
                 requestService.sendRequest(urls.signIn, 'post', null, sendData, config).then(signInSuccess, signInError);
 
@@ -50,7 +51,9 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-                        resolve();
+                        chatService.connect(authData.userId);
+
+                        //resolve();
                     } else {
                         errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
                         reject();
@@ -66,7 +69,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
         }
 
         function signUp(sendData) {
-            return new Promise(function (signUpResolve, reject) {
+            return new Promise((signUpResolve, reject) => {
                 reqData.isSendingNow = true;
                 requestService.sendRequest(urls.signUp, 'post', null, sendData, config).then(signUpSuccess, signUpError);
 
@@ -90,7 +93,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
         }
 
         function signOut() {
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 var headers = {
                     'Token': authData.token
                 };

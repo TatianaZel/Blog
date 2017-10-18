@@ -10,9 +10,10 @@ function layoutController(authService, $state) {
     $ctrl.errorSignOutMessages = authService.errorSignOutMessages;
     $ctrl.signOut = signOut;
 
-    function signOut() { //////временное решение
+    function signOut() {
         authService.signOut().then(() => {
-            $state.go('members', {userId: authService.authData.userId});
+            if($state.current.name === 'editProfile')
+                $state.go('members');
         });
     }
 }

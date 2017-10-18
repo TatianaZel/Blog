@@ -28,6 +28,9 @@ var src = {
         },
         jquery: {
             lib: './public/bower_components/jquery/dist/jquery.min.js'
+        },
+        socket: {
+            lib: './public/bower_components/socket.io.client/dist/*.js'
         }
     },
     app: {
@@ -45,7 +48,9 @@ var src = {
 };
 
 gulp.task('jsVendors', function () {
-    gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib, src.vendors.bootstrap.ui, src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage, src.vendors.angular.router, src.vendors.angular.stateEvents])
+    gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib, src.vendors.bootstrap.ui,
+              src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage, src.vendors.angular.router,
+              src.vendors.angular.stateEvents, src.vendors.socket.lib])
             .pipe(concat('vendor.js'))
             .pipe(gulp.dest('./public/build'));
 });

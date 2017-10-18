@@ -1,5 +1,5 @@
 <form name="$ctrl.profileForm" ng-submit="$ctrl.submitFunc($ctrl.profile)" class="authForm">
-    <request-errors errors="$ctrl.errors"></request-errors>
+    <notice notice="$ctrl.errors" danger="true"></notice>
     <h3>{{$ctrl.title}}</h3>
     <div class="form-group">
         <label>Name</label>

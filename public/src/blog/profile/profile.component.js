@@ -9,8 +9,8 @@ app.component('profile', {
 function profileController(profileService, $stateParams) {
     const $ctrl = this;
 
-    $ctrl.errorGettingMessages = profileService.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
-
     profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
 }

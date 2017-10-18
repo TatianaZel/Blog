@@ -1,20 +1,22 @@
 'use strict';
 
-var app = angular.module('app', ['ui.router', 'ui.router.state.events', 'LocalStorageModule', 'ui.bootstrap']).run(['$rootScope', 'localStorageService', function ($rootScope, localStorageService) {
-        $rootScope.$on('$stateChangeStart', (event, toState) => {
-            if (toState.data && toState.data.auth) {
-                if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
-                    event.preventDefault();
-                    return false;
-                }
-                if (toState.data.auth === 'Authorized' && !localStorageService.cookie.get('token')) {
-                    event.preventDefault();
-                    return false;
-                }
+let app = angular.module('app', ['ui.router', 'ui.router.state.events', 'LocalStorageModule', 'ui.bootstrap'])
+        .run(['$rootScope', 'localStorageService',
+            ($rootScope, localStorageService) => {
+                $rootScope.$on('$stateChangeStart', (event, toState) => {
+                    if (toState.data && toState.data.auth) {
+                        if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
+                            event.preventDefault();
+                            return false;
+                        }
+                        if (toState.data.auth === 'Authorized' && !localStorageService.cookie.get('token')) {
+                            event.preventDefault();
+                            return false;
+                        }
+                    }
+                });
             }
-        });
-    }
-]);
+        ]);
 
 app.factory('memberListService', ['requestService', 'urls',
     (requestService, urls) => {
@@ -26,7 +28,7 @@ app.factory('memberListService', ['requestService', 'urls',
         };
 
         function getMembers() {
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 requestService.sendRequest(urls.members, 'get').then(getMembersSuccess, getMembersError);
 
                 function getMembersSuccess(res) {
@@ -48,13 +50,14 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls',
-    (localStorageService, requestService, urls) => {
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
+    (localStorageService, requestService, urls, chatService) => {
+
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
                 token: localStorageService.cookie.get('token'),
@@ -80,7 +83,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
         };
 
         function signIn(sendData, signUpResolve) {
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 reqData.isSendingNow = true;
                 requestService.sendRequest(urls.signIn, 'post', null, sendData, config).then(signInSuccess, signInError);
 
@@ -100,7 +103,9 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-                        resolve();
+                        chatService.connect(authData.userId);
+
+                        //resolve();
                     } else {
                         errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
                         reject();
@@ -116,7 +121,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
         }
 
         function signUp(sendData) {
-            return new Promise(function (signUpResolve, reject) {
+            return new Promise((signUpResolve, reject) => {
                 reqData.isSendingNow = true;
                 requestService.sendRequest(urls.signUp, 'post', null, sendData, config).then(signUpSuccess, signUpError);
 
@@ -140,7 +145,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
         }
 
         function signOut() {
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 var headers = {
                     'Token': authData.token
                 };
@@ -161,6 +166,31 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
                     reject();
                 }
             });
+        }
+    }
+]);
+
+app.factory('chatService', [
+    () => {
+        return {
+            connect: connect
+        };
+
+        function connect(id) {
+            console.log(id);
+
+            const socket = io({
+                query: {
+                    userId: id
+                }
+            });
+
+            socket.on('resiep_msg', function (data) {
+                console.log(data);
+            });
+
+            //socket.emit('send_msg', {senderId: id, recipientId: id, msg: 'massageeee'});
+
         }
     }
 ]);
@@ -204,6 +234,7 @@ var urls = {
     signOut: 'http://localhost:3000/api/auth/logout/',
     myProfile: 'http://localhost:3000/api/user/getOwnInfo/',
     members: 'http://localhost:3000/api/user/',
+    changePassword: 'http://localhost:3000/api/user/changePassword/',
     post: 'http://localhost:3000/api/post/'
 };
 app.constant("urls", urls);
@@ -340,110 +371,120 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
     }
 }]);
 
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService', function (requestService, urls, authService, localStorageService) {
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
         let userInfo = {},
-            myInfo = {},
-            errorGettingMessages = {},
-            errorEdittingMessages = {},
-            reqData = {
-                isSendingNow: false
-            };
-
-    function getUserInfo(userId) {
-        return new Promise(() => {
-            requestService.sendRequest(urls.members + userId, 'get').then(getInfoSuccess, getInfoError);
-
-            function getInfoSuccess(response) {
-                if (response && response.data) {
-                    userInfo.name = response.data.name;
-                    userInfo.surname = response.data.surname;
-                    userInfo.description = response.data.description;
-                    userInfo.id = response.data.id;
-                }
-            }
-
-            function getInfoError(error) {
-                errorGettingMessages.gettingUserInfo = error;
-                userInfo.name = '';
-                userInfo.surname = '';
-                userInfo.description = '';
-                userInfo.id = '';
-            }
-        });
-    }
-
-    function getMyInfo() {
-        var headers = {
-            'Token': authService.authData.token
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
+            },
+        reqData = {
+            isSendingNow: false
         };
 
-        return new Promise(() => {
-            requestService.sendRequest(urls.myProfile, 'get', headers).then(getInfoSuccess, getInfoError);
+        function getUserInfo(userId) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + userId, 'get')
+                        .then(getInfoSuccess, getInfoError);
 
-            function getInfoSuccess(response) {
-                if (response && response.data) {
-                    myInfo.name = response.data.name;
-                    myInfo.surname = response.data.surname;
-                    myInfo.description = response.data.description;
-                    myInfo.id = response.data.id;
-                    myInfo.password = response.data.password;
-                    myInfo.email = response.data.email;
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.errorGettingMessages.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
                 }
-            }
 
-            function getInfoError(err) {
-                errorGettingMessages.gettingUserInfo = err;
-                myInfo.name = '';
-                myInfo.surname = '';
-                myInfo.description = '';
-                myInfo.id = '';
-                myInfo.password = '';
-                myInfo.email = '';
-            }
-        });
-    }
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                }
+            });
+        }
 
-    function editProfile(editedProfile) {
-        var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        },
+        function editProfileData(profileData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
                 headers = {
                     'Token': authService.authData.token
                 };
 
-        return new Promise((resolve) => {
-            reqData.isSendingNow = true;
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
 
-            requestService.sendRequest(urls.members + authService.authData.userId, 'put', headers, editedProfile, config).then(editProfileSuccess, editProfileError);
+                requestService.sendRequest(urls.members + authService.authData.userId, 'put', headers, profileData, config)
+                        .then(editProfileSuccess, editProfileError);
 
-            function editProfileSuccess() {
-                authService.authData.email = editedProfile.email;
-                localStorageService.cookie.set('email', editedProfile.email);
-                reqData.isSendingNow = false;
-                resolve();
-            }
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
 
-            function editProfileError(err) {
-                reqData.isSendingNow = false;
-                errorEdittingMessages.editProfile = err;
-            }
-        });
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword + authService.authData.userId, 'put', headers, passwordsData, config)
+                        .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
     }
-
-    return {
-        getUserInfo: getUserInfo,
-        getMyInfo: getMyInfo,
-        userInfo: userInfo,
-        myInfo: myInfo,
-        errorGettingMessages: errorGettingMessages,
-        errorEdittingMessages: errorEdittingMessages,
-        editProfile: editProfile,
-        reqData: reqData
-    };
-
-}]);
+]);
 
 app.filter('filter', () => {
     return (items, params) => {
@@ -515,20 +556,21 @@ function blogController() {
     const $ctrl = this;
 }
 
-app.component('requestErrors', {
+app.component('notice', {
     bindings: {
-        errors: '='
+        notice: '=',
+        danger: '<'
     },
-    template: '<div class="alert alert-danger" role="alert" ng-repeat="(key, value) in $ctrl.errors" ng-if="value"><p class="text-center">{{value}}</p></div>',
-    controller: [requestErrorsController]
+    templateUrl:'build/views/components/notice.html',
+    controller: [noticeController]
 });
 
-function requestErrorsController() {
+function noticeController() {
     const $ctrl = this;
 
     $ctrl.$onInit = function () {
-        for (var key in $ctrl.errors) {
-            $ctrl.errors[key] = '';
+        for (var key in $ctrl.notice) {
+            $ctrl.notice[key] = '';
         }
     };
 }
@@ -577,9 +619,10 @@ function layoutController(authService, $state) {
     $ctrl.errorSignOutMessages = authService.errorSignOutMessages;
     $ctrl.signOut = signOut;
 
-    function signOut() { //////временное решение
+    function signOut() {
         authService.signOut().then(() => {
-            $state.go('members', {userId: authService.authData.userId});
+            if($state.current.name === 'editProfile')
+                $state.go('members');
         });
     }
 }
@@ -716,6 +759,31 @@ function postModalController(postListService) {
     };
 }
 
+app.component('editProfile', {
+    templateUrl: 'build/views/blog/profile/edit-profile.html',
+    controller: ['profileService', 'localStorageService', '$state', editProfileController],
+});
+
+function editProfileController(profileService, localStorageService, $state) {
+    const $ctrl = this;
+
+    let userId = localStorageService.cookie.get('userId');
+
+    profileService.getUserInfo(userId);
+
+    $ctrl.changePassword = changePassword;
+    $ctrl.editProfileData = editProfileData;
+    $ctrl.profileData = profileService.userInfo;
+    $ctrl.notice = profileService.notice;
+
+    function changePassword(data) {
+        profileService.changePassword(data);
+    }
+
+    function editProfileData(data) {
+        profileService.editProfileData(data);
+    }
+}
 
 app.component('profile', {
     templateUrl: 'build/views/blog/profile/profile.html',
@@ -728,10 +796,10 @@ app.component('profile', {
 function profileController(profileService, $stateParams) {
     const $ctrl = this;
 
-    $ctrl.errorGettingMessages = profileService.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
-
     profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
 }
 
 app.component('profileForm', {
@@ -806,37 +874,6 @@ app.config(['$stateProvider',
         $stateProvider.state('editProfile', {
             url: "/editProfile",
             component: 'editProfile',
-            resolve: {
-                isSendingNow: ['profileService',
-                    (profileService) => {
-                        return profileService.reqData.isSendingNow;
-                    }
-                ],
-                title: [() => {
-                        return "Edit profile";
-                    }
-                ],
-                errors: ['profileService',
-                    (profileService) => {
-                        return profileService.errorEdittingMessages;
-                    }
-                ],
-                profile: ['profileService',
-                    (profileService) => {
-                        profileService.getMyInfo();
-                        return profileService.myInfo;
-                    }
-                ],
-                submitFunc: ['profileService', 'authService', '$state',
-                    (profileService, authService, $state) => {
-                        return (editedProfile) => {
-                            profileService.editProfile(editedProfile).then(() => {
-                                $state.go('member', {userId: authService.authData.userId})
-                            });
-                        };
-                    }
-                ]
-            },
             data: {
                 auth: "Authorized"
             }

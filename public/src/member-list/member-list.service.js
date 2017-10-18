@@ -8,7 +8,7 @@ app.factory('memberListService', ['requestService', 'urls',
         };
 
         function getMembers() {
-            return new Promise(function (resolve, reject) {
+            return new Promise((resolve, reject) => {
                 requestService.sendRequest(urls.members, 'get').then(getMembersSuccess, getMembersError);
 
                 function getMembersSuccess(res) {

@@ -1,5 +1,5 @@
 <a ng-click="$ctrl.openCreatingModal()" ng-if="$ctrl.authData.userId && $ctrl.userId == $ctrl.authData.userId" class="createLink"><i class="fa fa-plus" aria-hidden="true"></i> create post</a>
-<request-errors errors="$ctrl.errorMessages"></request-errors>
+<notice notice="$ctrl.errorMessages" danger="true"></notice>
 <div class="list">
     <blockquote ng-repeat="post in $ctrl.posts" class="blackBorder breakWord" ng-class="{'transparentPost' : $ctrl.reqData.removedPost === post.id}">
         <div class="blockquote-heading">

@@ -1,5 +1,5 @@
 <form name="$ctrl.signInForm" ng-submit="$ctrl.signIn($ctrl.user)" class="authForm">
-    <request-errors errors="$ctrl.errorSignInMessages"></request-errors>
+    <notice notice="$ctrl.errorSignInMessages" danger="true"></notice>
     <h3>Sign in</h3>
     <div class="form-group">
         <label>Email address</label>

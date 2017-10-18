@@ -5,6 +5,7 @@ var urls = {
     signOut: 'http://localhost:3000/api/auth/logout/',
     myProfile: 'http://localhost:3000/api/user/getOwnInfo/',
     members: 'http://localhost:3000/api/user/',
+    changePassword: 'http://localhost:3000/api/user/changePassword/',
     post: 'http://localhost:3000/api/post/'
 };
 app.constant("urls", urls);
