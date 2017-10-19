@@ -30,7 +30,7 @@ var src = {
             lib: './public/bower_components/jquery/dist/jquery.min.js'
         },
         socket: {
-            lib: './public/bower_components/socket.io.client/dist/*.js'
+            lib: './public/bower_components/socket.io.client/dist/socket.io-1.3.5.js'
         }
     },
     app: {

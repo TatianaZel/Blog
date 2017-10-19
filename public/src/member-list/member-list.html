@@ -26,7 +26,7 @@
     <blockquote ng-repeat="member in $ctrl.members| filter :  $ctrl.filterParams" class="blackBorder breakWord">
         <div class="clearfix">
             <a ui-sref="member({userId: member.id})" class=""><span class="memberName">{{member.name}}&nbsp{{member.surname}}</span></a>
-            <a class="pull-right" ng-if="$ctrl.authData.token"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>
+            <a class="pull-right" ng-if="$ctrl.authData.token" ng-click="$ctrl.sendMesasage('18', member.id)"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>
         </div>
     </blockquote>
 </div>

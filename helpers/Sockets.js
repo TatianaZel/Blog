@@ -1,20 +1,42 @@
-var chat = function (server) {
+const Session = require("../helpers/Session");
+
+const Chat = function (server) {
     var io = require('socket.io')(server);
-
-    io.on('connection', function (socket) {
-
-        socket.join(socket.request._query.userId);
-
-        io.to(socket.request._query.userId).emit('resiep_msg', 'mesageee!');
-
-//        socket.on('send_msg', function (data) {
-//            io.to(data.recipientId).emit('resiep_msg', data.msg);
-//
-//            //запись сообщений в бд
-//        });
-
-    });
-
+    io.on('connection', connection);
 };
 
-module.exports = chat;
+function connection(socket) {
+    var query = socket.request._query ? socket.request._query : {};
+
+    Session
+            .check(query.token)
+            .then((user) => {
+                if (user && user.id == query.userId) {//
+                    socket.join(query.userId);
+                }
+            })
+            .catch(() => {
+                console.log('some err');
+            });
+
+    socket.on('clientMsg', messageProcessing);
+}
+
+function messageProcessing(data) {
+    Session
+            .check(data.senderToken)
+            .then((user) => {
+                if (user && user.id == data.senderId) {//
+                    //запись в бд
+
+
+
+                    io.to(data.recipientId).emit('newMessage', data.msg);
+                }
+            })
+            .catch(() => {
+                console.log('some err');
+            });
+}
+
+module.exports = Chat;

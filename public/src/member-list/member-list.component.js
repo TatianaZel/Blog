@@ -1,12 +1,12 @@
 app.component('memberList', {
     templateUrl: 'build/views/member-list/member-list.html',
-    controller: ['memberListService', memberListController],
+    controller: ['memberListService', 'socketService', memberListController],
     bindings: {
         authData: '<'
     }
 });
 
-function memberListController(memberListService) {
+function memberListController(memberListService, socketService) {
     memberListService.getMembers();
 
     const $ctrl = this;
@@ -17,6 +17,8 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
+
+    $ctrl.sendMesasage = socketService.sendMessage;
 
 //    $ctrl.orderOptions = [
 //        {

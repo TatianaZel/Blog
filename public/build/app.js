@@ -50,26 +50,26 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
-    (localStorageService, requestService, urls, chatService) => {
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'socketService',
+    (localStorageService, requestService, urls, socketService) => {
 
         var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
+            headers: {
+                'Content-Type': 'application/jsone;'
+            }
+        };
 
         var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                userId: localStorageService.cookie.get('userId')
-            },
-            reqData = {
-                isSendingNow: false
-            },
-            errorSignInMessages = {},
-            errorSignOutMessages = {},
-            errorSignUpMessages = {};
+            token: localStorageService.cookie.get('token'),
+            email: localStorageService.cookie.get('email'),
+            userId: localStorageService.cookie.get('userId')
+        },
+                reqData = {
+                    isSendingNow: false
+                },
+                errorSignInMessages = {},
+                errorSignOutMessages = {},
+                errorSignUpMessages = {};
 
         return {
             signIn: signIn,
@@ -103,9 +103,9 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-                        chatService.connect(authData.userId);
+                        socketService.connect(authData.userId, authData.token);///
 
-                        //resolve();
+                        resolve();
                     } else {
                         errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
                         reject();
@@ -170,31 +170,6 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
     }
 ]);
 
-app.factory('chatService', [
-    () => {
-        return {
-            connect: connect
-        };
-
-        function connect(id) {
-            console.log(id);
-
-            const socket = io({
-                query: {
-                    userId: id
-                }
-            });
-
-            socket.on('resiep_msg', function (data) {
-                console.log(data);
-            });
-
-            //socket.emit('send_msg', {senderId: id, recipientId: id, msg: 'massageeee'});
-
-        }
-    }
-]);
-
 app.factory('requestService', ['$http', '$q',
     ($http, $q) => {
         return {
@@ -227,6 +202,38 @@ app.factory('requestService', ['$http', '$q',
     }
 ]);
 
+app.factory('socketService', function () {
+    var socket;
+
+    return {
+        connect: (id, token) => {///мб лучше брать из локалсторэджа
+            if (!id)
+                return;
+
+            socket = io.connect({
+                query: {
+                    userId: id,
+                    token: token
+                }
+            });
+
+            //получение диалогов
+
+            socket.on('newMessage', function (data) {//когда получаем сообщение от кого-то
+                console.log(data + ', dear');
+            });
+        },
+
+        sendMessage: (senderToken, senderId, recipientId) => {//отправить кому-то сообщение
+
+            socket.emit('clientMsg', {senderId: senderId, senderToken: senderToken, recipientId: recipientId, msg: 'hello!'});
+        },
+
+        disconnect: () => {
+
+        }
+    };
+});
 var urls = {
     blog: 'http://localhost:3000/api/blog/',
     signIn: 'http://localhost:3000/api/auth/signin/',
@@ -629,13 +636,13 @@ function layoutController(authService, $state) {
 
 app.component('memberList', {
     templateUrl: 'build/views/member-list/member-list.html',
-    controller: ['memberListService', memberListController],
+    controller: ['memberListService', 'socketService', memberListController],
     bindings: {
         authData: '<'
     }
 });
 
-function memberListController(memberListService) {
+function memberListController(memberListService, socketService) {
     memberListService.getMembers();
 
     const $ctrl = this;
@@ -646,6 +653,8 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
+
+    $ctrl.sendMesasage = socketService.sendMessage;
 
 //    $ctrl.orderOptions = [
 //        {

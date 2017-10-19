@@ -21,7 +21,8 @@ var Session = {
      * if sesson not defined, expires, ect
      */
     middleware(req, res, next) {
-        Session.check(req).then((user) => {
+        var token =  req.headers ? req.headers.token : null;
+        Session.check(token).then((user) => {
             if (user) {
                 req.userId = user.id;
                 req.user = user;
@@ -38,9 +39,8 @@ var Session = {
      * @param req {Object} express middleware request param
      * @returns {Promise: ~resolve => session Object}
      */
-    check(req) {
+    check(token) {
         return new Promise((resolve, reject) => {
-            let token = req.headers.token || null;
             if (token) {
                 Session.get(token).then(resolve, reject);
             } else
