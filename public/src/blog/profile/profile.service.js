@@ -8,9 +8,9 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 successProfileMessages: {},
                 successPasswordMessages: {}
             },
-        reqData = {
-            isSendingNow: false
-        };
+            reqData = {
+                isSendingNow: false
+            };
 
         function getUserInfo(userId) {
             return new Promise(() => {
@@ -84,7 +84,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
             return new Promise((resolve) => {
                 reqData.isSendingNow = true;
 
-                requestService.sendRequest(urls.changePassword + authService.authData.userId, 'put', headers, passwordsData, config)
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
                         .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {

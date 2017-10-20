@@ -105,7 +105,7 @@ router.post(
 router.post(
     ['/logout'],
 
-    ACL('auth.logout'),
+    ACL(),
 
     // Controller
     (req, res, next) => {

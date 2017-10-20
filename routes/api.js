@@ -51,16 +51,17 @@ const auth = require('./auth');
 const post = require('./post');
 const blog = require('./blog');
 const user = require('./user');
+//const chat = require('./chat');
 
-//const test = require('./test');
 
 /* Assign routes */
 router.use('/auth', auth);
 router.use('/post', post);
 router.use('/blog', blog);
 router.use('/user', user);
+//router.use('/chat', chat);
 
-//router.use('/test', test);
+
 
 /* API error hendler */
 router.use(function(err, req, res, next) {

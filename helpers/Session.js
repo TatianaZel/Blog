@@ -22,6 +22,7 @@ var Session = {
      */
     middleware(req, res, next) {
         var token =  req.headers ? req.headers.token : null;
+
         Session.check(token).then((user) => {
             if (user) {
                 req.userId = user.id;

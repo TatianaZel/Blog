@@ -97,7 +97,7 @@ router.put(
  * Update user by Id
  */
 router.put(
-    ['/changePassword/:userId'],
+    ['/changePassword'],
 
     ACL(),
 
@@ -117,9 +117,6 @@ router.put(
             return next(new HttpError(412, "Invalid input data", req.form.errors));
 
         let user = req.data.user;
-
-        if (user.id !== req.userId)
-            next(new HttpError(403, "Unavailable action"));
 
         Users.findById(user.id)
             .then((user) => {

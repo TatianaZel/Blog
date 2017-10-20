@@ -1,4 +1,4 @@
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'socketService',
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
     (localStorageService, requestService, urls, socketService) => {
 
         var config = {
@@ -18,6 +18,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'so
                 errorSignInMessages = {},
                 errorSignOutMessages = {},
                 errorSignUpMessages = {};
+                
+                chatService.connect(authData.userId, authData.token);///
 
         return {
             signIn: signIn,
@@ -51,7 +53,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'so
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-                        socketService.connect(authData.userId, authData.token);///
+
 
                         resolve();
                     } else {

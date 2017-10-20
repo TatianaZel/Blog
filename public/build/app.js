@@ -50,7 +50,7 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'socketService',
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
     (localStorageService, requestService, urls, socketService) => {
 
         var config = {
@@ -70,6 +70,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'so
                 errorSignInMessages = {},
                 errorSignOutMessages = {},
                 errorSignUpMessages = {};
+                
+                chatService.connect(authData.userId, authData.token);///
 
         return {
             signIn: signIn,
@@ -103,7 +105,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'so
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-                        socketService.connect(authData.userId, authData.token);///
+
 
                         resolve();
                     } else {
@@ -170,6 +172,47 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'so
     }
 ]);
 
+app.factory('chatService', [
+    () => {
+        var chats = [];
+        var socket;
+
+        return {
+            connect: connect,
+            beginChat: beginChat,
+            sendMessage: sendMessage,
+            chats: chats
+        };
+
+        function connect(id, token) {
+            if (!id)
+                return;
+
+            socket = io.connect({
+                query: {
+                    token: token
+                }
+            });
+
+            socket.on('successConnection', (data) => {
+                socket.removeAllListeners('successConnection');
+            });
+
+            socket.on('chatCreated', (data) => {
+                console.log(data);
+            });
+        }
+
+        function beginChat(token) {
+            socket.emit('newChat', {});
+        }
+
+        function sendMessage(senderToken, senderId, recipientId) {
+            //socket.emit('clientMsg', {senderId: senderId, senderToken: senderToken, recipientId: recipientId, msg: 'hello!'});
+        }
+
+    }
+]);
 app.factory('requestService', ['$http', '$q',
     ($http, $q) => {
         return {
@@ -202,47 +245,15 @@ app.factory('requestService', ['$http', '$q',
     }
 ]);
 
-app.factory('socketService', function () {
-    var socket;
-
-    return {
-        connect: (id, token) => {///мб лучше брать из локалсторэджа
-            if (!id)
-                return;
-
-            socket = io.connect({
-                query: {
-                    userId: id,
-                    token: token
-                }
-            });
-
-            //получение диалогов
-
-            socket.on('newMessage', function (data) {//когда получаем сообщение от кого-то
-                console.log(data + ', dear');
-            });
-        },
-
-        sendMessage: (senderToken, senderId, recipientId) => {//отправить кому-то сообщение
-
-            socket.emit('clientMsg', {senderId: senderId, senderToken: senderToken, recipientId: recipientId, msg: 'hello!'});
-        },
-
-        disconnect: () => {
-
-        }
-    };
-});
 var urls = {
     blog: 'http://localhost:3000/api/blog/',
     signIn: 'http://localhost:3000/api/auth/signin/',
     signUp: 'http://localhost:3000/api/auth/signup/',
     signOut: 'http://localhost:3000/api/auth/logout/',
-    myProfile: 'http://localhost:3000/api/user/getOwnInfo/',
     members: 'http://localhost:3000/api/user/',
     changePassword: 'http://localhost:3000/api/user/changePassword/',
-    post: 'http://localhost:3000/api/post/'
+    post: 'http://localhost:3000/api/post/',
+    chat: 'http://localhost:3000/api/chat/'
 };
 app.constant("urls", urls);
 
@@ -388,9 +399,9 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 successProfileMessages: {},
                 successPasswordMessages: {}
             },
-        reqData = {
-            isSendingNow: false
-        };
+            reqData = {
+                isSendingNow: false
+            };
 
         function getUserInfo(userId) {
             return new Promise(() => {
@@ -464,7 +475,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
             return new Promise((resolve) => {
                 reqData.isSendingNow = true;
 
-                requestService.sendRequest(urls.changePassword + authService.authData.userId, 'put', headers, passwordsData, config)
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
                         .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
