@@ -50,7 +50,7 @@ var src = {
 gulp.task('jsVendors', function () {
     gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib, src.vendors.bootstrap.ui,
               src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage, src.vendors.angular.router,
-              src.vendors.angular.stateEvents, src.vendors.socket.lib])
+              src.vendors.angular.stateEvents])
             .pipe(concat('vendor.js'))
             .pipe(gulp.dest('./public/build'));
 });

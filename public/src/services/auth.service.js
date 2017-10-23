@@ -1,25 +1,26 @@
 app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
-    (localStorageService, requestService, urls, socketService) => {
+    (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
-            token: localStorageService.cookie.get('token'),
-            email: localStorageService.cookie.get('email'),
-            userId: localStorageService.cookie.get('userId')
-        },
-                reqData = {
-                    isSendingNow: false
-                },
-                errorSignInMessages = {},
-                errorSignOutMessages = {},
-                errorSignUpMessages = {};
-                
-                chatService.connect(authData.userId, authData.token);///
+                token: localStorageService.cookie.get('token'),
+                email: localStorageService.cookie.get('email'),
+                userId: localStorageService.cookie.get('userId')
+            },
+            reqData = {
+                isSendingNow: false
+            },
+            errorSignInMessages = {},
+            errorSignOutMessages = {},
+            errorSignUpMessages = {};
+
+        if (authData.token && authData.userId)
+            chatService.connect(authData.userId, authData.token);
 
         return {
             signIn: signIn,
@@ -53,7 +54,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-
+                        chatService.connect(authData.userId, authData.token);
 
                         resolve();
                     } else {

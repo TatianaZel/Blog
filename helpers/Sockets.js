@@ -4,6 +4,7 @@ const Session = require("../helpers/Session");
 
 const Users = require("../models").User;
 const Chats = require("../models").Chat;
+const Messages = require("../models").Message;
 const Memberships = require("../models").Membership;
 
 const Chat = function (server) {
@@ -19,9 +20,9 @@ function connection(socket) {
             .check(query.token)
             .then((user) => {
                 if (user) {
-                    socket.join(user.id);
-
                     userId = user.id;
+
+                    socket.join(userId);
 
                     let opt = {
                         where: {
@@ -35,12 +36,15 @@ function connection(socket) {
                         ]
                     };
 
-                    Users.findAll(opt)
+                    Users
+                            .findAll(opt)
                             .then((users) => {
-//                                socket.on('newChat', createChat);
-//                                socket.on('addPeopleToChat', addPeopleToChat);
-//                                socket.on('clientMsg', messageProcessing);
-                                io.to(userId).emit('successConnection', users[0].Chats);
+                                socket.on('newChat', createChat);
+                                socket.on('addUserToChat', addUserToChat);
+                                socket.on('newMessage', messageProcessing);
+                                io.to(userId).emit('successConnection', {
+                                    chats: users[0].Chats
+                                });
                             });
                 }
             })
@@ -48,24 +52,48 @@ function connection(socket) {
                 console.log(err);
             });
 
-    function createChat() {
+    function createChat() {//добавить проверку на существование сессии
         let chat = new Chats();
 
-        chat.save()
-            .then(() => {
-                io.to(userId).emit('chatCreated', chat);
-            })
-            .catch((err) => {
-                console.log(err);
-            });
+        chat
+                .save()
+                .then(() => {
+                    io.to(userId).emit('chatCreated', chat);
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
     }
 
-    function addPeopleToChat(data) {//тут как-то создавать несколько записей в мемберщип одновременно или по одному(лучше по одному)  и по резолву файрить событие в котором возвращать
+    function addUserToChat(data) {//добавить проверку на существование сессии
+        let ms = new Memberships({//просто передавать data
+            UserId: data.userId,
+            ChatId: data.chatId
+        });
 
+        ms
+                .save()
+                .then(() => {
+                    io.to(userId).emit('userAddedToChat', {
+                        addedUser: data.userId
+                    });
+                });
     }
 
-    function messageProcessing() {
+    function messageProcessing(data) {//добавить проверку на существование сессии
+        let msg = new Messages({
+            text: data.text,
+            ChatId: data.chatId,
+            author: data.author
+        });
 
+        msg
+                .save()
+                .then(() => { //отправить всем участникам чата нотификейшн
+
+                    
+                    io.to(userId).emit('messageSended', data);
+                });
     }
 }
 

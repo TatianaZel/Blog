@@ -8,11 +8,11 @@ function compareTo() {
             otherModelValue: "=compareTo"
         },
         link: function (scope, element, attributes, ngModel) {
-            ngModel.$validators.confirm = function (modelValue) {
+            ngModel.$validators.confirm = (modelValue) => {
                 return modelValue === scope.otherModelValue;
             };
 
-            scope.$watch("otherModelValue", function () {
+            scope.$watch("otherModelValue", () => {
                 ngModel.$validate();
             });
         }

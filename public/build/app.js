@@ -51,27 +51,28 @@ app.factory('memberListService', ['requestService', 'urls',
 ]);
 
 app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
-    (localStorageService, requestService, urls, socketService) => {
+    (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
-            token: localStorageService.cookie.get('token'),
-            email: localStorageService.cookie.get('email'),
-            userId: localStorageService.cookie.get('userId')
-        },
-                reqData = {
-                    isSendingNow: false
-                },
-                errorSignInMessages = {},
-                errorSignOutMessages = {},
-                errorSignUpMessages = {};
-                
-                chatService.connect(authData.userId, authData.token);///
+                token: localStorageService.cookie.get('token'),
+                email: localStorageService.cookie.get('email'),
+                userId: localStorageService.cookie.get('userId')
+            },
+            reqData = {
+                isSendingNow: false
+            },
+            errorSignInMessages = {},
+            errorSignOutMessages = {},
+            errorSignUpMessages = {};
+
+        if (authData.token && authData.userId)
+            chatService.connect(authData.userId, authData.token);
 
         return {
             signIn: signIn,
@@ -105,7 +106,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
-
+                        chatService.connect(authData.userId, authData.token);
 
                         resolve();
                     } else {
@@ -172,43 +173,108 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
     }
 ]);
 
-app.factory('chatService', [
-    () => {
+app.factory('chatService', ['localStorageService',
+    (localStorageService) => {
         var chats = [];
         var socket;
 
         return {
             connect: connect,
             beginChat: beginChat,
+            addUserToChat: addUserToChat,
+            getChatsWithUser: getChatsWithUser,
             sendMessage: sendMessage,
             chats: chats
         };
 
-        function connect(id, token) {
-            if (!id)
-                return;
-
+        function connect() {
             socket = io.connect({
                 query: {
-                    token: token
+                    token: localStorageService.cookie.get('token')
                 }
             });
 
             socket.on('successConnection', (data) => {
+                Array.prototype.push.apply(chats, data.chats);
+
+                socket.on('messageForClient', (data) => {
+                    console.log(data);
+                });
+
                 socket.removeAllListeners('successConnection');
             });
+        }
 
-            socket.on('chatCreated', (data) => {
-                console.log(data);
+        function beginChat() {
+            return new Promise((resolve) => {
+                socket.on('chatCreated', (data) => {
+                    data.Users = [];////
+                    chats.push(data);
+                    socket.removeAllListeners('chatCreated');
+                    resolve(data);
+                });
+
+                socket.emit('newChat', {
+                    token: localStorageService.cookie.get('token')
+                });
             });
         }
 
-        function beginChat(token) {
-            socket.emit('newChat', {});
+        function addUserToChat(user, chatId) {//~~~~
+            return new Promise((resolve) => {
+                socket.on('userAddedToChat', (data) => {
+                    socket.removeAllListeners('userAddedToChat');
+
+                    chats.forEach((item) => {
+                        if (item.id == chatId)
+                            item.Users.push(user);
+                    });
+
+                    //добавить юзера в чат!
+                    console.log(data);
+
+                    resolve(data);
+                });
+
+                socket.emit('addUserToChat', {
+                    token: localStorageService.cookie.get('token'),
+                    userId: user.id,
+                    chatId: chatId
+                });
+            });
         }
 
-        function sendMessage(senderToken, senderId, recipientId) {
-            //socket.emit('clientMsg', {senderId: senderId, senderToken: senderToken, recipientId: recipientId, msg: 'hello!'});
+        function sendMessage(text, chatId, id) {
+            return new Promise((resolve) => {
+                socket.on('messageSended', (data) => {
+                    socket.removeAllListeners('messageSended');
+                    //добавить сообщение в чат!
+                    resolve(data);
+                });
+
+                socket.emit('newMessage', {
+                    token: localStorageService.cookie.get('token'),
+                    text: text,
+                    chatId: chatId,
+                    author: id
+                });
+            });
+        }
+
+        function getChatsWithUser(userId) {//вынести в фильтр
+            var chatsWithUser = [];
+
+            chats.forEach((chat) => {
+                var flag = false;
+                chat.Users.forEach((user) => {
+                    if (user.id === userId)
+                        flag = true;
+                });
+                if (flag)
+                    chatsWithUser.push(chat);
+            });
+
+            return chatsWithUser;
         }
 
     }
@@ -647,54 +713,23 @@ function layoutController(authService, $state) {
 
 app.component('memberList', {
     templateUrl: 'build/views/member-list/member-list.html',
-    controller: ['memberListService', 'socketService', memberListController],
+    controller: ['memberListService', memberListController],
     bindings: {
         authData: '<'
     }
 });
 
-function memberListController(memberListService, socketService) {
+function memberListController(memberListService) {
     memberListService.getMembers();
 
     const $ctrl = this;
 
     $ctrl.members = memberListService.members;
-    //$ctrl.authData = authService.authData;
 
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
 
-    $ctrl.sendMesasage = socketService.sendMessage;
-
-//    $ctrl.orderOptions = [
-//        {
-//            nameOption: '-createdAt',
-//            textOption: 'new first'
-//        },
-//        {
-//            nameOption: 'createdAt',
-//            textOption: 'new last'
-//        },
-//        {
-//            nameOption: 'name',
-//            textOption: 'order by name'
-//        },
-//        {
-//            nameOption: 'surname',
-//            textOption: 'order by surname'
-//        },
-//        {
-//            nameOption: '-name',
-//            textOption: 'not order by name'
-//        },
-//        {
-//            nameOption: '-surname',
-//            textOption: 'not order by surname'
-//        }
-//    ];
-//
-//    $ctrl.orderOptionIdx = '0';
 }
 
 app.component('editModal', {
@@ -848,13 +883,71 @@ function compareTo() {
             otherModelValue: "=compareTo"
         },
         link: function (scope, element, attributes, ngModel) {
-            ngModel.$validators.confirm = function (modelValue) {
+            ngModel.$validators.confirm = (modelValue) => {
                 return modelValue === scope.otherModelValue;
             };
 
-            scope.$watch("otherModelValue", function () {
+            scope.$watch("otherModelValue", () => {
                 ngModel.$validate();
             });
+        }
+    };
+}
+
+app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', 'localStorageService', messageModalSwitch]);
+
+function messageModalSwitch(chatService, $uibModal, $uibModalStack, localStorageService) {
+    return {
+        restrict: 'A',
+        scope: {
+            member: "=sendMessageTo"
+        },
+        link: function (scope, element) {
+            element.bind('click', () => {
+                $uibModal.open({
+                    templateUrl: 'build/views/components/message-modal/message-modal.html',
+                    size: 'sm',
+                    controller: modalController,
+                    controllerAs: '$ctrl'
+                });
+            });
+
+            function modalController() {
+                let $ctrl = this;
+
+                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);
+
+
+                $ctrl.sendMessage = sendMessage;
+
+                function sendMessage(messageData) {
+                    let userId = localStorageService.cookie.get('userId');
+
+                    if (!messageData.chat) {
+                        chatService.beginChat().then((newChatData) => {
+
+                            chatService.addUserToChat(scope.member, newChatData.id).then(() => {
+
+                                chatService.addUserToChat({id: userId}, newChatData.id).then(() => {//сюда передавать свою инфу
+
+                                    chatService.sendMessage($ctrl.messageData.text, newChatData.id, userId).then((data) => {
+
+                                        $uibModalStack.dismissAll({});
+                                    });
+
+                                });
+
+                            });
+
+                        });
+                    } else {
+                        chatService.sendMessage($ctrl.text, $ctrl.messageData.chat.id, userId).then((data) => {
+                            $uibModalStack.dismissAll({});
+                        });
+                    }
+                }
+
+            }
         }
     };
 }
