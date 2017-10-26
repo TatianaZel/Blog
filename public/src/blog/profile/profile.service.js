@@ -12,9 +12,9 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 isSendingNow: false
             };
 
-        function getUserInfo(userId) {
+        function getUserInfo(id) {
             return new Promise(() => {
-                requestService.sendRequest(urls.members + userId, 'get')
+                requestService.sendRequest(urls.members + id, 'get')
                         .then(getInfoSuccess, getInfoError);
 
                 function getInfoSuccess(response) {
@@ -51,7 +51,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
             return new Promise((resolve) => {
                 reqData.isSendingNow = true;
 
-                requestService.sendRequest(urls.members + authService.authData.userId, 'put', headers, profileData, config)
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
                         .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {

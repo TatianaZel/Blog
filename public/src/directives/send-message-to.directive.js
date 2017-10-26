@@ -1,6 +1,6 @@
-app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', 'localStorageService', messageModalSwitch]);
+app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', messageModalSwitch]);
 
-function messageModalSwitch(chatService, $uibModal, $uibModalStack, localStorageService) {
+function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
     return {
         restrict: 'A',
         scope: {
@@ -18,40 +18,21 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack, localStorage
 
             function modalController() {
                 let $ctrl = this;
-
-                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);
-
-
+                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);//сделать фильтром
                 $ctrl.sendMessage = sendMessage;
 
                 function sendMessage(messageData) {
-                    let userId = localStorageService.cookie.get('userId');
-
-                    if (!messageData.chat) {
-                        chatService.beginChat().then((newChatData) => {
-
-                            chatService.addUserToChat(scope.member, newChatData.id).then(() => {
-
-                                chatService.addUserToChat({id: userId}, newChatData.id).then(() => {//сюда передавать свою инфу
-
-                                    chatService.sendMessage($ctrl.messageData.text, newChatData.id, userId).then((data) => {
-
-                                        $uibModalStack.dismissAll({});
-                                    });
-
-                                });
-
-                            });
-
-                        });
+                    if (!messageData.chatId) {
+                        chatService.messageToNewChat();
                     } else {
-                        chatService.sendMessage($ctrl.text, $ctrl.messageData.chat.id, userId).then((data) => {
+                        chatService.messageToExistChat(messageData.text, messageData.chatId).then(() => {
                             $uibModalStack.dismissAll({});
                         });
                     }
                 }
-
             }
+
+
         }
     };
 }

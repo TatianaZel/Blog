@@ -50,29 +50,32 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
-    (localStorageService, requestService, urls, chatService) => {
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService', 'memberListService',
+    (localStorageService, requestService, urls, chatService, memberListService) => {
 
         var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
+            headers: {
+                'Content-Type': 'application/jsone;'
+            }
+        };
 
         var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                userId: localStorageService.cookie.get('userId')
-            },
-            reqData = {
-                isSendingNow: false
-            },
-            errorSignInMessages = {},
-            errorSignOutMessages = {},
-            errorSignUpMessages = {};
+            token: localStorageService.cookie.get('token'),
+            email: localStorageService.cookie.get('email'),
+            id: localStorageService.cookie.get('id'),
+            name: localStorageService.cookie.get('name'),
+            surname: localStorageService.cookie.get('surname')
+        },
+                reqData = {
+                    isSendingNow: false
+                },
+                errorSignInMessages = {},
+                errorSignOutMessages = {},
+                errorSignUpMessages = {};
 
-        if (authData.token && authData.userId)
-            chatService.connect(authData.userId, authData.token);
+        if (authData.token && authData.id) {
+            chatService.connect(authData.id, authData.token);
+        }
 
         return {
             signIn: signIn,
@@ -92,17 +95,20 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
 
                 function signInSuccess(response) {
                     reqData.isSendingNow = false;
-                    if (response.data && response.data.token && response.data.userId) {
+
+                    if (response.data && response.data.token && response.data.id) {
                         authData.token = response.data.token;
-                        authData.userId = response.data.userId;
-                        if (response.config && response.config.data) {
-                            authData.email = JSON.parse(response.config.data).email;
-                        } else {
-                            authData.email = '';
-                        }
+                        authData.id = response.data.id;
+                        authData.name = response.data.name;
+                        authData.surname = response.data.surname;
+                        authData.email = response.data.email;
+
                         localStorageService.cookie.set('token', authData.token);
+                        localStorageService.cookie.set('id', authData.id);
+                        localStorageService.cookie.set('name', authData.name);
+                        localStorageService.cookie.set('surname', authData.surname);
                         localStorageService.cookie.set('email', authData.email);
-                        localStorageService.cookie.set('userId', authData.userId);
+
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
@@ -158,14 +164,25 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                 function signOutSuccess() {
                     localStorageService.cookie.remove('token');
                     localStorageService.cookie.remove('email');
-                    localStorageService.cookie.remove('userId');
+                    localStorageService.cookie.remove('id');
+                    localStorageService.cookie.remove('name');
+                    localStorageService.cookie.remove('surname');
+
                     authData.token = '';
                     authData.email = '';
-                    authData.userId = '';
+                    authData.id = '';
+                    authData.name = '';
+                    authData.surname = '';
+
                     resolve();
                 }
 
                 function signOutError() {
+                    localStorageService.cookie.remove('token');
+                    localStorageService.cookie.remove('email');
+                    localStorageService.cookie.remove('id');
+                    localStorageService.cookie.remove('name');
+                    localStorageService.cookie.remove('surname');
                     reject();
                 }
             });
@@ -173,17 +190,18 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
     }
 ]);
 
-app.factory('chatService', ['localStorageService',
-    (localStorageService) => {
+app.factory('chatService', ['localStorageService', '$rootScope',
+    (localStorageService, $rootScope) => {
         var chats = [];
         var socket;
+        var counters = {};
 
         return {
             connect: connect,
-            beginChat: beginChat,
-            addUserToChat: addUserToChat,
+            messageToNewChat: messageToNewChat,
             getChatsWithUser: getChatsWithUser,
-            sendMessage: sendMessage,
+            messageToExistChat: messageToExistChat,
+            loadMessages: loadMessages,
             chats: chats
         };
 
@@ -195,69 +213,106 @@ app.factory('chatService', ['localStorageService',
             });
 
             socket.on('successConnection', (data) => {
+
                 Array.prototype.push.apply(chats, data.chats);
+                $rootScope.$digest();
 
                 socket.on('messageForClient', (data) => {
-                    console.log(data);
+                    setMessageToChat(data);
+                });
+
+                socket.on('newChatForClient', (newChat) => {
+                    chats.push(newChat);
                 });
 
                 socket.removeAllListeners('successConnection');
             });
         }
 
-        function beginChat() {
+        function messageToNewChat() {
             return new Promise((resolve) => {
-                socket.on('chatCreated', (data) => {
-                    data.Users = [];////
-                    chats.push(data);
-                    socket.removeAllListeners('chatCreated');
-                    resolve(data);
+                socket.on('newChatCreated', (newChat) => {
+                    chats.push(newChat);
+                    counters[newChat.id] = 1;
+                    socket.removeAllListeners('newChatCreated');
+                    resolve(newChat);
                 });
 
-                socket.emit('newChat', {
-                    token: localStorageService.cookie.get('token')
+                socket.emit('messageToNewChat', {
+                    token: localStorageService.cookie.get('token'),
+                    text: 'qweqweqwe',
+                    recipientId: 5
                 });
             });
         }
 
-        function addUserToChat(user, chatId) {//~~~~
+        function messageToExistChat(text, chatId) {
             return new Promise((resolve) => {
-                socket.on('userAddedToChat', (data) => {
-                    socket.removeAllListeners('userAddedToChat');
-
-                    chats.forEach((item) => {
-                        if (item.id == chatId)
-                            item.Users.push(user);
-                    });
-
-                    //добавить юзера в чат!
-                    console.log(data);
-
-                    resolve(data);
+                socket.on('messageSended', (data) => {
+                    setMessageToChat(data);
+                    socket.removeAllListeners('messageSended');
+                    resolve();
                 });
-
-                socket.emit('addUserToChat', {
+                socket.emit('messageToExistChat', {
                     token: localStorageService.cookie.get('token'),
-                    userId: user.id,
+                    text: text,
                     chatId: chatId
                 });
             });
         }
 
-        function sendMessage(text, chatId, id) {
+        function setMessageToChat(data) {
+            counters[data.message.ChatId]++;
+
+            chats.forEach((chat) => {
+                if (chat.id == data.message.ChatId) {
+                    if (!chat.Messages)
+                        chat.Messages = [];
+
+                    chat.Messages.push(data);
+
+                    console.log(chat.Messages);
+
+                    $rootScope.$digest();
+                    return;
+                }
+            });
+        }
+
+        function loadMessages(chatId) {
             return new Promise((resolve) => {
-                socket.on('messageSended', (data) => {
-                    socket.removeAllListeners('messageSended');
-                    //добавить сообщение в чат!
-                    resolve(data);
+                if (!counters[chatId]) {
+                    counters[chatId] = 0;
+                }
+
+                socket.on('portionOfMessages', (data) => {
+                    setMessagesToChat(chatId, data);
+                    socket.removeAllListeners('portionOfMessages');
+                    resolve();
                 });
 
-                socket.emit('newMessage', {
+                socket.emit('loadMessages', {
                     token: localStorageService.cookie.get('token'),
-                    text: text,
-                    chatId: chatId,
-                    author: id
+                    from: counters[chatId],
+                    chatId: chatId
                 });
+            });
+        }
+
+        function setMessagesToChat(chatId, messages) {
+            counters[chatId] = counters[chatId] + 101;
+
+            chats.forEach((chat) => {
+                if (chat.id == chatId) {
+                    if (!chat.Messages)
+                        chat.Messages = [];///////////////////////////////////////////
+
+                    Array.prototype.push.apply(chat.Messages, messages);
+
+                    $rootScope.$digest();
+
+                    return;
+                }
             });
         }
 
@@ -276,7 +331,6 @@ app.factory('chatService', ['localStorageService',
 
             return chatsWithUser;
         }
-
     }
 ]);
 app.factory('requestService', ['$http', '$q',
@@ -469,9 +523,9 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 isSendingNow: false
             };
 
-        function getUserInfo(userId) {
+        function getUserInfo(id) {
             return new Promise(() => {
-                requestService.sendRequest(urls.members + userId, 'get')
+                requestService.sendRequest(urls.members + id, 'get')
                         .then(getInfoSuccess, getInfoError);
 
                 function getInfoSuccess(response) {
@@ -508,7 +562,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
             return new Promise((resolve) => {
                 reqData.isSendingNow = true;
 
-                requestService.sendRequest(urls.members + authService.authData.userId, 'put', headers, profileData, config)
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
                         .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
@@ -617,13 +671,13 @@ function authController(authService, $state) {
 
     function signUp(userData) {
         authService.signUp(userData).then(() => {
-            $state.go('member', {userId: authService.authData.userId});
+            $state.go('member', {userId: authService.authData.id});
         });
     }
 
     function signIn(userData) {
         authService.signIn(userData).then(() => {
-             $state.go('member', {userId: authService.authData.userId})
+             $state.go('member', {userId: authService.authData.id});
         });
     }
 }
@@ -638,6 +692,32 @@ app.component('blog', {
 
 function blogController() {
     const $ctrl = this;
+}
+
+app.component('chat', {
+    templateUrl: 'build/views/chat/chat.html',
+    controller: ['chatService', chatController]
+});
+
+function chatController(chatService) {
+    const $ctrl = this;
+
+    $ctrl.chats = chatService.chats;
+    $ctrl.selectChat = selectChat;
+    $ctrl.sendMessage = sendMessage;
+
+    function sendMessage(chatId) {
+        chatService.messageToExistChat($ctrl.messageText, chatId);
+        $ctrl.messageText = '';
+    }
+
+    function selectChat(index) {
+        $ctrl.selectedChat = index;
+
+        if (!$ctrl.chats[$ctrl.selectedChat].Messages)
+            chatService.loadMessages($ctrl.chats[$ctrl.selectedChat].id);
+
+    }
 }
 
 app.component('notice', {
@@ -729,7 +809,6 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
-
 }
 
 app.component('editModal', {
@@ -822,7 +901,7 @@ app.component('editProfile', {
 function editProfileController(profileService, localStorageService, $state) {
     const $ctrl = this;
 
-    let userId = localStorageService.cookie.get('userId');
+    let userId = localStorageService.cookie.get('id');
 
     profileService.getUserInfo(userId);
 
@@ -894,9 +973,9 @@ function compareTo() {
     };
 }
 
-app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', 'localStorageService', messageModalSwitch]);
+app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', messageModalSwitch]);
 
-function messageModalSwitch(chatService, $uibModal, $uibModalStack, localStorageService) {
+function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
     return {
         restrict: 'A',
         scope: {
@@ -914,40 +993,21 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack, localStorage
 
             function modalController() {
                 let $ctrl = this;
-
-                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);
-
-
+                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);//сделать фильтром
                 $ctrl.sendMessage = sendMessage;
 
                 function sendMessage(messageData) {
-                    let userId = localStorageService.cookie.get('userId');
-
-                    if (!messageData.chat) {
-                        chatService.beginChat().then((newChatData) => {
-
-                            chatService.addUserToChat(scope.member, newChatData.id).then(() => {
-
-                                chatService.addUserToChat({id: userId}, newChatData.id).then(() => {//сюда передавать свою инфу
-
-                                    chatService.sendMessage($ctrl.messageData.text, newChatData.id, userId).then((data) => {
-
-                                        $uibModalStack.dismissAll({});
-                                    });
-
-                                });
-
-                            });
-
-                        });
+                    if (!messageData.chatId) {
+                        chatService.messageToNewChat();
                     } else {
-                        chatService.sendMessage($ctrl.text, $ctrl.messageData.chat.id, userId).then((data) => {
+                        chatService.messageToExistChat(messageData.text, messageData.chatId).then(() => {
                             $uibModalStack.dismissAll({});
                         });
                     }
                 }
-
             }
+
+
         }
     };
 }
@@ -987,6 +1047,18 @@ app.config(['$stateProvider',
         $stateProvider.state('editProfile', {
             url: "/editProfile",
             component: 'editProfile',
+            data: {
+                auth: "Authorized"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('chat', {
+            url: "/chat",
+            component: 'chat',
             data: {
                 auth: "Authorized"
             }

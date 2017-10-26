@@ -1,11 +1,11 @@
-<a ng-click="$ctrl.openCreatingModal()" ng-if="$ctrl.authData.userId && $ctrl.userId == $ctrl.authData.userId" class="createLink"><i class="fa fa-plus" aria-hidden="true"></i> create post</a>
+<a ng-click="$ctrl.openCreatingModal()" ng-if="$ctrl.authData.id && $ctrl.userId == $ctrl.authData.id" class="createLink"><i class="fa fa-plus" aria-hidden="true"></i> create post</a>
 <notice notice="$ctrl.errorMessages" danger="true"></notice>
 <div class="list">
     <blockquote ng-repeat="post in $ctrl.posts" class="blackBorder breakWord" ng-class="{'transparentPost' : $ctrl.reqData.removedPost === post.id}">
         <div class="blockquote-heading">
             <strong class="cursorPointer">{{post.title}}</strong>
-            <span ng-if="$ctrl.userId == $ctrl.authData.userId" ng-click="$ctrl.removePost(post.id)" class="pull-right cursorPointer controlBtn"><i class="fa fa-trash-o" aria-hidden="true"></i></span>
-            <span ng-if="$ctrl.userId == $ctrl.authData.userId" ng-click="$ctrl.openEdditingModal(post)" class="pull-right cursorPointer controlBtn"><i class="fa fa-pencil" aria-hidden="true"></i>&nbsp;</span>
+            <span ng-if="$ctrl.userId == $ctrl.authData.id" ng-click="$ctrl.removePost(post.id)" class="pull-right cursorPointer controlBtn"><i class="fa fa-trash-o" aria-hidden="true"></i></span>
+            <span ng-if="$ctrl.userId == $ctrl.authData.id" ng-click="$ctrl.openEdditingModal(post)" class="pull-right cursorPointer controlBtn"><i class="fa fa-pencil" aria-hidden="true"></i>&nbsp;</span>
         </div>
         <p>{{post.text}}</p>
         <footer class="blockquote-footer">{{post.createdAt| date:'yyyy-MM-dd'}}</footer>

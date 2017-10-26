@@ -72,7 +72,12 @@ var Session = {
             }
         }).then((session) => {
             if (session) {
-                return Users.findById(session.UserId);
+                return Users.findOne({
+                    where: {
+                        id: session.UserId
+                    },
+                    attributes: {exclude: ['password']}
+                });
             }
         });
     },

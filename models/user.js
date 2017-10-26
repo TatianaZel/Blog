@@ -40,7 +40,7 @@ module.exports = function (sequelize, DataTypes) {
                 }
             }).then((user) => {
                 if (user) {
-                    resolve(user.id);
+                    resolve(user);
                 }
                 reject(new HttpError(403, "Wrong email or password"));
             });
@@ -48,7 +48,6 @@ module.exports = function (sequelize, DataTypes) {
     };
 
     User.prototype.checkEmail = function (email, id) {
-
         return new Promise((resolve, reject) => {
             return User.findOne({
                 where: {

@@ -1,26 +1,29 @@
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
-    (localStorageService, requestService, urls, chatService) => {
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService', 'memberListService',
+    (localStorageService, requestService, urls, chatService, memberListService) => {
 
         var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
+            headers: {
+                'Content-Type': 'application/jsone;'
+            }
+        };
 
         var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                userId: localStorageService.cookie.get('userId')
-            },
-            reqData = {
-                isSendingNow: false
-            },
-            errorSignInMessages = {},
-            errorSignOutMessages = {},
-            errorSignUpMessages = {};
+            token: localStorageService.cookie.get('token'),
+            email: localStorageService.cookie.get('email'),
+            id: localStorageService.cookie.get('id'),
+            name: localStorageService.cookie.get('name'),
+            surname: localStorageService.cookie.get('surname')
+        },
+                reqData = {
+                    isSendingNow: false
+                },
+                errorSignInMessages = {},
+                errorSignOutMessages = {},
+                errorSignUpMessages = {};
 
-        if (authData.token && authData.userId)
-            chatService.connect(authData.userId, authData.token);
+        if (authData.token && authData.id) {
+            chatService.connect(authData.id, authData.token);
+        }
 
         return {
             signIn: signIn,
@@ -40,17 +43,20 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
 
                 function signInSuccess(response) {
                     reqData.isSendingNow = false;
-                    if (response.data && response.data.token && response.data.userId) {
+
+                    if (response.data && response.data.token && response.data.id) {
                         authData.token = response.data.token;
-                        authData.userId = response.data.userId;
-                        if (response.config && response.config.data) {
-                            authData.email = JSON.parse(response.config.data).email;
-                        } else {
-                            authData.email = '';
-                        }
+                        authData.id = response.data.id;
+                        authData.name = response.data.name;
+                        authData.surname = response.data.surname;
+                        authData.email = response.data.email;
+
                         localStorageService.cookie.set('token', authData.token);
+                        localStorageService.cookie.set('id', authData.id);
+                        localStorageService.cookie.set('name', authData.name);
+                        localStorageService.cookie.set('surname', authData.surname);
                         localStorageService.cookie.set('email', authData.email);
-                        localStorageService.cookie.set('userId', authData.userId);
+
                         errorSignInMessages.signIn = '';
                         signUpResolve ? signUpResolve() : '';
 
@@ -106,14 +112,25 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                 function signOutSuccess() {
                     localStorageService.cookie.remove('token');
                     localStorageService.cookie.remove('email');
-                    localStorageService.cookie.remove('userId');
+                    localStorageService.cookie.remove('id');
+                    localStorageService.cookie.remove('name');
+                    localStorageService.cookie.remove('surname');
+
                     authData.token = '';
                     authData.email = '';
-                    authData.userId = '';
+                    authData.id = '';
+                    authData.name = '';
+                    authData.surname = '';
+
                     resolve();
                 }
 
                 function signOutError() {
+                    localStorageService.cookie.remove('token');
+                    localStorageService.cookie.remove('email');
+                    localStorageService.cookie.remove('id');
+                    localStorageService.cookie.remove('name');
+                    localStorageService.cookie.remove('surname');
                     reject();
                 }
             });

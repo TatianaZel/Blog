@@ -14,86 +14,127 @@ const Chat = function (server) {
 
 function connection(socket) {
     var query = socket.request._query ? socket.request._query : {};
-    var userId;
 
-    Session
-            .check(query.token)
-            .then((user) => {
-                if (user) {
-                    userId = user.id;
+    Session.check(query.token).then((user) => {
 
-                    socket.join(userId);
+        socket.join(user.id);
 
-                    let opt = {
-                        where: {
-                            id: userId
-                        },
-                        include: [
-                            {
-                                model: Chats,
-                                include: [Users]
-                            }
-                        ]
-                    };
-
-                    Users
-                            .findAll(opt)
-                            .then((users) => {
-                                socket.on('newChat', createChat);
-                                socket.on('addUserToChat', addUserToChat);
-                                socket.on('newMessage', messageProcessing);
-                                io.to(userId).emit('successConnection', {
-                                    chats: users[0].Chats
-                                });
-                            });
+        let opt = {
+            where: {
+                id: user.id
+            },
+            include: [
+                {
+                    model: Chats,
+                    include: [{model: Users, attributes: ['id', 'name', 'surname']}]
                 }
-            })
-            .catch((err) => {
-                console.log(err);
+            ]
+        };
+
+        Users.findOne(opt).then((user) => {
+
+            socket.on('messageToExistChat', addMessageToExistChat);
+            socket.on('messageToNewChat', addMessageToNewChat);
+            socket.on('loadMessages', getMessagesByChat);
+            io.to(user.id).emit('successConnection', {
+                chats: user.Chats
             });
 
-    function createChat() {//добавить проверку на существование сессии
-        let chat = new Chats();
-
-        chat
-                .save()
-                .then(() => {
-                    io.to(userId).emit('chatCreated', chat);
-                })
-                .catch((err) => {
-                    console.log(err);
-                });
-    }
-
-    function addUserToChat(data) {//добавить проверку на существование сессии
-        let ms = new Memberships({//просто передавать data
-            UserId: data.userId,
-            ChatId: data.chatId
         });
+    }).catch((err) => {
+        console.log(err);
+    });
 
-        ms
-                .save()
-                .then(() => {
-                    io.to(userId).emit('userAddedToChat', {
-                        addedUser: data.userId
+    function addMessageToNewChat(data) {
+        Session.check(data.token).then((user) => {
+            Chats.create().then((chat) => {
+                Memberships.bulkCreate([{UserId: user.id, ChatId: chat.id}, {UserId: data.recipientId, ChatId: chat.id}]).then(() => {
+
+                    let msg = new Messages({
+                        text: data.text,
+                        ChatId: chat.id,
+                        authorId: user.id
                     });
+
+                    msg.save().then(() => {
+                        let opt = {
+                            where: {
+                                id: chat.id
+                            },
+                            include: [{model: Users, attributes: ['id', 'name', 'surname']}, {model: Messages, include: [{model: Users, as: 'author'}]}]
+                        };
+
+                        Chats.findOne(opt).then((chat) => {
+                            io.to(data.recipientId).emit('newChatForClient', chat);
+                            io.to(user.id).emit('newChatCreated', chat);
+                        });
+                    });
+
                 });
+            });
+        });
     }
 
-    function messageProcessing(data) {//добавить проверку на существование сессии
-        let msg = new Messages({
-            text: data.text,
-            ChatId: data.chatId,
-            author: data.author
-        });
+    function addMessageToExistChat(data) {
+        Session.check(data.token).then((user) => {
+            Memberships.prototype.check(user.id, data.chatId).then(() => {
 
-        msg
-                .save()
-                .then(() => { //отправить всем участникам чата нотификейшн
-
-                    
-                    io.to(userId).emit('messageSended', data);
+                let msg = new Messages({
+                    text: data.text,
+                    ChatId: data.chatId,
+                    authorId: user.id
                 });
+
+                msg
+                    .save()
+                    .then(() => {
+                        let msgForSending = {
+                            author: user,
+                            text: msg.text,
+                            ChatId: msg.ChatId,
+                            createdAt: msg.createdAt
+                        };
+
+                        let opt = {
+                            where: {
+                                id: data.chatId
+                            },
+                            include: [Users]
+                        };
+
+                        Chats.findOne(opt).then((chat) => {
+                            chat.Users.forEach((recipient) => {
+                                if (recipient.id != msg.authorId) {
+                                    io.to(recipient.id).emit('messageForClient', msgForSending);
+                                }
+                            });
+                        });
+
+                        io.to(msg.authorId).emit('messageSended', msgForSending);
+                    });
+            });
+        });
+    }
+
+    function getMessagesByChat(data) {
+        Session.check(data.token).then((user) => {
+            Memberships.prototype.check(user.id, data.chatId).then(() => {
+                let opt = {
+                    where: {
+                        ChatId: data.chatId
+                    },
+                    offset: data.from,
+                    limit: 100,
+                    include: [{model: Users, as: 'author'}]
+                };
+
+                Messages
+                        .findAll(opt)
+                        .then((messages) => {
+                            io.to(user.id).emit('portionOfMessages', messages);
+                        });
+            });
+        });
     }
 }
 

@@ -1,14 +1,15 @@
-app.factory('chatService', ['localStorageService',
-    (localStorageService) => {
+app.factory('chatService', ['localStorageService', '$rootScope',
+    (localStorageService, $rootScope) => {
         var chats = [];
         var socket;
+        var counters = {};
 
         return {
             connect: connect,
-            beginChat: beginChat,
-            addUserToChat: addUserToChat,
+            messageToNewChat: messageToNewChat,
             getChatsWithUser: getChatsWithUser,
-            sendMessage: sendMessage,
+            messageToExistChat: messageToExistChat,
+            loadMessages: loadMessages,
             chats: chats
         };
 
@@ -20,69 +21,106 @@ app.factory('chatService', ['localStorageService',
             });
 
             socket.on('successConnection', (data) => {
+
                 Array.prototype.push.apply(chats, data.chats);
+                $rootScope.$digest();
 
                 socket.on('messageForClient', (data) => {
-                    console.log(data);
+                    setMessageToChat(data);
+                });
+
+                socket.on('newChatForClient', (newChat) => {
+                    chats.push(newChat);
                 });
 
                 socket.removeAllListeners('successConnection');
             });
         }
 
-        function beginChat() {
+        function messageToNewChat() {
             return new Promise((resolve) => {
-                socket.on('chatCreated', (data) => {
-                    data.Users = [];////
-                    chats.push(data);
-                    socket.removeAllListeners('chatCreated');
-                    resolve(data);
+                socket.on('newChatCreated', (newChat) => {
+                    chats.push(newChat);
+                    counters[newChat.id] = 1;
+                    socket.removeAllListeners('newChatCreated');
+                    resolve(newChat);
                 });
 
-                socket.emit('newChat', {
-                    token: localStorageService.cookie.get('token')
+                socket.emit('messageToNewChat', {
+                    token: localStorageService.cookie.get('token'),
+                    text: 'qweqweqwe',
+                    recipientId: 5
                 });
             });
         }
 
-        function addUserToChat(user, chatId) {//~~~~
+        function messageToExistChat(text, chatId) {
             return new Promise((resolve) => {
-                socket.on('userAddedToChat', (data) => {
-                    socket.removeAllListeners('userAddedToChat');
-
-                    chats.forEach((item) => {
-                        if (item.id == chatId)
-                            item.Users.push(user);
-                    });
-
-                    //добавить юзера в чат!
-                    console.log(data);
-
-                    resolve(data);
+                socket.on('messageSended', (data) => {
+                    setMessageToChat(data);
+                    socket.removeAllListeners('messageSended');
+                    resolve();
                 });
-
-                socket.emit('addUserToChat', {
+                socket.emit('messageToExistChat', {
                     token: localStorageService.cookie.get('token'),
-                    userId: user.id,
+                    text: text,
                     chatId: chatId
                 });
             });
         }
 
-        function sendMessage(text, chatId, id) {
+        function setMessageToChat(data) {
+            counters[data.message.ChatId]++;
+
+            chats.forEach((chat) => {
+                if (chat.id == data.message.ChatId) {
+                    if (!chat.Messages)
+                        chat.Messages = [];
+
+                    chat.Messages.push(data);
+
+                    console.log(chat.Messages);
+
+                    $rootScope.$digest();
+                    return;
+                }
+            });
+        }
+
+        function loadMessages(chatId) {
             return new Promise((resolve) => {
-                socket.on('messageSended', (data) => {
-                    socket.removeAllListeners('messageSended');
-                    //добавить сообщение в чат!
-                    resolve(data);
+                if (!counters[chatId]) {
+                    counters[chatId] = 0;
+                }
+
+                socket.on('portionOfMessages', (data) => {
+                    setMessagesToChat(chatId, data);
+                    socket.removeAllListeners('portionOfMessages');
+                    resolve();
                 });
 
-                socket.emit('newMessage', {
+                socket.emit('loadMessages', {
                     token: localStorageService.cookie.get('token'),
-                    text: text,
-                    chatId: chatId,
-                    author: id
+                    from: counters[chatId],
+                    chatId: chatId
                 });
+            });
+        }
+
+        function setMessagesToChat(chatId, messages) {
+            counters[chatId] = counters[chatId] + 101;
+
+            chats.forEach((chat) => {
+                if (chat.id == chatId) {
+                    if (!chat.Messages)
+                        chat.Messages = [];///////////////////////////////////////////
+
+                    Array.prototype.push.apply(chat.Messages, messages);
+
+                    $rootScope.$digest();
+
+                    return;
+                }
             });
         }
 
@@ -101,6 +139,5 @@ app.factory('chatService', ['localStorageService',
 
             return chatsWithUser;
         }
-
     }
 ]);

@@ -55,7 +55,9 @@ router.post(
                 user.
                     save()
                     .then(() => {
-                        res.send({});
+                        //user.password = "";
+                        //res.send(user);
+                        res.send();
                     })
                     .catch(next);//?
             })
@@ -77,25 +79,30 @@ router.post(
             .required()
     ),
 
-
     // Controller
     (req, res, next) => {
         if (!req.form.isValid) {
             return next(new HttpError(412, "Invalid input data", req.form.errors));
         }
 
-        let userId;
+        let user;
 
         Users.prototype
             .auth(req.form.email, req.form.password)
-            .then((id) => {
-                userId = id;
-                return Session.create(userId);
+            .then((usr) => {
+                user = usr;
+                return Session.create(usr.id);
             })
             .then((token) => {
+                console.log(user);
+                console.log(111111);
+                
                 res.send({
-                    token,
-                    userId
+                    token: token,
+                    id: user.id,
+                    name: user.name,
+                    surname: user.surname,
+                    email: user.email
                 });
             })
             .catch(next);

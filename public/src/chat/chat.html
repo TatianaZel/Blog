@@ -1,0 +1,21 @@
+<div ng-if="$ctrl.selectedChat !== undefined" class="col-md-6 messages">
+    <blockquote class="chatItem breakWord" ng-repeat="message in $ctrl.chats[$ctrl.selectedChat].Messages">
+        <p>{{message.author.name}}:</p>
+        <p>{{message.createdAt | date:'yyyy-MM-dd'}}</p>
+        <span>{{message.text}}</span>
+    </blockquote>
+
+    <div class="form-group">
+        <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
+    </div>
+
+    <button class="btn btn-default" ng-click="$ctrl.sendMessage($ctrl.chats[$ctrl.selectedChat].id)">Send</button>
+</div>
+
+<div ng-if="$ctrl.selectedChat === undefined" class="col-md-6">
+    <p>Please, choose the chat</p>
+</div>
+
+<div class="col-md-6">
+    <div class="chatItem" ng-repeat="chat in $ctrl.chats" ng-click="$ctrl.selectChat($index)">{{chat.id}}</div>
+</div>

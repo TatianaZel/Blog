@@ -6,7 +6,7 @@ app.component('editProfile', {
 function editProfileController(profileService, localStorageService, $state) {
     const $ctrl = this;
 
-    let userId = localStorageService.cookie.get('userId');
+    let userId = localStorageService.cookie.get('id');
 
     profileService.getUserInfo(userId);
 
