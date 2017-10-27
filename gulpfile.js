@@ -24,7 +24,8 @@ var src = {
             lib: './public/bower_components/angular/angular.min.js',
             router: './public/bower_components/angular-ui-router/release/angular-ui-router.min.js',
             stateEvents: './public/bower_components/angular-ui-router/release/stateEvents.min.js',
-            localstorage: './public/bower_components/angular-local-storage/dist/angular-local-storage.min.js'
+            localstorage: './public/bower_components/angular-local-storage/dist/angular-local-storage.min.js',
+            animate: './public/bower_components/angular-animate/angular-animate.min.js'
         },
         jquery: {
             lib: './public/bower_components/jquery/dist/jquery.min.js'
@@ -50,7 +51,7 @@ var src = {
 gulp.task('jsVendors', function () {
     gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib, src.vendors.bootstrap.ui,
               src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage, src.vendors.angular.router,
-              src.vendors.angular.stateEvents])
+              src.vendors.angular.stateEvents, src.vendors.angular.animate])
             .pipe(concat('vendor.js'))
             .pipe(gulp.dest('./public/build'));
 });

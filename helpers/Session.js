@@ -21,7 +21,7 @@ var Session = {
      * if sesson not defined, expires, ect
      */
     middleware(req, res, next) {
-        var token =  req.headers ? req.headers.token : null;
+        var token = req.headers ? req.headers.token : null;
 
         Session.check(token).then((user) => {
             if (user) {

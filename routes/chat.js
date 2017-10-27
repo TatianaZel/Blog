@@ -15,7 +15,6 @@ router.get(
     ACL(),
 
     // Controller
-    //
     (req, res, next) => {
         Users.findAll({
                 where: {
@@ -38,7 +37,6 @@ router.post(
     ACL(),
 
     // Controller
-    //
     (req, res, next) => {
 
         let chat = new Chat();

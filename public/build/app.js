@@ -1,22 +1,21 @@
 'use strict';
 
-let app = angular.module('app', ['ui.router', 'ui.router.state.events', 'LocalStorageModule', 'ui.bootstrap'])
-        .run(['$rootScope', 'localStorageService',
-            ($rootScope, localStorageService) => {
-                $rootScope.$on('$stateChangeStart', (event, toState) => {
-                    if (toState.data && toState.data.auth) {
-                        if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
-                            event.preventDefault();
-                            return false;
-                        }
-                        if (toState.data.auth === 'Authorized' && !localStorageService.cookie.get('token')) {
-                            event.preventDefault();
-                            return false;
-                        }
-                    }
-                });
+let app = angular.module('app', ['ui.router', 'ui.router.state.events', 'LocalStorageModule', 'ui.bootstrap', 'ngAnimate']).run(['$rootScope', 'localStorageService',
+    ($rootScope, localStorageService) => {
+        $rootScope.$on('$stateChangeStart', (event, toState) => {
+            if (toState.data && toState.data.auth) {
+                if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
+                    event.preventDefault();
+                    return false;
+                }
+                if (toState.data.auth === 'Authorized' && !localStorageService.cookie.get('token')) {
+                    event.preventDefault();
+                    return false;
+                }
             }
-        ]);
+        });
+    }
+]);
 
 app.factory('memberListService', ['requestService', 'urls',
     (requestService, urls) => {
@@ -50,28 +49,28 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService', 'memberListService',
-    (localStorageService, requestService, urls, chatService, memberListService) => {
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
+    (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
-            token: localStorageService.cookie.get('token'),
-            email: localStorageService.cookie.get('email'),
-            id: localStorageService.cookie.get('id'),
-            name: localStorageService.cookie.get('name'),
-            surname: localStorageService.cookie.get('surname')
-        },
-                reqData = {
-                    isSendingNow: false
-                },
-                errorSignInMessages = {},
-                errorSignOutMessages = {},
-                errorSignUpMessages = {};
+                token: localStorageService.cookie.get('token'),
+                email: localStorageService.cookie.get('email'),
+                id: localStorageService.cookie.get('id'),
+                name: localStorageService.cookie.get('name'),
+                surname: localStorageService.cookie.get('surname')
+            },
+            reqData = {
+                isSendingNow: false
+            },
+            errorSignInMessages = {},
+            errorSignOutMessages = {},
+            errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
             chatService.connect(authData.id, authData.token);
@@ -183,6 +182,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                     localStorageService.cookie.remove('id');
                     localStorageService.cookie.remove('name');
                     localStorageService.cookie.remove('surname');
+
                     reject();
                 }
             });
@@ -192,7 +192,9 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
 
 app.factory('chatService', ['localStorageService', '$rootScope',
     (localStorageService, $rootScope) => {
-        var chats = [];
+        var chatsData = {
+            chats: []
+        };
         var socket;
         var counters = {};
 
@@ -202,7 +204,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             getChatsWithUser: getChatsWithUser,
             messageToExistChat: messageToExistChat,
             loadMessages: loadMessages,
-            chats: chats
+            chatsData: chatsData
         };
 
         function connect() {
@@ -213,8 +215,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
 
             socket.on('successConnection', (data) => {
-
-                Array.prototype.push.apply(chats, data.chats);
+                chatsData.chats = data.chats;
                 $rootScope.$digest();
 
                 socket.on('messageForClient', (data) => {
@@ -222,26 +223,25 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                 });
 
                 socket.on('newChatForClient', (newChat) => {
-                    chats.push(newChat);
+                    addNewChat(newChat);
                 });
 
                 socket.removeAllListeners('successConnection');
             });
         }
 
-        function messageToNewChat() {
+        function messageToNewChat(text, recipientId) {
             return new Promise((resolve) => {
                 socket.on('newChatCreated', (newChat) => {
-                    chats.push(newChat);
-                    counters[newChat.id] = 1;
+                    addNewChat(newChat);
                     socket.removeAllListeners('newChatCreated');
-                    resolve(newChat);
+                    resolve();
                 });
 
                 socket.emit('messageToNewChat', {
                     token: localStorageService.cookie.get('token'),
-                    text: 'qweqweqwe',
-                    recipientId: 5
+                    text: text,
+                    recipientId: recipientId
                 });
             });
         }
@@ -258,24 +258,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     text: text,
                     chatId: chatId
                 });
-            });
-        }
-
-        function setMessageToChat(data) {
-            counters[data.message.ChatId]++;
-
-            chats.forEach((chat) => {
-                if (chat.id == data.message.ChatId) {
-                    if (!chat.Messages)
-                        chat.Messages = [];
-
-                    chat.Messages.push(data);
-
-                    console.log(chat.Messages);
-
-                    $rootScope.$digest();
-                    return;
-                }
             });
         }
 
@@ -299,13 +281,37 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
         }
 
+        function addNewChat(newChat) {
+            counters[newChat.id] = 1;
+            chatsData.chats.push(newChat);
+            $rootScope.$digest();
+        }
+
+        function setMessageToChat(data) {
+            if (!counters[data.ChatId])
+                return;
+
+            chatsData.chats.forEach((chat) => {
+                if (chat.id == data.ChatId) {
+                    if (!chat.Messages)
+                        chat.Messages = [];
+
+                    chat.Messages.push(data);
+                    counters[data.ChatId]++;
+                    $rootScope.$digest();
+
+                    return;
+                }
+            });
+        }
+
         function setMessagesToChat(chatId, messages) {
             counters[chatId] = counters[chatId] + 101;
 
-            chats.forEach((chat) => {
+            chatsData.chats.forEach((chat) => {
                 if (chat.id == chatId) {
                     if (!chat.Messages)
-                        chat.Messages = [];///////////////////////////////////////////
+                        chat.Messages = [];
 
                     Array.prototype.push.apply(chat.Messages, messages);
 
@@ -316,10 +322,10 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
         }
 
-        function getChatsWithUser(userId) {//вынести в фильтр
+        function getChatsWithUser(userId) {
             var chatsWithUser = [];
 
-            chats.forEach((chat) => {
+            chatsData.chats.forEach((chat) => {
                 var flag = false;
                 chat.Users.forEach((user) => {
                     if (user.id === userId)
@@ -702,7 +708,7 @@ app.component('chat', {
 function chatController(chatService) {
     const $ctrl = this;
 
-    $ctrl.chats = chatService.chats;
+    $ctrl.chatsData = chatService.chatsData;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
@@ -713,10 +719,7 @@ function chatController(chatService) {
 
     function selectChat(index) {
         $ctrl.selectedChat = index;
-
-        if (!$ctrl.chats[$ctrl.selectedChat].Messages)
-            chatService.loadMessages($ctrl.chats[$ctrl.selectedChat].id);
-
+        chatService.loadMessages($ctrl.chatsData.chats[$ctrl.selectedChat].id);
     }
 }
 
@@ -998,7 +1001,9 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
 
                 function sendMessage(messageData) {
                     if (!messageData.chatId) {
-                        chatService.messageToNewChat();
+                        chatService.messageToNewChat(messageData.text, scope.member.id).then(() => {
+                            $uibModalStack.dismissAll({});
+                        });
                     } else {
                         chatService.messageToExistChat(messageData.text, messageData.chatId).then(() => {
                             $uibModalStack.dismissAll({});
@@ -1006,8 +1011,6 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
                     }
                 }
             }
-
-
         }
     };
 }

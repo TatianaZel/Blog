@@ -23,7 +23,9 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
 
                 function sendMessage(messageData) {
                     if (!messageData.chatId) {
-                        chatService.messageToNewChat();
+                        chatService.messageToNewChat(messageData.text, scope.member.id).then(() => {
+                            $uibModalStack.dismissAll({});
+                        });
                     } else {
                         chatService.messageToExistChat(messageData.text, messageData.chatId).then(() => {
                             $uibModalStack.dismissAll({});
@@ -31,8 +33,6 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
                     }
                 }
             }
-
-
         }
     };
 }

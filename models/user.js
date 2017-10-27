@@ -65,5 +65,26 @@ module.exports = function (sequelize, DataTypes) {
         });
     };
 
+    User.prototype.getChats = function (id, chatModel) {
+        return new Promise((resolve) => {
+            let opt = {
+                where: {
+                    id: id
+                },
+                include: [
+                    {
+                        model: chatModel,
+                        include: [{model: User, attributes: ['id', 'name', 'surname']}]
+                    }
+                ]
+            };
+
+            User.findOne(opt).then((user) => {
+                resolve(user.Chats);
+            });
+
+        });
+    };
+
     return User;
 };

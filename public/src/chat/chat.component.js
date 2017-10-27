@@ -6,7 +6,7 @@ app.component('chat', {
 function chatController(chatService) {
     const $ctrl = this;
 
-    $ctrl.chats = chatService.chats;
+    $ctrl.chatsData = chatService.chatsData;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
@@ -17,9 +17,6 @@ function chatController(chatService) {
 
     function selectChat(index) {
         $ctrl.selectedChat = index;
-
-        if (!$ctrl.chats[$ctrl.selectedChat].Messages)
-            chatService.loadMessages($ctrl.chats[$ctrl.selectedChat].id);
-
+        chatService.loadMessages($ctrl.chatsData.chats[$ctrl.selectedChat].id);
     }
 }

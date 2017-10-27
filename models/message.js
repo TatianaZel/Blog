@@ -13,5 +13,22 @@ module.exports = function (sequelize, DataTypes) {
         Message.belongsTo(models.User, {as: 'author'});
     };
 
+    Message.prototype.getMessagesByChat = function (id, userModel, from) {
+        return new Promise((resolve) => {
+            let opt = {
+                where: {
+                    ChatId: id
+                },
+                offset: from,
+                limit: 100,
+                include: [{model: userModel, as: 'author'}]
+            };
+
+            Message.findAll(opt).then((messages) => {
+                resolve(messages);
+            });
+        });
+    };
+
     return Message;
 };

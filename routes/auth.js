@@ -55,11 +55,9 @@ router.post(
                 user.
                     save()
                     .then(() => {
-                        //user.password = "";
-                        //res.send(user);
                         res.send();
                     })
-                    .catch(next);//?
+                    .catch(next);
             })
             .catch(next);
     }
@@ -94,9 +92,6 @@ router.post(
                 return Session.create(usr.id);
             })
             .then((token) => {
-                console.log(user);
-                console.log(111111);
-                
                 res.send({
                     token: token,
                     id: user.id,
