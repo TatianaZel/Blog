@@ -6,12 +6,15 @@ app.component('chat', {
 function chatController(chatService, $stateParams) {
     const $ctrl = this;
 
-    $ctrl.chatsData = chatService.chatsData;
+    $ctrl.chats = chatService.chats;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
-    selectChat($stateParams.chatId);
     
+
+
+    //selectChat($stateParams.chatId);
+
     function sendMessage(chatId) {
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';

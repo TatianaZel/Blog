@@ -1,5 +1,5 @@
 <div ng-if="$ctrl.selectedChat !== undefined" class="col-md-6 msgColumn" id="scrollArea">
-    <blockquote class="chatItem breakWord blackBorder" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
+    <blockquote class="chatItem breakWord blackBorder" ng-repeat="message in $ctrl.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
         <p>{{message.author.name}}:</p>
         <p>{{message.createdAt| date: 'short'}}</p>
         <span>{{message.text}}</span>
@@ -10,16 +10,16 @@
             <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
         </div>
 
-        <button class="btn btn-default msgSubmitBtn" ng-click="$ctrl.sendMessage($ctrl.chatsData.chats[$ctrl.selectedChat].id)">Send</button>
+        <button class="btn btn-default msgSubmitBtn" ng-click="$ctrl.sendMessage($ctrl.chats[$ctrl.selectedChat].id)">Send</button>
     </form>
 </div>
 
-<div ng-if="$ctrl.selectedChat === undefined || !$ctrl.chatsData.chats.length" class="col-md-6">
+<div ng-if="$ctrl.selectedChat === undefined || !$ctrl.chats.length" class="col-md-6">
     <p>Please, choose the chat</p>
 </div>
 
 <div class="col-md-6 chatColumn">
-    <div class="chatItem blackBorder" ng-repeat="chat in $ctrl.chatsData.chats | orderBy : '-updatedAt'" ng-click="$ctrl.selectChat(chat.id)">
+    <div class="chatItem blackBorder" ng-repeat="chat in $ctrl.chats | orderBy : '-updatedAt'" ng-click="$ctrl.selectChat(chat.id)">
         <span ng-repeat="user in chat.Users">
             {{user.name}} {{user.surname}}
         </span>

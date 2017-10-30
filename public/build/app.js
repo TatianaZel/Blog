@@ -49,253 +49,6 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
-    (requestService, urls, authService, localStorageService) => {
-        let userInfo = {},
-            notice = {
-                errorGettingMessages: {},
-                errorProfileMessages: {},
-                errorPasswordMessages: {},
-                successProfileMessages: {},
-                successPasswordMessages: {}
-            },
-            reqData = {
-                isSendingNow: false
-            };
-
-        function getUserInfo(id) {
-            return new Promise(() => {
-                requestService.sendRequest(urls.members + id, 'get')
-                        .then(getInfoSuccess, getInfoError);
-
-                function getInfoSuccess(response) {
-                    if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
-                        userInfo.name = response.data.name;
-                        userInfo.surname = response.data.surname;
-                        userInfo.description = response.data.description;
-                        userInfo.id = response.data.id;
-                        userInfo.email = response.data.email;
-                    }
-                }
-
-                function getInfoError(error) {
-                    notice.errorGettingMessages = error;
-                    userInfo.name = '';
-                    userInfo.surname = '';
-                    userInfo.description = '';
-                    userInfo.id = '';
-                }
-            });
-        }
-
-        function editProfileData(profileData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                        .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    authService.authData.email = profileData.email;
-                    localStorageService.cookie.set('email', profileData.email);
-                    notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
-                    reqData.isSendingNow = false;
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-        function changePassword(passwordsData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                        .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
-        }
-
-        return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
-        };
-    }
-]);
-
-app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
-        var posts = [],
-            errorMessages = {},
-            reqData = {
-                isCreatingNow: false,
-                removedPost: ''
-            },
-            editedPost = {},
-            config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
-
-    return {
-        getPosts: getPosts,
-        posts: posts,
-        reqData: reqData,
-        editedPost: editedPost,
-        errorMessages: errorMessages,
-        removePost: removePost,
-        createPost: createPost,
-        editPost: editPost
-    };
-
-    function getPosts(userId) {
-        return new Promise((resolve, reject) => {
-            posts.splice(0, posts.length);
-            requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
-            function getPostsSuccess(res) {
-                if (res.data) {
-                    Array.prototype.push.apply(posts, res.data);
-                    errorMessages.gettingPosts = '';
-                    resolve();
-                } else {
-                    errorMessages.gettingPosts = 'No available posts.';
-                    reject();
-                }
-            }
-
-            function getPostsError(err) {
-                errorMessages.gettingPosts = err;
-                reject();
-            }
-        });
-    }
-
-    function createPost(sendData) {
-        return new Promise((resolve, reject) => {
-            var headers = {
-                'Token': authService.authData.token
-            };
-
-            reqData.isCreatingNow = true;
-
-            requestService.sendRequest(urls.post, 'post', headers, sendData, config).then(createPostSuccess, createPostError);
-
-            function createPostSuccess(res) {
-                reqData.isCreatingNow = false;
-                if (res.data) {
-                    posts.push(res.data);
-                    errorMessages.creatingPost = '';
-                    resolve();
-                } else {
-                    errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
-                    reject();
-                }
-            }
-
-            function createPostError(err) {
-                errorMessages.creatingPost = err;
-                reqData.isCreatingNow = false;
-                reject();
-            }
-        });
-    }
-
-    function editPost(id, sendData) {
-        return new Promise((resolve, reject) => {
-            var headers = {
-                'Token': authService.authData.token
-            };
-
-            reqData.isCreatingNow = true;
-
-            requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
-
-            function editPostSuccess(res) {
-                reqData.isCreatingNow = false;
-                errorMessages.creatingPost = '';
-                resolve();
-            }
-
-            function editPostError(err) {
-                errorMessages.edditingPost = err;
-                reqData.isCreatingNow = false;
-                reject();
-            }
-        });
-    }
-
-    function removePost(postId) {
-        return new Promise(function (resolve, reject) {
-            if (!confirm("Are you sure you want to remove the post?"))
-                return;
-
-            var headers = {
-                'Token': authService.authData.token
-            };
-
-            reqData.removedPost = postId;
-
-            requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
-
-            function removePostSuccess() {
-                errorMessages.removingPost = '';
-                for (var i = 0; i < posts.length; i++) {
-                    if (posts[i].id === reqData.removedPost) {
-                        posts.splice(i, 1);
-                    }
-                }
-                resolve();
-            }
-
-            function removePostError(response) {
-                errorMessages.removingPost = response;
-                reject();
-            }
-        });
-    }
-}]);
-
 app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
     (localStorageService, requestService, urls, chatService) => {
 
@@ -438,9 +191,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
 
 app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
     (localStorageService, $rootScope, $anchorScroll, $location) => {
-        var chatsData = {
-            chats: []
-        };
+        var chats = []
         var socket;
         var counters = {};
         var resolveMsg;
@@ -453,7 +204,7 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
             messageToExistChat: messageToExistChat,
             getChatsWithUser: getChatsWithUser,
             loadMessages: loadMessages,
-            chatsData: chatsData
+            chats: chats
         };
 
         function connect() {
@@ -465,8 +216,6 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
             socket.on('successConnection', (data) => {
                 reIndexingChats(data.chats);
-
-                console.log(chatsData.chats);
 
                 $rootScope.$digest();
 
@@ -494,12 +243,13 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
         function reIndexingChats(data) {
             data.forEach((item) => {
-                chatsData.chats[item.id] = item;
+                chats[item.id] = item;
             });
         }
 
         function disconnect() {///
-            chatsData.chats = [];
+            chats = [];////
+
             for (var key in counters) {
                 counters[key] = 0;
             }
@@ -551,7 +301,7 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
         function addNewChat(newChat) {
             counters[newChat.id] = 1;
-            chatsData.chats[newChat.id] = newChat;
+            chats[newChat.id] = newChat;
             $rootScope.$digest();
         }
 
@@ -559,11 +309,11 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
             if (!counters[data.ChatId])
                 return;
 
-            if (!chatsData.chats[data.chatId].Messages)
-                chatsData.chats[data.chatId].Messages = [];
+            if (!chats[data.chatId].Messages)
+                chats[data.chatId].Messages = [];
 
-            chatsData.chats[data.chatId].Messages.push(data);
-            chatsData.chats[data.chatId].updatedAt = data.createdAt;
+            chats[data.chatId].Messages.push(data);
+            chats[data.chatId].updatedAt = data.createdAt;
             $rootScope.$digest();
 
             counters[data.ChatId]++;
@@ -573,15 +323,12 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         }
 
         function setMessagesToChat(chatId, messages) {
-            console.log(chatId);
-            console.log(chatsData.chats[chatId]);
-
             counters[chatId] = counters[chatId] + messages.length + 1;
 
-            if (!chatsData.chats[chatId].Messages)
-                chatsData.chats[chatId].Messages = [];
+            if (!chats[chatId].Messages)
+                chats[chatId].Messages = [];
 
-            Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
+            Array.prototype.push.apply(chats[chatId].Messages, messages);
             $rootScope.$digest();
 
             $location.hash('bottom');
@@ -591,7 +338,7 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         function getChatsWithUser(userId) {
             var chatsWithUser = [];
 
-            chatsData.chats.forEach((chat) => {
+            chats.forEach((chat) => {
                 var flag = false;
                 chat.Users.forEach((user) => {
                     if (user.id === userId)
@@ -605,6 +352,7 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         }
     }
 ]);
+
 app.factory('requestService', ['$http', '$q',
     ($http, $q) => {
         return {
@@ -648,6 +396,253 @@ var urls = {
     chat: 'http://localhost:3000/api/chat/'
 };
 app.constant("urls", urls);
+
+app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
+        var posts = [],
+            errorMessages = {},
+            reqData = {
+                isCreatingNow: false,
+                removedPost: ''
+            },
+            editedPost = {},
+            config = {
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
+
+    return {
+        getPosts: getPosts,
+        posts: posts,
+        reqData: reqData,
+        editedPost: editedPost,
+        errorMessages: errorMessages,
+        removePost: removePost,
+        createPost: createPost,
+        editPost: editPost
+    };
+
+    function getPosts(userId) {
+        return new Promise((resolve, reject) => {
+            posts.splice(0, posts.length);
+            requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
+            function getPostsSuccess(res) {
+                if (res.data) {
+                    Array.prototype.push.apply(posts, res.data);
+                    errorMessages.gettingPosts = '';
+                    resolve();
+                } else {
+                    errorMessages.gettingPosts = 'No available posts.';
+                    reject();
+                }
+            }
+
+            function getPostsError(err) {
+                errorMessages.gettingPosts = err;
+                reject();
+            }
+        });
+    }
+
+    function createPost(sendData) {
+        return new Promise((resolve, reject) => {
+            var headers = {
+                'Token': authService.authData.token
+            };
+
+            reqData.isCreatingNow = true;
+
+            requestService.sendRequest(urls.post, 'post', headers, sendData, config).then(createPostSuccess, createPostError);
+
+            function createPostSuccess(res) {
+                reqData.isCreatingNow = false;
+                if (res.data) {
+                    posts.push(res.data);
+                    errorMessages.creatingPost = '';
+                    resolve();
+                } else {
+                    errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
+                    reject();
+                }
+            }
+
+            function createPostError(err) {
+                errorMessages.creatingPost = err;
+                reqData.isCreatingNow = false;
+                reject();
+            }
+        });
+    }
+
+    function editPost(id, sendData) {
+        return new Promise((resolve, reject) => {
+            var headers = {
+                'Token': authService.authData.token
+            };
+
+            reqData.isCreatingNow = true;
+
+            requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
+
+            function editPostSuccess(res) {
+                reqData.isCreatingNow = false;
+                errorMessages.creatingPost = '';
+                resolve();
+            }
+
+            function editPostError(err) {
+                errorMessages.edditingPost = err;
+                reqData.isCreatingNow = false;
+                reject();
+            }
+        });
+    }
+
+    function removePost(postId) {
+        return new Promise(function (resolve, reject) {
+            if (!confirm("Are you sure you want to remove the post?"))
+                return;
+
+            var headers = {
+                'Token': authService.authData.token
+            };
+
+            reqData.removedPost = postId;
+
+            requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
+
+            function removePostSuccess() {
+                errorMessages.removingPost = '';
+                for (var i = 0; i < posts.length; i++) {
+                    if (posts[i].id === reqData.removedPost) {
+                        posts.splice(i, 1);
+                    }
+                }
+                resolve();
+            }
+
+            function removePostError(response) {
+                errorMessages.removingPost = response;
+                reject();
+            }
+        });
+    }
+}]);
+
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
+        let userInfo = {},
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
+            },
+            reqData = {
+                isSendingNow: false
+            };
+
+        function getUserInfo(id) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + id, 'get')
+                        .then(getInfoSuccess, getInfoError);
+
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.errorGettingMessages.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
+                }
+
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                }
+            });
+        }
+
+        function editProfileData(profileData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                        .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                        .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
+    }
+]);
 
 app.filter('filter', () => {
     return (items, params) => {
@@ -727,12 +722,15 @@ app.component('chat', {
 function chatController(chatService, $stateParams) {
     const $ctrl = this;
 
-    $ctrl.chatsData = chatService.chatsData;
+    $ctrl.chats = chatService.chats;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
-    selectChat($stateParams.chatId);
     
+
+
+    //selectChat($stateParams.chatId);
+
     function sendMessage(chatId) {
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';
@@ -835,49 +833,6 @@ function memberListController(memberListService) {
     };
 }
 
-app.component('editProfile', {
-    templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', '$state', editProfileController],
-});
-
-function editProfileController(profileService, localStorageService, $state) {
-    const $ctrl = this;
-
-    let userId = localStorageService.cookie.get('id');
-
-    profileService.getUserInfo(userId);
-
-    $ctrl.changePassword = changePassword;
-    $ctrl.editProfileData = editProfileData;
-    $ctrl.profileData = profileService.userInfo;
-    $ctrl.notice = profileService.notice;
-
-    function changePassword(data) {
-        profileService.changePassword(data);
-    }
-
-    function editProfileData(data) {
-        profileService.editProfileData(data);
-    }
-}
-
-app.component('profile', {
-    templateUrl: 'build/views/blog/profile/profile.html',
-    controller: ['profileService', '$stateParams', profileController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function profileController(profileService, $stateParams) {
-    const $ctrl = this;
-
-    profileService.getUserInfo($stateParams.userId);
-
-    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
-}
-
 app.component('editModal', {
     templateUrl: 'build/views/blog/post-list/post-modal.html',
     bindings: {
@@ -958,6 +913,49 @@ function postModalController(postListService) {
     $ctrl.submitFunc = () => {
         postListService.createPost($ctrl.postData).then($ctrl.close);
     };
+}
+
+app.component('editProfile', {
+    templateUrl: 'build/views/blog/profile/edit-profile.html',
+    controller: ['profileService', 'localStorageService', '$state', editProfileController],
+});
+
+function editProfileController(profileService, localStorageService, $state) {
+    const $ctrl = this;
+
+    let userId = localStorageService.cookie.get('id');
+
+    profileService.getUserInfo(userId);
+
+    $ctrl.changePassword = changePassword;
+    $ctrl.editProfileData = editProfileData;
+    $ctrl.profileData = profileService.userInfo;
+    $ctrl.notice = profileService.notice;
+
+    function changePassword(data) {
+        profileService.changePassword(data);
+    }
+
+    function editProfileData(data) {
+        profileService.editProfileData(data);
+    }
+}
+
+app.component('profile', {
+    templateUrl: 'build/views/blog/profile/profile.html',
+    controller: ['profileService', '$stateParams', profileController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function profileController(profileService, $stateParams) {
+    const $ctrl = this;
+
+    profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
 }
 
 app.component('profileForm', {
