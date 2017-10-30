@@ -2,10 +2,10 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
     (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
+            headers: {
+                'Content-Type': 'application/jsone;'
+            }
+        };
 
         var authData = {
                 token: localStorageService.cookie.get('token'),
@@ -110,31 +110,30 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                 requestService.sendRequest(urls.signOut, 'post', headers).then(signOutSuccess, signOutError);
 
                 function signOutSuccess() {
-                    localStorageService.cookie.remove('token');
-                    localStorageService.cookie.remove('email');
-                    localStorageService.cookie.remove('id');
-                    localStorageService.cookie.remove('name');
-                    localStorageService.cookie.remove('surname');
-
-                    authData.token = '';
-                    authData.email = '';
-                    authData.id = '';
-                    authData.name = '';
-                    authData.surname = '';
-
+                    chatService.disconnect();
+                    cleanAuthData();
                     resolve();
                 }
 
                 function signOutError() {
-                    localStorageService.cookie.remove('token');
-                    localStorageService.cookie.remove('email');
-                    localStorageService.cookie.remove('id');
-                    localStorageService.cookie.remove('name');
-                    localStorageService.cookie.remove('surname');
-
+                    cleanAuthData();
                     reject();
                 }
             });
+        }
+
+        function cleanAuthData() {
+            localStorageService.cookie.remove('token');
+            localStorageService.cookie.remove('email');
+            localStorageService.cookie.remove('id');
+            localStorageService.cookie.remove('name');
+            localStorageService.cookie.remove('surname');
+
+            authData.token = '';
+            authData.email = '';
+            authData.id = '';
+            authData.name = '';
+            authData.surname = '';
         }
     }
 ]);

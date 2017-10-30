@@ -21,7 +21,10 @@ module.exports = function (sequelize, DataTypes) {
                 },
                 offset: from,
                 limit: 100,
-                include: [{model: userModel, as: 'author'}]
+                include: [{model: userModel, as: 'author'}],
+                order: [
+                    ['createdAt']
+                ]
             };
 
             Message.findAll(opt).then((messages) => {

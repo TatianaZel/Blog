@@ -1,21 +1,27 @@
-<div ng-if="$ctrl.selectedChat !== undefined" class="col-md-6 chatColumn">
-    <blockquote class="chatItem breakWord" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat].Messages">
+<div ng-if="$ctrl.selectedChat !== undefined" class="col-md-6 msgColumn" id="scrollArea">
+    <blockquote class="chatItem breakWord blackBorder" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
         <p>{{message.author.name}}:</p>
-        <p>{{message.createdAt | date:'yyyy-MM-dd'}}</p>
+        <p>{{message.createdAt| date: 'short'}}</p>
         <span>{{message.text}}</span>
     </blockquote>
 
-    <div class="form-group">
-        <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
-    </div>
+    <form class="" id="bottom">
+        <div class="form-group">
+            <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
+        </div>
 
-    <button class="btn btn-default" ng-click="$ctrl.sendMessage($ctrl.chatsData.chats[$ctrl.selectedChat].id)">Send</button>
+        <button class="btn btn-default msgSubmitBtn" ng-click="$ctrl.sendMessage($ctrl.chatsData.chats[$ctrl.selectedChat].id)">Send</button>
+    </form>
 </div>
 
-<div ng-if="$ctrl.selectedChat === undefined" class="col-md-6">
+<div ng-if="$ctrl.selectedChat === undefined || !$ctrl.chatsData.chats.length" class="col-md-6">
     <p>Please, choose the chat</p>
 </div>
 
 <div class="col-md-6 chatColumn">
-    <div class="chatItem" ng-repeat="chat in $ctrl.chatsData.chats" ng-click="$ctrl.selectChat($index)">{{chat.id}}</div>
+    <div class="chatItem blackBorder" ng-repeat="chat in $ctrl.chatsData.chats | orderBy : '-updatedAt'" ng-click="$ctrl.selectChat(chat.id)">
+        <span ng-repeat="user in chat.Users">
+            {{user.name}} {{user.surname}}
+        </span>
+    </div>
 </div>

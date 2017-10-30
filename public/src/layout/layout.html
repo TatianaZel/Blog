@@ -11,7 +11,7 @@
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-2">
             <ul class="nav navbar-nav navbar-right">
-                <li class="" ng-show="$ctrl.authData.token"><a ui-sref="chat">Chat</a></li>
+                <li class="" ng-show="$ctrl.authData.token"><a ui-sref="chat({chatId: ''})">Chat</a></li>
                 <li class="membersLink"><a ui-sref="members">Members</a></li>
                 <li class="signOut cursorPointer" ng-show="$ctrl.authData.token" ng-click="$ctrl.signOut()"><a>Sign out</a></li>
                 <li class="signIn" ng-show="!$ctrl.authData.token"><a ui-sref="auth">Sign in</a></li>

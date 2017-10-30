@@ -49,339 +49,120 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
-    (localStorageService, requestService, urls, chatService) => {
-
-        var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
-
-        var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                id: localStorageService.cookie.get('id'),
-                name: localStorageService.cookie.get('name'),
-                surname: localStorageService.cookie.get('surname')
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
+        let userInfo = {},
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
             },
             reqData = {
                 isSendingNow: false
-            },
-            errorSignInMessages = {},
-            errorSignOutMessages = {},
-            errorSignUpMessages = {};
-
-        if (authData.token && authData.id) {
-            chatService.connect(authData.id, authData.token);
-        }
-
-        return {
-            signIn: signIn,
-            signUp: signUp,
-            signOut: signOut,
-            authData: authData,
-            reqData: reqData,
-            errorSignInMessages: errorSignInMessages,
-            errorSignOutMessages: errorSignOutMessages,
-            errorSignUpMessages: errorSignUpMessages
-        };
-
-        function signIn(sendData, signUpResolve) {
-            return new Promise((resolve, reject) => {
-                reqData.isSendingNow = true;
-                requestService.sendRequest(urls.signIn, 'post', null, sendData, config).then(signInSuccess, signInError);
-
-                function signInSuccess(response) {
-                    reqData.isSendingNow = false;
-
-                    if (response.data && response.data.token && response.data.id) {
-                        authData.token = response.data.token;
-                        authData.id = response.data.id;
-                        authData.name = response.data.name;
-                        authData.surname = response.data.surname;
-                        authData.email = response.data.email;
-
-                        localStorageService.cookie.set('token', authData.token);
-                        localStorageService.cookie.set('id', authData.id);
-                        localStorageService.cookie.set('name', authData.name);
-                        localStorageService.cookie.set('surname', authData.surname);
-                        localStorageService.cookie.set('email', authData.email);
-
-                        errorSignInMessages.signIn = '';
-                        signUpResolve ? signUpResolve() : '';
-
-                        chatService.connect(authData.userId, authData.token);
-
-                        resolve();
-                    } else {
-                        errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
-                        reject();
-                    }
-                }
-
-                function signInError(response) {
-                    reqData.isSendingNow = false;
-                    errorSignInMessages.signIn = response;
-                    reject();
-                }
-            });
-        }
-
-        function signUp(sendData) {
-            return new Promise((signUpResolve, reject) => {
-                reqData.isSendingNow = true;
-                requestService.sendRequest(urls.signUp, 'post', null, sendData, config).then(signUpSuccess, signUpError);
-
-                function signUpSuccess(response) {
-                    reqData.isSendingNow = false;
-                    if (response.config && response.config.data) {
-                        signIn(JSON.parse(response.config.data), signUpResolve);
-                        errorSignUpMessages.signUp = '';
-                    } else {
-                        errorSignUpMessages.signUp = 'Some error. Please, try sign up again.';
-                        reject();
-                    }
-                }
-
-                function signUpError(response) {
-                    reqData.isSendingNow = false;
-                    errorSignUpMessages.signUp = response;
-                    reject();
-                }
-            });
-        }
-
-        function signOut() {
-            return new Promise((resolve, reject) => {
-                var headers = {
-                    'Token': authData.token
-                };
-
-                requestService.sendRequest(urls.signOut, 'post', headers).then(signOutSuccess, signOutError);
-
-                function signOutSuccess() {
-                    localStorageService.cookie.remove('token');
-                    localStorageService.cookie.remove('email');
-                    localStorageService.cookie.remove('id');
-                    localStorageService.cookie.remove('name');
-                    localStorageService.cookie.remove('surname');
-
-                    authData.token = '';
-                    authData.email = '';
-                    authData.id = '';
-                    authData.name = '';
-                    authData.surname = '';
-
-                    resolve();
-                }
-
-                function signOutError() {
-                    localStorageService.cookie.remove('token');
-                    localStorageService.cookie.remove('email');
-                    localStorageService.cookie.remove('id');
-                    localStorageService.cookie.remove('name');
-                    localStorageService.cookie.remove('surname');
-
-                    reject();
-                }
-            });
-        }
-    }
-]);
-
-app.factory('chatService', ['localStorageService', '$rootScope',
-    (localStorageService, $rootScope) => {
-        var chatsData = {
-            chats: []
-        };
-        var socket;
-        var counters = {};
-
-        return {
-            connect: connect,
-            messageToNewChat: messageToNewChat,
-            getChatsWithUser: getChatsWithUser,
-            messageToExistChat: messageToExistChat,
-            loadMessages: loadMessages,
-            chatsData: chatsData
-        };
-
-        function connect() {
-            socket = io.connect({
-                query: {
-                    token: localStorageService.cookie.get('token')
-                }
-            });
-
-            socket.on('successConnection', (data) => {
-                chatsData.chats = data.chats;
-                $rootScope.$digest();
-
-                socket.on('messageForClient', (data) => {
-                    setMessageToChat(data);
-                });
-
-                socket.on('newChatForClient', (newChat) => {
-                    addNewChat(newChat);
-                });
-
-                socket.removeAllListeners('successConnection');
-            });
-        }
-
-        function messageToNewChat(text, recipientId) {
-            return new Promise((resolve) => {
-                socket.on('newChatCreated', (newChat) => {
-                    addNewChat(newChat);
-                    socket.removeAllListeners('newChatCreated');
-                    resolve();
-                });
-
-                socket.emit('messageToNewChat', {
-                    token: localStorageService.cookie.get('token'),
-                    text: text,
-                    recipientId: recipientId
-                });
-            });
-        }
-
-        function messageToExistChat(text, chatId) {
-            return new Promise((resolve) => {
-                socket.on('messageSended', (data) => {
-                    setMessageToChat(data);
-                    socket.removeAllListeners('messageSended');
-                    resolve();
-                });
-                socket.emit('messageToExistChat', {
-                    token: localStorageService.cookie.get('token'),
-                    text: text,
-                    chatId: chatId
-                });
-            });
-        }
-
-        function loadMessages(chatId) {
-            return new Promise((resolve) => {
-                if (!counters[chatId]) {
-                    counters[chatId] = 0;
-                }
-
-                socket.on('portionOfMessages', (data) => {
-                    setMessagesToChat(chatId, data);
-                    socket.removeAllListeners('portionOfMessages');
-                    resolve();
-                });
-
-                socket.emit('loadMessages', {
-                    token: localStorageService.cookie.get('token'),
-                    from: counters[chatId],
-                    chatId: chatId
-                });
-            });
-        }
-
-        function addNewChat(newChat) {
-            counters[newChat.id] = 1;
-            chatsData.chats.push(newChat);
-            $rootScope.$digest();
-        }
-
-        function setMessageToChat(data) {
-            if (!counters[data.ChatId])
-                return;
-
-            chatsData.chats.forEach((chat) => {
-                if (chat.id == data.ChatId) {
-                    if (!chat.Messages)
-                        chat.Messages = [];
-
-                    chat.Messages.push(data);
-                    counters[data.ChatId]++;
-                    $rootScope.$digest();
-
-                    return;
-                }
-            });
-        }
-
-        function setMessagesToChat(chatId, messages) {
-            counters[chatId] = counters[chatId] + 101;
-
-            chatsData.chats.forEach((chat) => {
-                if (chat.id == chatId) {
-                    if (!chat.Messages)
-                        chat.Messages = [];
-
-                    Array.prototype.push.apply(chat.Messages, messages);
-
-                    $rootScope.$digest();
-
-                    return;
-                }
-            });
-        }
-
-        function getChatsWithUser(userId) {
-            var chatsWithUser = [];
-
-            chatsData.chats.forEach((chat) => {
-                var flag = false;
-                chat.Users.forEach((user) => {
-                    if (user.id === userId)
-                        flag = true;
-                });
-                if (flag)
-                    chatsWithUser.push(chat);
-            });
-
-            return chatsWithUser;
-        }
-    }
-]);
-app.factory('requestService', ['$http', '$q',
-    ($http, $q) => {
-        return {
-            sendRequest: sendRequest
-        };
-
-        function sendRequest(url, method, headers, sendData, config) {
-            var deferred = $q.defer();
-
-            var req = {
-                method: method,
-                url: url,
-                data: sendData ? JSON.stringify(sendData) : '',
-                config: config ? config : '',
-                headers: headers ? headers : ''
             };
 
-            $http(req).then(
-                    (response) => {
-                        if (response)
-                            deferred.resolve(response);
-                    },
-                    (error) => {
-                        if (error)
-                            deferred.reject(error.data.message);
-                    });
+        function getUserInfo(id) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + id, 'get')
+                        .then(getInfoSuccess, getInfoError);
 
-            return deferred.promise;
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.errorGettingMessages.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
+                }
+
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                }
+            });
         }
+
+        function editProfileData(profileData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                        .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                        .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
     }
 ]);
-
-var urls = {
-    blog: 'http://localhost:3000/api/blog/',
-    signIn: 'http://localhost:3000/api/auth/signin/',
-    signUp: 'http://localhost:3000/api/auth/signup/',
-    signOut: 'http://localhost:3000/api/auth/logout/',
-    members: 'http://localhost:3000/api/user/',
-    changePassword: 'http://localhost:3000/api/user/changePassword/',
-    post: 'http://localhost:3000/api/post/',
-    chat: 'http://localhost:3000/api/chat/'
-};
-app.constant("urls", urls);
 
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
         var posts = [],
@@ -515,120 +296,358 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
     }
 }]);
 
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
-    (requestService, urls, authService, localStorageService) => {
-        let userInfo = {},
-            notice = {
-                errorGettingMessages: {},
-                errorProfileMessages: {},
-                errorPasswordMessages: {},
-                successProfileMessages: {},
-                successPasswordMessages: {}
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
+    (localStorageService, requestService, urls, chatService) => {
+
+        var config = {
+            headers: {
+                'Content-Type': 'application/jsone;'
+            }
+        };
+
+        var authData = {
+                token: localStorageService.cookie.get('token'),
+                email: localStorageService.cookie.get('email'),
+                id: localStorageService.cookie.get('id'),
+                name: localStorageService.cookie.get('name'),
+                surname: localStorageService.cookie.get('surname')
             },
             reqData = {
                 isSendingNow: false
-            };
+            },
+            errorSignInMessages = {},
+            errorSignOutMessages = {},
+            errorSignUpMessages = {};
 
-        function getUserInfo(id) {
-            return new Promise(() => {
-                requestService.sendRequest(urls.members + id, 'get')
-                        .then(getInfoSuccess, getInfoError);
-
-                function getInfoSuccess(response) {
-                    if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
-                        userInfo.name = response.data.name;
-                        userInfo.surname = response.data.surname;
-                        userInfo.description = response.data.description;
-                        userInfo.id = response.data.id;
-                        userInfo.email = response.data.email;
-                    }
-                }
-
-                function getInfoError(error) {
-                    notice.errorGettingMessages = error;
-                    userInfo.name = '';
-                    userInfo.surname = '';
-                    userInfo.description = '';
-                    userInfo.id = '';
-                }
-            });
-        }
-
-        function editProfileData(profileData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                        .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    authService.authData.email = profileData.email;
-                    localStorageService.cookie.set('email', profileData.email);
-                    notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
-                    reqData.isSendingNow = false;
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-        function changePassword(passwordsData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                        .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
+        if (authData.token && authData.id) {
+            chatService.connect(authData.id, authData.token);
         }
 
         return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
+            signIn: signIn,
+            signUp: signUp,
+            signOut: signOut,
+            authData: authData,
+            reqData: reqData,
+            errorSignInMessages: errorSignInMessages,
+            errorSignOutMessages: errorSignOutMessages,
+            errorSignUpMessages: errorSignUpMessages
         };
+
+        function signIn(sendData, signUpResolve) {
+            return new Promise((resolve, reject) => {
+                reqData.isSendingNow = true;
+                requestService.sendRequest(urls.signIn, 'post', null, sendData, config).then(signInSuccess, signInError);
+
+                function signInSuccess(response) {
+                    reqData.isSendingNow = false;
+
+                    if (response.data && response.data.token && response.data.id) {
+                        authData.token = response.data.token;
+                        authData.id = response.data.id;
+                        authData.name = response.data.name;
+                        authData.surname = response.data.surname;
+                        authData.email = response.data.email;
+
+                        localStorageService.cookie.set('token', authData.token);
+                        localStorageService.cookie.set('id', authData.id);
+                        localStorageService.cookie.set('name', authData.name);
+                        localStorageService.cookie.set('surname', authData.surname);
+                        localStorageService.cookie.set('email', authData.email);
+
+                        errorSignInMessages.signIn = '';
+                        signUpResolve ? signUpResolve() : '';
+
+                        chatService.connect(authData.userId, authData.token);
+
+                        resolve();
+                    } else {
+                        errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
+                        reject();
+                    }
+                }
+
+                function signInError(response) {
+                    reqData.isSendingNow = false;
+                    errorSignInMessages.signIn = response;
+                    reject();
+                }
+            });
+        }
+
+        function signUp(sendData) {
+            return new Promise((signUpResolve, reject) => {
+                reqData.isSendingNow = true;
+                requestService.sendRequest(urls.signUp, 'post', null, sendData, config).then(signUpSuccess, signUpError);
+
+                function signUpSuccess(response) {
+                    reqData.isSendingNow = false;
+                    if (response.config && response.config.data) {
+                        signIn(JSON.parse(response.config.data), signUpResolve);
+                        errorSignUpMessages.signUp = '';
+                    } else {
+                        errorSignUpMessages.signUp = 'Some error. Please, try sign up again.';
+                        reject();
+                    }
+                }
+
+                function signUpError(response) {
+                    reqData.isSendingNow = false;
+                    errorSignUpMessages.signUp = response;
+                    reject();
+                }
+            });
+        }
+
+        function signOut() {
+            return new Promise((resolve, reject) => {
+                var headers = {
+                    'Token': authData.token
+                };
+
+                requestService.sendRequest(urls.signOut, 'post', headers).then(signOutSuccess, signOutError);
+
+                function signOutSuccess() {
+                    chatService.disconnect();
+                    cleanAuthData();
+                    resolve();
+                }
+
+                function signOutError() {
+                    cleanAuthData();
+                    reject();
+                }
+            });
+        }
+
+        function cleanAuthData() {
+            localStorageService.cookie.remove('token');
+            localStorageService.cookie.remove('email');
+            localStorageService.cookie.remove('id');
+            localStorageService.cookie.remove('name');
+            localStorageService.cookie.remove('surname');
+
+            authData.token = '';
+            authData.email = '';
+            authData.id = '';
+            authData.name = '';
+            authData.surname = '';
+        }
     }
 ]);
+
+app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
+    (localStorageService, $rootScope, $anchorScroll, $location) => {
+        var chatsData = {
+            chats: []
+        };
+        var socket;
+        var counters = {};
+        var resolveMsg;
+        var resolveChat;
+
+        return {
+            connect: connect,
+            disconnect: disconnect,
+            messageToNewChat: messageToNewChat,
+            messageToExistChat: messageToExistChat,
+            getChatsWithUser: getChatsWithUser,
+            loadMessages: loadMessages,
+            chatsData: chatsData
+        };
+
+        function connect() {
+            socket = io.connect({
+                query: {
+                    token: localStorageService.cookie.get('token')
+                }
+            });
+
+            socket.on('successConnection', (data) => {
+                reIndexingChats(data.chats);
+
+                console.log(chatsData.chats);
+
+                $rootScope.$digest();
+
+                socket.on('messageForClient', (data) => {
+                    setMessageToChat(data);
+                });
+
+                socket.on('newChatForClient', (newChat) => {
+                    addNewChat(newChat);
+                });
+
+                socket.on('messageSended', (data) => {
+                    setMessageToChat(data);
+                    resolveMsg ? resolveMsg() : '';
+                });
+
+                socket.on('newChatCreated', (newChat) => {
+                    addNewChat(newChat);
+                    resolveChat ? resolveChat() : '';
+                });
+
+                socket.removeAllListeners('successConnection');
+            });
+        }
+
+        function reIndexingChats(data) {
+            data.forEach((item) => {
+                chatsData.chats[item.id] = item;
+            });
+        }
+
+        function disconnect() {///
+            chatsData.chats = [];
+            for (var key in counters) {
+                counters[key] = 0;
+            }
+            socket.emit('disconnect');
+        }
+
+        function messageToNewChat(text, recipientId) {
+            return new Promise((resolve) => {
+                resolveChat = resolve;
+
+                socket.emit('messageToNewChat', {
+                    token: localStorageService.cookie.get('token'),
+                    text: text,
+                    recipientId: recipientId
+                });
+            });
+        }
+
+        function messageToExistChat(text, chatId) {
+            return new Promise((resolve) => {
+                resolveMsg = resolve;
+                socket.emit('messageToExistChat', {
+                    token: localStorageService.cookie.get('token'),
+                    text: text,
+                    chatId: chatId
+                });
+            });
+        }
+
+        function loadMessages(chatId) {
+            return new Promise((resolve) => {
+                if (!counters[chatId]) {
+                    counters[chatId] = 0;
+                }
+
+                socket.on('portionOfMessages', (data) => {
+                    setMessagesToChat(chatId, data);
+                    socket.removeAllListeners('portionOfMessages');
+                    resolve();
+                });
+
+                socket.emit('loadMessages', {
+                    token: localStorageService.cookie.get('token'),
+                    from: counters[chatId],
+                    chatId: chatId
+                });
+            });
+        }
+
+        function addNewChat(newChat) {
+            counters[newChat.id] = 1;
+            chatsData.chats[newChat.id] = newChat;
+            $rootScope.$digest();
+        }
+
+        function setMessageToChat(data) {
+            if (!counters[data.ChatId])
+                return;
+
+            if (!chatsData.chats[data.chatId].Messages)
+                chatsData.chats[data.chatId].Messages = [];
+
+            chatsData.chats[data.chatId].Messages.push(data);
+            chatsData.chats[data.chatId].updatedAt = data.createdAt;
+            $rootScope.$digest();
+
+            counters[data.ChatId]++;
+
+            $location.hash('bottom');
+            $anchorScroll();
+        }
+
+        function setMessagesToChat(chatId, messages) {
+            console.log(chatId);
+            console.log(chatsData.chats[chatId]);
+
+            counters[chatId] = counters[chatId] + messages.length + 1;
+
+            if (!chatsData.chats[chatId].Messages)
+                chatsData.chats[chatId].Messages = [];
+
+            Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
+            $rootScope.$digest();
+
+            $location.hash('bottom');
+            $anchorScroll();
+        }
+
+        function getChatsWithUser(userId) {
+            var chatsWithUser = [];
+
+            chatsData.chats.forEach((chat) => {
+                var flag = false;
+                chat.Users.forEach((user) => {
+                    if (user.id === userId)
+                        flag = true;
+                });
+                if (flag)
+                    chatsWithUser.push(chat);
+            });
+
+            return chatsWithUser;
+        }
+    }
+]);
+app.factory('requestService', ['$http', '$q',
+    ($http, $q) => {
+        return {
+            sendRequest: sendRequest
+        };
+
+        function sendRequest(url, method, headers, sendData, config) {
+            var deferred = $q.defer();
+
+            var req = {
+                method: method,
+                url: url,
+                data: sendData ? JSON.stringify(sendData) : '',
+                config: config ? config : '',
+                headers: headers ? headers : ''
+            };
+
+            $http(req).then(
+                    (response) => {
+                        if (response)
+                            deferred.resolve(response);
+                    },
+                    (error) => {
+                        if (error)
+                            deferred.reject(error.data.message);
+                    });
+
+            return deferred.promise;
+        }
+    }
+]);
+
+var urls = {
+    blog: 'http://localhost:3000/api/blog/',
+    signIn: 'http://localhost:3000/api/auth/signin/',
+    signUp: 'http://localhost:3000/api/auth/signup/',
+    signOut: 'http://localhost:3000/api/auth/logout/',
+    members: 'http://localhost:3000/api/user/',
+    changePassword: 'http://localhost:3000/api/user/changePassword/',
+    post: 'http://localhost:3000/api/post/',
+    chat: 'http://localhost:3000/api/chat/'
+};
+app.constant("urls", urls);
 
 app.filter('filter', () => {
     return (items, params) => {
@@ -702,24 +721,26 @@ function blogController() {
 
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', chatController]
+    controller: ['chatService', '$stateParams', chatController]
 });
 
-function chatController(chatService) {
+function chatController(chatService, $stateParams) {
     const $ctrl = this;
 
     $ctrl.chatsData = chatService.chatsData;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
+    selectChat($stateParams.chatId);
+    
     function sendMessage(chatId) {
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';
     }
 
-    function selectChat(index) {
-        $ctrl.selectedChat = index;
-        chatService.loadMessages($ctrl.chatsData.chats[$ctrl.selectedChat].id);
+    function selectChat(id) {
+        $ctrl.selectedChat = id;
+        chatService.loadMessages(id);
     }
 }
 
@@ -814,6 +835,49 @@ function memberListController(memberListService) {
     };
 }
 
+app.component('editProfile', {
+    templateUrl: 'build/views/blog/profile/edit-profile.html',
+    controller: ['profileService', 'localStorageService', '$state', editProfileController],
+});
+
+function editProfileController(profileService, localStorageService, $state) {
+    const $ctrl = this;
+
+    let userId = localStorageService.cookie.get('id');
+
+    profileService.getUserInfo(userId);
+
+    $ctrl.changePassword = changePassword;
+    $ctrl.editProfileData = editProfileData;
+    $ctrl.profileData = profileService.userInfo;
+    $ctrl.notice = profileService.notice;
+
+    function changePassword(data) {
+        profileService.changePassword(data);
+    }
+
+    function editProfileData(data) {
+        profileService.editProfileData(data);
+    }
+}
+
+app.component('profile', {
+    templateUrl: 'build/views/blog/profile/profile.html',
+    controller: ['profileService', '$stateParams', profileController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function profileController(profileService, $stateParams) {
+    const $ctrl = this;
+
+    profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
+}
+
 app.component('editModal', {
     templateUrl: 'build/views/blog/post-list/post-modal.html',
     bindings: {
@@ -894,49 +958,6 @@ function postModalController(postListService) {
     $ctrl.submitFunc = () => {
         postListService.createPost($ctrl.postData).then($ctrl.close);
     };
-}
-
-app.component('editProfile', {
-    templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', '$state', editProfileController],
-});
-
-function editProfileController(profileService, localStorageService, $state) {
-    const $ctrl = this;
-
-    let userId = localStorageService.cookie.get('id');
-
-    profileService.getUserInfo(userId);
-
-    $ctrl.changePassword = changePassword;
-    $ctrl.editProfileData = editProfileData;
-    $ctrl.profileData = profileService.userInfo;
-    $ctrl.notice = profileService.notice;
-
-    function changePassword(data) {
-        profileService.changePassword(data);
-    }
-
-    function editProfileData(data) {
-        profileService.editProfileData(data);
-    }
-}
-
-app.component('profile', {
-    templateUrl: 'build/views/blog/profile/profile.html',
-    controller: ['profileService', '$stateParams', profileController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function profileController(profileService, $stateParams) {
-    const $ctrl = this;
-
-    profileService.getUserInfo($stateParams.userId);
-
-    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
 }
 
 app.component('profileForm', {
@@ -1060,7 +1081,7 @@ app.config(['$stateProvider',
 app.config(['$stateProvider',
     ($stateProvider) => {
         $stateProvider.state('chat', {
-            url: "/chat",
+            url: "/chat/:chatId",
             component: 'chat',
             data: {
                 auth: "Authorized"

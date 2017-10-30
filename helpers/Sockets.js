@@ -77,13 +77,18 @@ function connection(socket) {
                         createdAt: msg.createdAt
                     };
 
-                    io.to(msg.authorId).emit('messageSended', msgForSending);
-
-                    Chats.prototype.getChatUsers(data.chatId, Users).then((users) => {
-                        users.forEach((recipient) => {
-                            if (recipient.id != msg.authorId) {
-                                io.to(recipient.id).emit('messageForClient', msgForSending);
-                            }
+                    Chats.update({}, {
+                        where: {
+                            id: data.chatId
+                        }
+                    }).then((chat) => {
+                        io.to(msg.authorId).emit('messageSended', msgForSending);
+                        Chats.prototype.getChatUsers(data.chatId, Users).then((users) => {
+                            users.forEach((recipient) => {
+                                if (recipient.id != msg.authorId) {
+                                    io.to(recipient.id).emit('messageForClient', msgForSending);
+                                }
+                            });
                         });
                     });
                 });

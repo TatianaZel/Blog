@@ -1,6 +1,6 @@
 a{cursor:pointer}.authForm{width:50%;margin:auto auto 30px}.blackBorder{border-radius:5px;border:1px solid #d3d3d3}.list{margin-top:20px}blockquote p{margin-top:10px}textarea{resize:none}.breakWord{word-wrap:break-word}
 
-.chatItem{padding:10px}.chatColumn{max-height:90vh;overflow-y:auto}
+.chatItem{padding:10px;margin-bottom:20px;cursor:pointer}.chatColumn,.msgColumn{max-height:90vh;overflow-y:auto}.chatColumn::-webkit-scrollbar-track,.msgColumn::-webkit-scrollbar-track{-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);border-radius:10px;background-color:light-gray}.chatColumn::-webkit-scrollbar,.msgColumn::-webkit-scrollbar{width:10px;background-color:light-gray}.chatColumn::-webkit-scrollbar-thumb,.msgColumn::-webkit-scrollbar-thumb{border-radius:10px;-webkit-box-shadow:inset 0 0 6px rgba(0,0,0,.3);background-color:light-gray}.msgSubmitBtn{width:100%;margin-bottom:20px}
 .filter{display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-ms-flex-direction:row;flex-direction:row;-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-ms-flex-wrap:wrap;flex-wrap:wrap}.checkbox{height:100%}
 .container{width:50%}.logoutErrors{margin-top:60px}
 .memberName{font-size:16px;font-weight:700}

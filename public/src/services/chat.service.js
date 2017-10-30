@@ -1,16 +1,19 @@
-app.factory('chatService', ['localStorageService', '$rootScope',
-    (localStorageService, $rootScope) => {
+app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
+    (localStorageService, $rootScope, $anchorScroll, $location) => {
         var chatsData = {
             chats: []
         };
         var socket;
         var counters = {};
+        var resolveMsg;
+        var resolveChat;
 
         return {
             connect: connect,
+            disconnect: disconnect,
             messageToNewChat: messageToNewChat,
-            getChatsWithUser: getChatsWithUser,
             messageToExistChat: messageToExistChat,
+            getChatsWithUser: getChatsWithUser,
             loadMessages: loadMessages,
             chatsData: chatsData
         };
@@ -23,7 +26,10 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
 
             socket.on('successConnection', (data) => {
-                chatsData.chats = data.chats;
+                reIndexingChats(data.chats);
+
+                console.log(chatsData.chats);
+
                 $rootScope.$digest();
 
                 socket.on('messageForClient', (data) => {
@@ -34,17 +40,37 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     addNewChat(newChat);
                 });
 
+                socket.on('messageSended', (data) => {
+                    setMessageToChat(data);
+                    resolveMsg ? resolveMsg() : '';
+                });
+
+                socket.on('newChatCreated', (newChat) => {
+                    addNewChat(newChat);
+                    resolveChat ? resolveChat() : '';
+                });
+
                 socket.removeAllListeners('successConnection');
             });
         }
 
+        function reIndexingChats(data) {
+            data.forEach((item) => {
+                chatsData.chats[item.id] = item;
+            });
+        }
+
+        function disconnect() {///
+            chatsData.chats = [];
+            for (var key in counters) {
+                counters[key] = 0;
+            }
+            socket.emit('disconnect');
+        }
+
         function messageToNewChat(text, recipientId) {
             return new Promise((resolve) => {
-                socket.on('newChatCreated', (newChat) => {
-                    addNewChat(newChat);
-                    socket.removeAllListeners('newChatCreated');
-                    resolve();
-                });
+                resolveChat = resolve;
 
                 socket.emit('messageToNewChat', {
                     token: localStorageService.cookie.get('token'),
@@ -56,11 +82,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
         function messageToExistChat(text, chatId) {
             return new Promise((resolve) => {
-                socket.on('messageSended', (data) => {
-                    setMessageToChat(data);
-                    socket.removeAllListeners('messageSended');
-                    resolve();
-                });
+                resolveMsg = resolve;
                 socket.emit('messageToExistChat', {
                     token: localStorageService.cookie.get('token'),
                     text: text,
@@ -91,7 +113,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
         function addNewChat(newChat) {
             counters[newChat.id] = 1;
-            chatsData.chats.push(newChat);
+            chatsData.chats[newChat.id] = newChat;
             $rootScope.$digest();
         }
 
@@ -99,35 +121,33 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             if (!counters[data.ChatId])
                 return;
 
-            chatsData.chats.forEach((chat) => {
-                if (chat.id == data.ChatId) {
-                    if (!chat.Messages)
-                        chat.Messages = [];
+            if (!chatsData.chats[data.chatId].Messages)
+                chatsData.chats[data.chatId].Messages = [];
 
-                    chat.Messages.push(data);
-                    counters[data.ChatId]++;
-                    $rootScope.$digest();
+            chatsData.chats[data.chatId].Messages.push(data);
+            chatsData.chats[data.chatId].updatedAt = data.createdAt;
+            $rootScope.$digest();
 
-                    return;
-                }
-            });
+            counters[data.ChatId]++;
+
+            $location.hash('bottom');
+            $anchorScroll();
         }
 
         function setMessagesToChat(chatId, messages) {
-            counters[chatId] = counters[chatId] + 101;
+            console.log(chatId);
+            console.log(chatsData.chats[chatId]);
 
-            chatsData.chats.forEach((chat) => {
-                if (chat.id == chatId) {
-                    if (!chat.Messages)
-                        chat.Messages = [];
+            counters[chatId] = counters[chatId] + messages.length + 1;
 
-                    Array.prototype.push.apply(chat.Messages, messages);
+            if (!chatsData.chats[chatId].Messages)
+                chatsData.chats[chatId].Messages = [];
 
-                    $rootScope.$digest();
+            Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
+            $rootScope.$digest();
 
-                    return;
-                }
-            });
+            $location.hash('bottom');
+            $anchorScroll();
         }
 
         function getChatsWithUser(userId) {
