@@ -1,6 +1,6 @@
 'use strict';
 
-var gulp = require('gulp'),
+const gulp = require('gulp'),
     concat = require('gulp-concat'),
     gulpif = require('gulp-if'),
     arg = require('yargs').argv,
@@ -10,7 +10,8 @@ var gulp = require('gulp'),
     notify = require('gulp-notify'),
     sass = require('gulp-sass'),
     watch = require('gulp-watch'),
-    prefixer = require('gulp-autoprefixer');
+    prefixer = require('gulp-autoprefixer'),
+    eslint = require('gulp-eslint');
 
 var src = {
     vendors: {
@@ -34,7 +35,7 @@ var src = {
             lib: './public/bower_components/socket.io.client/dist/socket.io-1.3.5.js'
         }
     },
-    app: {
+    frontApp: {
         allJS: './public/src/**/*.js',
         mainModule: './public/src/app.module.js',
         services: './public/src/**/*.service.js',
@@ -45,62 +46,83 @@ var src = {
         views: './public/src/**/*.html',
         tests: './public/src/**/*.spec.js'
     },
-    styles: './public/src/**/*.scss'
+    styles: './public/src/**/*.scss',
+    allJS: './**/*.js'
 };
 
-gulp.task('jsVendors', function () {
-    gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib, src.vendors.bootstrap.ui,
-              src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage, src.vendors.angular.router,
-              src.vendors.angular.stateEvents, src.vendors.angular.animate])
-            .pipe(concat('vendor.js'))
-            .pipe(gulp.dest('./public/build'));
+gulp.task('jsVendors', () => {
+    gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib,
+        src.vendors.bootstrap.ui,
+        src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage,
+        src.vendors.angular.router,
+        src.vendors.angular.stateEvents, src.vendors.angular.animate])
+        .pipe(concat('vendor.js'))
+        .pipe(gulp.dest('./public/build'));
 });
 
-gulp.task('styleVendors', function () {
+gulp.task('styleVendors', () => {
     gulp.src([src.vendors.bootstrap.lib, src.vendors.bootstrap.theme])
-            .pipe(concat('vendor.css'))
-            .pipe(gulp.dest('./public/build'));
+        .pipe(concat('vendor.css'))
+        .pipe(gulp.dest('./public/build'));
 });
 
-gulp.task('views', function () {
-    gulp.src(src.app.views)
-            .pipe(gulp.dest('./public/build/views'));
+gulp.task('views', () => {
+    gulp.src(src.frontApp.views)
+        .pipe(gulp.dest('./public/build/views'));
 });
 
-gulp.task('js', function () {
-    gulp.src([src.app.mainModule, src.app.services, src.app.filters, src.app.components, src.app.directives, src.app.routes])
-            .pipe(concat('app.js'))
+gulp.task('js', () => {
+    gulp.src([src.frontApp.mainModule, src.frontApp.services,
+        src.frontApp.filters,
+        src.frontApp.components, src.frontApp.directives, src.frontApp.routes])
+        .pipe(concat('app.js'))
 //            .pipe(uglify())
 //            .pipe(gulpif(arg.development, sourcemaps.write()))
-            .pipe(gulp.dest('./public/build'));
+        .pipe(gulp.dest('./public/build'));
 });
 
-gulp.task('styles', function () {
+gulp.task('styles', () => {
     gulp.src(src.styles)
-            .pipe(sass())
-            .on('error', notify.onError({
-                title: 'Sass error!',
-                message: '<%=error.message%>'
-            }))
-            .pipe(prefixer())
-            .pipe(gulpif(!arg.development, cssmin()))
-            .pipe(concat('main.css'))
-            .pipe(gulp.dest('./public/build'))
-            .pipe(notify('Yeah! Styles done!'));
+        .pipe(sass())
+        .on('error', notify.onError({
+            title: 'Sass error!',
+            message: '<%=error.message%>'
+        }))
+        .pipe(prefixer())
+        .pipe(gulpif(!arg.development, cssmin()))
+        .pipe(concat('main.css'))
+        .pipe(gulp.dest('./public/build'))
+        .pipe(notify('Yeah! Styles done!'));
 });
 
-gulp.task('watch', function () {
-    watch([src.app.allJS, '!' + src.app.tests], function () {
+gulp.task('watch', () => {
+    watch([src.frontApp.allJS, '!' + src.frontApp.tests], () => {
         gulp.start('js');
     });
 
-    watch(src.app.views, function () {
+    watch(src.frontApp.views, () => {
         gulp.start('views');
     });
 
-    watch(src.styles, function () {
+    watch(src.styles, () => {
         gulp.start('styles');
     });
+
+//    watch([src.allJS, '!' + src.frontApp.allJS, '!node_modules/**'], () => {
+//        gulp.start('backLint');
+//    });
 });
 
-gulp.task('default', ['jsVendors', 'styleVendors', 'views', 'js', 'styles', 'watch']);
+gulp.task('backLint', () => {
+    return gulp.src([src.allJS, '!' + src.frontApp.allJS, '!node_modules/**'])
+        .pipe(eslint())
+        .pipe(eslint.format('./.eslintrc.json'))
+        .pipe(eslint.failOnError())
+        .on('error', notify.onError({
+            title: 'Eslint error!',
+            message: '<%=error.message%>'
+        }));
+});
+
+gulp.task('default', ['jsVendors', 'styleVendors', 'views', 'js', 'styles',
+    'backLint', 'watch']);

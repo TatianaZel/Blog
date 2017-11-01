@@ -1,7 +1,5 @@
-"use strict";
-
 module.exports = function (sequelize, DataTypes) {
-    var Message = sequelize.define("Message", {
+    const Message = sequelize.define('Message', {
         text: {
             type: DataTypes.STRING,
             notEmpty: true
@@ -15,20 +13,27 @@ module.exports = function (sequelize, DataTypes) {
 
     Message.prototype.getMessagesByChat = function (id, userModel, from) {
         return new Promise((resolve) => {
-            let opt = {
+            const opt = {
                 where: {
                     ChatId: id
                 },
                 offset: from,
                 limit: 100,
-                include: [{model: userModel, as: 'author'}],
+                include: [{model: userModel,
+                        as: 'author'}
+                ],
                 order: [
-                    ['createdAt']
+                    ['createdAt', 'DESC']
                 ]
             };
 
             Message.findAll(opt).then((messages) => {
-                resolve(messages);
+                if (messages) {
+                    resolve(messages);
+                }
+                else {
+                    resolve([]);
+                }
             });
         });
     };

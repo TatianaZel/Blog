@@ -1,9 +1,7 @@
-"use strict";
-
-const HttpError = require("../helpers/HttpError");
+const HttpError = require('../helpers/HttpError');
 
 module.exports = function (sequelize, DataTypes) {
-    var User = sequelize.define("User", {
+    const User = sequelize.define('User', {
         name: {
             type: DataTypes.STRING,
             notEmpty: true
@@ -33,48 +31,61 @@ module.exports = function (sequelize, DataTypes) {
 
     User.prototype.auth = function (email, password) {
         return new Promise((resolve, reject) => {
-            User.findOne({
-                where: {
-                    email: email,
-                    password: password
-                }
-            }).then((user) => {
-                if (user) {
-                    resolve(user);
-                }
-                reject(new HttpError(403, "Wrong email or password"));
-            });
+            User
+                .findOne({
+                    where: {
+                        email,
+                        password
+                    }
+                })
+                .then((user) => {
+                    if (user) {
+                        resolve(user);
+                    }
+                    reject(new HttpError(403, 'Wrong email or password'));
+                });
         });
     };
 
     User.prototype.checkEmail = function (email, id) {
-        return new Promise((resolve, reject) => {
-            return User.findOne({
-                where: {
-                    email: email,
-                    id: {
-                        $not: id
+        return new Promise((resolve, reject) =>
+            User
+                .findOne({
+                    where: {
+                        email,
+                        id: {
+                            $not: id
+                        }
                     }
-                }
-            }).then((user) => {
-                if (user) {
-                    reject(new HttpError(403, "Email alredy exists"));
-                }
-                resolve();
-            });
-        });
+                })
+                .then((user) => {
+                    if (user) {
+                        reject(new HttpError(403, 'Email alredy exists'));
+                    }
+                    resolve();
+                })
+        );
     };
 
     User.prototype.getChats = function (id, chatModel) {
         return new Promise((resolve) => {
-            let opt = {
+            const opt = {
                 where: {
-                    id: id
+                    id
                 },
                 include: [
                     {
                         model: chatModel,
-                        include: [{model: User, attributes: ['id', 'name', 'surname']}]
+                        include: [
+                            {
+                                model: User,
+                                attributes: [
+                                    'id',
+                                    'name',
+                                    'surname'
+                                ]
+                            }
+                        ]
                     }
                 ]
             };
@@ -82,7 +93,6 @@ module.exports = function (sequelize, DataTypes) {
             User.findOne(opt).then((user) => {
                 resolve(user.Chats);
             });
-
         });
     };
 

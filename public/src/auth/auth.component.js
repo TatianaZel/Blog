@@ -20,7 +20,7 @@ function authController(authService, $state) {
 
     function signIn(userData) {
         authService.signIn(userData).then(() => {
-             $state.go('member', {userId: authService.authData.id});
+            $state.go('member', {userId: authService.authData.id});
         });
     }
 }

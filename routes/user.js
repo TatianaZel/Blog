@@ -1,12 +1,11 @@
-"use strict";
+const router = require('express').Router();
+const Users = require('../models').User;
+const Session = require('../helpers/Session');
+const ACL = require('../helpers/ACL');
+const HttpError = require('../helpers/HttpError');
+const form = require('express-form2');
 
-const router = require("express").Router();
-const Users = require("../models").User;
-const Session = require("../helpers/Session");
-const ACL = require("../helpers/ACL");
-const HttpError = require("../helpers/HttpError");
-const form = require("express-form2");
-  var field = form.field;
+const field = form.field;
 
 /**
  * Get all users
@@ -14,9 +13,7 @@ const form = require("express-form2");
 router.get(
     ['/'],
 
-    // Controller
     (req, res, next) => {
-
         Users
             .findAll({
                 attributes: {exclude: ['password']}
@@ -34,7 +31,6 @@ router.get(
 router.get(
     ['/:userId'],
 
-    // Controller
     (req, res, next) => {
         res.send(req.data.user);
     }
@@ -48,31 +44,28 @@ router.put(
 
     ACL(),
 
-// Body validation
     form(
         field('name')
-            .required(),
-
+        .required(),
         field('surname')
-            .required(),
-
+        .required(),
         field('email')
-            .required()
-            .trim()
-            .isEmail(),
-
+        .required()
+        .trim()
+        .isEmail(),
         field('description')
-    ),
+     ),
 
-    // Controller
     (req, res, next) => {
-        if (!req.form.isValid)
-            return next(new HttpError(412, "Invalid input data", req.form.errors));
+        if (!req.form.isValid) {
+            return next(new HttpError(412, 'Invalid input data', req.form.errors));
+        }
 
-        let user = req.data.user;
+        const user = req.data.user;
 
-        if (user.id !== req.userId)
-            next(new HttpError(403, "Unavailable action"));
+        if (user.id !== req.userId) {
+            next(new HttpError(403, 'Unavailable action'));
+        }
 
         Users.prototype
             .checkEmail(req.form.email, user.id)
@@ -87,7 +80,7 @@ router.put(
                     .then(() => {
                         res.send(user);
                     })
-                    .catch(next);//?
+                    .catch(next);
             })
             .catch(next);
     }
@@ -103,25 +96,24 @@ router.put(
 
     form(
         field('currentPassword')
-            .required(),
-
+        .required(),
         field('newPassword')
-            .required()
-            .minLength(8)
-            .maxLength(40)
+        .required()
+        .minLength(8)
+        .maxLength(40)
     ),
 
-    // Controller
     (req, res, next) => {
-        if (!req.form.isValid)
-            return next(new HttpError(412, "Invalid input data", req.form.errors));
+        if (!req.form.isValid) {
+            return next(new HttpError(412, 'Invalid input data', req.form.errors));
+        }
 
-        let user = req.data.user;
+        const user = req.data.user;
 
         Users.findById(user.id)
             .then((user) => {
                 if (user.password !== req.form.currentPassword) {
-                    return next(new HttpError(403, "Uncorrect password"));
+                    return next(new HttpError(403, 'Uncorrect password'));
                 }
 
                 user.password = req.form.newPassword;
@@ -139,24 +131,24 @@ router.put(
 
 // Params
 router.param('userId', (req, res, next, userId) => {
-        if((userId ^ 0) != userId)
-            return next(new HttpError(416, "Post id is not valid"));
-
-        Users.find({
-                where: {id: userId},
-                attributes: {exclude: ['password']}
-            })
-            .then((user) => {
-                if (!user) {
-                    return next(new HttpError(404, "User not found"));
-                }
-
-                req.data = req.data || {};
-                req.data.user = user;
-                next();
-            })
-            .catch(next);
+    if ((userId ^ 0) != userId) {
+        return next(new HttpError(416, 'Post id is not valid'));
     }
-);
+
+    Users.find({
+            where: {id: userId},
+            attributes: {exclude: ['password']}
+        })
+        .then((user) => {
+            if (!user) {
+                return next(new HttpError(404, 'User not found'));
+            }
+
+            req.data = req.data || {};
+            req.data.user = user;
+            next();
+        })
+        .catch(next);
+});
 
 module.exports = router;

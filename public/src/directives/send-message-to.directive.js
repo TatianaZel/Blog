@@ -1,4 +1,5 @@
-app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', messageModalSwitch]);
+app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack',
+    messageModalSwitch]);
 
 function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
     return {
@@ -12,24 +13,29 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
                     templateUrl: 'build/views/components/message-modal/message-modal.html',
                     size: 'sm',
                     controller: modalController,
-                    controllerAs: '$ctrl'
+                    controllerAs: '$ctrl',
                 });
             });
-
             function modalController() {
                 let $ctrl = this;
-                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);//сделать фильтром
+                $ctrl.chats = chatService.getChatsByUser(scope.member.id); //сделать фильтром
                 $ctrl.sendMessage = sendMessage;
+                $ctrl.close = () => {
+                    $uibModalStack.dismissAll({});
+                };
 
                 function sendMessage(messageData) {
                     if (!messageData.chatId) {
-                        chatService.messageToNewChat(messageData.text, scope.member.id).then(() => {
-                            $uibModalStack.dismissAll({});
-                        });
-                    } else {
-                        chatService.messageToExistChat(messageData.text, messageData.chatId).then(() => {
-                            $uibModalStack.dismissAll({});
-                        });
+                        chatService.messageToNewChat(messageData.text, scope.member.id)
+                            .then(() => {
+                                $uibModalStack.dismissAll({});
+                            });
+                    }
+                    else {
+                        chatService.messageToExistChat(messageData.text, messageData.chatId)
+                            .then(() => {
+                                $uibModalStack.dismissAll({});
+                            });
                     }
                 }
             }

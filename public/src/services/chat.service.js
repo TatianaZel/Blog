@@ -1,18 +1,20 @@
 app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
     (localStorageService, $rootScope, $anchorScroll, $location) => {
-        var chats = []
-        var socket;
-        var counters = {};
-        var resolveMsg;
-        var resolveChat;
+        let chats = [],
+            socket,
+            counters = {},
+            resolveMsg,
+            resolveChat,
+            selectedChat = {};
 
         return {
             connect: connect,
             disconnect: disconnect,
             messageToNewChat: messageToNewChat,
             messageToExistChat: messageToExistChat,
-            getChatsWithUser: getChatsWithUser,
+            getChatsByUser: getChatsByUser,
             loadMessages: loadMessages,
+            selectedChat: selectedChat,
             chats: chats
         };
 
@@ -25,6 +27,11 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
             socket.on('successConnection', (data) => {
                 reIndexingChats(data.chats);
+
+                if (selectedChat.id !== undefined) {
+                    loadMessages(selectedChat.id);
+                    selectedChat.id = undefined;
+                }
 
                 $rootScope.$digest();
 
@@ -53,15 +60,24 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         function reIndexingChats(data) {
             data.forEach((item) => {
                 chats[item.id] = item;
+                counters[item.id] = 0;
             });
         }
 
-        function disconnect() {///
-            chats = [];////
+        function disconnect() {
+            chats.forEach((item) => {
+                item = '';
+            });
 
             for (var key in counters) {
                 counters[key] = 0;
             }
+
+            socket.removeAllListeners('messageForClient');
+            socket.removeAllListeners('newChatForClient');
+            socket.removeAllListeners('messageSended');
+            socket.removeAllListeners('newChatCreated');
+
             socket.emit('disconnect');
         }
 
@@ -90,12 +106,9 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
         function loadMessages(chatId) {
             return new Promise((resolve) => {
-                if (!counters[chatId]) {
-                    counters[chatId] = 0;
-                }
-
                 socket.on('portionOfMessages', (data) => {
                     setMessagesToChat(chatId, data);
+
                     socket.removeAllListeners('portionOfMessages');
                     resolve();
                 });
@@ -115,14 +128,11 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         }
 
         function setMessageToChat(data) {
-            if (!counters[data.ChatId])
-                return;
+            if (!chats[data.ChatId].Messages)
+                chats[data.ChatId].Messages = [];
 
-            if (!chats[data.chatId].Messages)
-                chats[data.chatId].Messages = [];
-
-            chats[data.chatId].Messages.push(data);
-            chats[data.chatId].updatedAt = data.createdAt;
+            chats[data.ChatId].Messages.push(data);
+            chats[data.ChatId].updatedAt = data.createdAt;
             $rootScope.$digest();
 
             counters[data.ChatId]++;
@@ -132,10 +142,13 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         }
 
         function setMessagesToChat(chatId, messages) {
-            counters[chatId] = counters[chatId] + messages.length + 1;
+            if (!chats[chatId])
+                return;
 
             if (!chats[chatId].Messages)
                 chats[chatId].Messages = [];
+
+            counters[chatId] = counters[chatId] + messages.length + 1;
 
             Array.prototype.push.apply(chats[chatId].Messages, messages);
             $rootScope.$digest();
@@ -144,7 +157,7 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
             $anchorScroll();
         }
 
-        function getChatsWithUser(userId) {
+        function getChatsByUser(userId) {
             var chatsWithUser = [];
 
             chats.forEach((chat) => {

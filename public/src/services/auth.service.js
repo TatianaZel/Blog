@@ -8,12 +8,12 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
         };
 
         var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                id: localStorageService.cookie.get('id'),
-                name: localStorageService.cookie.get('name'),
-                surname: localStorageService.cookie.get('surname')
-            },
+            token: localStorageService.cookie.get('token'),
+            email: localStorageService.cookie.get('email'),
+            id: localStorageService.cookie.get('id'),
+            name: localStorageService.cookie.get('name'),
+            surname: localStorageService.cookie.get('surname')
+        },
             reqData = {
                 isSendingNow: false
             },

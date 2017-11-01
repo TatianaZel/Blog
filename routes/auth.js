@@ -1,59 +1,51 @@
-'use strict';
-
 const router = require('express').Router();
 
-const Users = require("../models").User;
-const Session = require("../helpers/Session");
+const Users = require('../models').User;
+const Session = require('../helpers/Session');
 const ACL = require('../helpers/ACL');
-const HttpError = require("../helpers/HttpError");
+const HttpError = require('../helpers/HttpError');
 const form = require('express-form2');
-  var field   = form.field;
+
+const field = form.field;
 
 router.post(
     ['/signup'],
 
-    // Body validation
     form(
         field('password')
-            .required()
-            .minLength(8)
-            .maxLength(40),
-
+        .required()
+        .minLength(8)
+        .maxLength(40),
         field('name')
-            .required(),
-
+        .required(),
         field('surname')
-            .required(),
-
+        .required(),
         field('email')
-            .required()
-            .trim()
-            .isEmail(),
-
+        .required()
+        .trim()
+        .isEmail(),
         field('description')
-            .trim()
+        .trim()
     ),
 
-    // Controller
     (req, res, next) => {
-
-        if(!req.form.isValid) {
-            return next(new HttpError(412, "Invalid input data", req.form.errors));
+        if (!req.form.isValid) {
+            return next(new HttpError(412, 'Invalid input data', req.form.errors));
         }
 
         Users.prototype
             .checkEmail(req.form.email, 0)
             .then(() => {
-                let user = new Users({
-                        name: req.form.name,
-                        surname: req.form.surname,
-                        email: req.form.email,
-                        password: req.form.password,
-                        description: req.form.description
-                    });
+                const user = new Users({
+                    name: req.form.name,
+                    surname: req.form.surname,
+                    email: req.form.email,
+                    password: req.form.password,
+                    description: req.form.description,
+                });
 
-                user.
-                    save()
+                user
+                    .save()
                     .then(() => {
                         res.send();
                     })
@@ -66,21 +58,18 @@ router.post(
 router.post(
     ['/signin'],
 
-    // Body validation
     form(
         field('email')
-            .required()
-            .trim()
-            .isEmail(),
-
+        .required()
+        .trim()
+        .isEmail(),
         field('password')
-            .required()
+        .required()
     ),
 
-    // Controller
     (req, res, next) => {
         if (!req.form.isValid) {
-            return next(new HttpError(412, "Invalid input data", req.form.errors));
+            return next(new HttpError(412, 'Invalid input data', req.form.errors));
         }
 
         let user;
@@ -93,7 +82,7 @@ router.post(
             })
             .then((token) => {
                 res.send({
-                    token: token,
+                    token,
                     id: user.id,
                     name: user.name,
                     surname: user.surname,
@@ -109,7 +98,6 @@ router.post(
 
     ACL(),
 
-    // Controller
     (req, res, next) => {
         Session
             .kill(req.session)

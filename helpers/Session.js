@@ -6,12 +6,12 @@
  *
  * @module helpers/Session
  */
-'use strict';
 
-const Users = require("../models").User;
-const Sessions = require("../models").Session;
 
-//const HttpError = require("HttpError");
+const Users = require('../models').User;
+const Sessions = require('../models').Session;
+
+// const HttpError = require("HttpError");
 
 var Session = {
     /**
@@ -21,7 +21,7 @@ var Session = {
      * if sesson not defined, expires, ect
      */
     middleware(req, res, next) {
-        var token = req.headers ? req.headers.token : null;
+        const token = req.headers ? req.headers.token : null;
 
         Session.check(token).then((user) => {
             if (user) {
@@ -30,7 +30,7 @@ var Session = {
                 req.session = req.headers.token;
             }
             next();
-        }).catch((err) => {
+        }).catch((err) => { // /
             next();
         });
     },
@@ -44,8 +44,10 @@ var Session = {
         return new Promise((resolve, reject) => {
             if (token) {
                 Session.get(token).then(resolve, reject);
-            } else
+            }
+            else {
                 reject(null);
+            }
         });
     },
     /**
@@ -68,15 +70,15 @@ var Session = {
     get(token) {
         return Sessions.findOne({
             where: {
-                token: token
-            }
+                token,
+            },
         }).then((session) => {
             if (session) {
                 return Users.findOne({
                     where: {
-                        id: session.UserId
+                        id: session.UserId,
                     },
-                    attributes: {exclude: ['password']}
+                    attributes: {exclude: ['password']},
                 });
             }
         });
@@ -90,7 +92,7 @@ var Session = {
      */
     kill(token) {
         return Sessions.prototype.removeSession(token);
-    }
+    },
 };
 
 module.exports = Session;

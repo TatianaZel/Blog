@@ -1,10 +1,7 @@
-"use strict";
+const Session = require('../helpers/HttpError');
 
-const Session = require("../helpers/HttpError");
-
-
-module.exports = function (sequelize, DataTypes) {
-    var Chat = sequelize.define("Chat", {});
+module.exports = function (sequelize) {
+    const Chat = sequelize.define('Chat', {});
 
     Chat.associate = function (models) {
         Chat.hasMany(models.Message);
@@ -13,9 +10,9 @@ module.exports = function (sequelize, DataTypes) {
 
     Chat.prototype.getChatUsers = function (id, userModel) {
         return new Promise((resolve) => {
-            let opt = {
+            const opt = {
                 where: {
-                    id: id
+                    id
                 },
                 include: [userModel]
             };
@@ -28,9 +25,9 @@ module.exports = function (sequelize, DataTypes) {
 
     Chat.prototype.getChat = function (id, userModel, messageModel) {
         return new Promise((resolve) => {
-            let opt = {
+            const opt = {
                 where: {
-                    id: id
+                    id
                 },
                 include: [
                     {

@@ -1,21 +1,25 @@
 'use strict';
 
-let app = angular.module('app', ['ui.router', 'ui.router.state.events', 'LocalStorageModule', 'ui.bootstrap', 'ngAnimate']).run(['$rootScope', 'localStorageService',
-    ($rootScope, localStorageService) => {
-        $rootScope.$on('$stateChangeStart', (event, toState) => {
-            if (toState.data && toState.data.auth) {
-                if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
-                    event.preventDefault();
-                    return false;
+let app = angular
+    .module('app', ['ui.router', 'ui.router.state.events',
+        'LocalStorageModule', 'ui.bootstrap', 'ngAnimate'])
+    .run(['$rootScope', 'localStorageService', '$animate',
+        ($rootScope, localStorageService, $animate) => {
+            $animate.enabled(true);
+            $rootScope.$on('$stateChangeStart', (event, toState) => {
+                if (toState.data && toState.data.auth) {
+                    if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
+                        event.preventDefault();
+                        return false;
+                    }
+                    if (toState.data.auth === 'Authorized' && !localStorageService.cookie.get('token')) {
+                        event.preventDefault();
+                        return false;
+                    }
                 }
-                if (toState.data.auth === 'Authorized' && !localStorageService.cookie.get('token')) {
-                    event.preventDefault();
-                    return false;
-                }
-            }
-        });
-    }
-]);
+            });
+        }
+    ]);
 
 app.factory('memberListService', ['requestService', 'urls',
     (requestService, urls) => {
@@ -59,12 +63,12 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
         };
 
         var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                id: localStorageService.cookie.get('id'),
-                name: localStorageService.cookie.get('name'),
-                surname: localStorageService.cookie.get('surname')
-            },
+            token: localStorageService.cookie.get('token'),
+            email: localStorageService.cookie.get('email'),
+            id: localStorageService.cookie.get('id'),
+            name: localStorageService.cookie.get('name'),
+            surname: localStorageService.cookie.get('surname')
+        },
             reqData = {
                 isSendingNow: false
             },
@@ -191,19 +195,21 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
 
 app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
     (localStorageService, $rootScope, $anchorScroll, $location) => {
-        var chats = []
-        var socket;
-        var counters = {};
-        var resolveMsg;
-        var resolveChat;
+        let chats = [],
+            socket,
+            counters = {},
+            resolveMsg,
+            resolveChat,
+            selectedChat = {};
 
         return {
             connect: connect,
             disconnect: disconnect,
             messageToNewChat: messageToNewChat,
             messageToExistChat: messageToExistChat,
-            getChatsWithUser: getChatsWithUser,
+            getChatsByUser: getChatsByUser,
             loadMessages: loadMessages,
+            selectedChat: selectedChat,
             chats: chats
         };
 
@@ -216,6 +222,11 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
             socket.on('successConnection', (data) => {
                 reIndexingChats(data.chats);
+
+                if (selectedChat.id !== undefined) {
+                    loadMessages(selectedChat.id);
+                    selectedChat.id = undefined;
+                }
 
                 $rootScope.$digest();
 
@@ -244,15 +255,24 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         function reIndexingChats(data) {
             data.forEach((item) => {
                 chats[item.id] = item;
+                counters[item.id] = 0;
             });
         }
 
-        function disconnect() {///
-            chats = [];////
+        function disconnect() {
+            chats.forEach((item) => {
+                item = '';
+            });
 
             for (var key in counters) {
                 counters[key] = 0;
             }
+
+            socket.removeAllListeners('messageForClient');
+            socket.removeAllListeners('newChatForClient');
+            socket.removeAllListeners('messageSended');
+            socket.removeAllListeners('newChatCreated');
+
             socket.emit('disconnect');
         }
 
@@ -281,12 +301,9 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
         function loadMessages(chatId) {
             return new Promise((resolve) => {
-                if (!counters[chatId]) {
-                    counters[chatId] = 0;
-                }
-
                 socket.on('portionOfMessages', (data) => {
                     setMessagesToChat(chatId, data);
+
                     socket.removeAllListeners('portionOfMessages');
                     resolve();
                 });
@@ -306,14 +323,11 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         }
 
         function setMessageToChat(data) {
-            if (!counters[data.ChatId])
-                return;
+            if (!chats[data.ChatId].Messages)
+                chats[data.ChatId].Messages = [];
 
-            if (!chats[data.chatId].Messages)
-                chats[data.chatId].Messages = [];
-
-            chats[data.chatId].Messages.push(data);
-            chats[data.chatId].updatedAt = data.createdAt;
+            chats[data.ChatId].Messages.push(data);
+            chats[data.ChatId].updatedAt = data.createdAt;
             $rootScope.$digest();
 
             counters[data.ChatId]++;
@@ -323,10 +337,13 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
         }
 
         function setMessagesToChat(chatId, messages) {
-            counters[chatId] = counters[chatId] + messages.length + 1;
+            if (!chats[chatId])
+                return;
 
             if (!chats[chatId].Messages)
                 chats[chatId].Messages = [];
+
+            counters[chatId] = counters[chatId] + messages.length + 1;
 
             Array.prototype.push.apply(chats[chatId].Messages, messages);
             $rootScope.$digest();
@@ -335,7 +352,7 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
             $anchorScroll();
         }
 
-        function getChatsWithUser(userId) {
+        function getChatsByUser(userId) {
             var chatsWithUser = [];
 
             chats.forEach((chat) => {
@@ -371,14 +388,14 @@ app.factory('requestService', ['$http', '$q',
             };
 
             $http(req).then(
-                    (response) => {
-                        if (response)
-                            deferred.resolve(response);
-                    },
-                    (error) => {
-                        if (error)
-                            deferred.reject(error.data.message);
-                    });
+                (response) => {
+                if (response)
+                    deferred.resolve(response);
+            },
+                (error) => {
+                if (error)
+                    deferred.reject(error.data.message);
+            });
 
             return deferred.promise;
         }
@@ -411,123 +428,123 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
                 }
             };
 
-    return {
-        getPosts: getPosts,
-        posts: posts,
-        reqData: reqData,
-        editedPost: editedPost,
-        errorMessages: errorMessages,
-        removePost: removePost,
-        createPost: createPost,
-        editPost: editPost
-    };
+        return {
+            getPosts: getPosts,
+            posts: posts,
+            reqData: reqData,
+            editedPost: editedPost,
+            errorMessages: errorMessages,
+            removePost: removePost,
+            createPost: createPost,
+            editPost: editPost
+        };
 
-    function getPosts(userId) {
-        return new Promise((resolve, reject) => {
-            posts.splice(0, posts.length);
-            requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
-            function getPostsSuccess(res) {
-                if (res.data) {
-                    Array.prototype.push.apply(posts, res.data);
-                    errorMessages.gettingPosts = '';
-                    resolve();
-                } else {
-                    errorMessages.gettingPosts = 'No available posts.';
-                    reject();
-                }
-            }
-
-            function getPostsError(err) {
-                errorMessages.gettingPosts = err;
-                reject();
-            }
-        });
-    }
-
-    function createPost(sendData) {
-        return new Promise((resolve, reject) => {
-            var headers = {
-                'Token': authService.authData.token
-            };
-
-            reqData.isCreatingNow = true;
-
-            requestService.sendRequest(urls.post, 'post', headers, sendData, config).then(createPostSuccess, createPostError);
-
-            function createPostSuccess(res) {
-                reqData.isCreatingNow = false;
-                if (res.data) {
-                    posts.push(res.data);
-                    errorMessages.creatingPost = '';
-                    resolve();
-                } else {
-                    errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
-                    reject();
-                }
-            }
-
-            function createPostError(err) {
-                errorMessages.creatingPost = err;
-                reqData.isCreatingNow = false;
-                reject();
-            }
-        });
-    }
-
-    function editPost(id, sendData) {
-        return new Promise((resolve, reject) => {
-            var headers = {
-                'Token': authService.authData.token
-            };
-
-            reqData.isCreatingNow = true;
-
-            requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
-
-            function editPostSuccess(res) {
-                reqData.isCreatingNow = false;
-                errorMessages.creatingPost = '';
-                resolve();
-            }
-
-            function editPostError(err) {
-                errorMessages.edditingPost = err;
-                reqData.isCreatingNow = false;
-                reject();
-            }
-        });
-    }
-
-    function removePost(postId) {
-        return new Promise(function (resolve, reject) {
-            if (!confirm("Are you sure you want to remove the post?"))
-                return;
-
-            var headers = {
-                'Token': authService.authData.token
-            };
-
-            reqData.removedPost = postId;
-
-            requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
-
-            function removePostSuccess() {
-                errorMessages.removingPost = '';
-                for (var i = 0; i < posts.length; i++) {
-                    if (posts[i].id === reqData.removedPost) {
-                        posts.splice(i, 1);
+        function getPosts(userId) {
+            return new Promise((resolve, reject) => {
+                posts.splice(0, posts.length);
+                requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
+                function getPostsSuccess(res) {
+                    if (res.data) {
+                        Array.prototype.push.apply(posts, res.data);
+                        errorMessages.gettingPosts = '';
+                        resolve();
+                    } else {
+                        errorMessages.gettingPosts = 'No available posts.';
+                        reject();
                     }
                 }
-                resolve();
-            }
 
-            function removePostError(response) {
-                errorMessages.removingPost = response;
-                reject();
-            }
-        });
-    }
-}]);
+                function getPostsError(err) {
+                    errorMessages.gettingPosts = err;
+                    reject();
+                }
+            });
+        }
+
+        function createPost(sendData) {
+            return new Promise((resolve, reject) => {
+                var headers = {
+                    'Token': authService.authData.token
+                };
+
+                reqData.isCreatingNow = true;
+
+                requestService.sendRequest(urls.post, 'post', headers, sendData, config).then(createPostSuccess, createPostError);
+
+                function createPostSuccess(res) {
+                    reqData.isCreatingNow = false;
+                    if (res.data) {
+                        posts.push(res.data);
+                        errorMessages.creatingPost = '';
+                        resolve();
+                    } else {
+                        errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
+                        reject();
+                    }
+                }
+
+                function createPostError(err) {
+                    errorMessages.creatingPost = err;
+                    reqData.isCreatingNow = false;
+                    reject();
+                }
+            });
+        }
+
+        function editPost(id, sendData) {
+            return new Promise((resolve, reject) => {
+                var headers = {
+                    'Token': authService.authData.token
+                };
+
+                reqData.isCreatingNow = true;
+
+                requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
+
+                function editPostSuccess(res) {
+                    reqData.isCreatingNow = false;
+                    errorMessages.creatingPost = '';
+                    resolve();
+                }
+
+                function editPostError(err) {
+                    errorMessages.edditingPost = err;
+                    reqData.isCreatingNow = false;
+                    reject();
+                }
+            });
+        }
+
+        function removePost(postId) {
+            return new Promise(function (resolve, reject) {
+                if (!confirm("Are you sure you want to remove the post?"))
+                    return;
+
+                var headers = {
+                    'Token': authService.authData.token
+                };
+
+                reqData.removedPost = postId;
+
+                requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
+
+                function removePostSuccess() {
+                    errorMessages.removingPost = '';
+                    for (var i = 0; i < posts.length; i++) {
+                        if (posts[i].id === reqData.removedPost) {
+                            posts.splice(i, 1);
+                        }
+                    }
+                    resolve();
+                }
+
+                function removePostError(response) {
+                    errorMessages.removingPost = response;
+                    reject();
+                }
+            });
+        }
+    }]);
 
 app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
     (requestService, urls, authService, localStorageService) => {
@@ -546,7 +563,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
         function getUserInfo(id) {
             return new Promise(() => {
                 requestService.sendRequest(urls.members + id, 'get')
-                        .then(getInfoSuccess, getInfoError);
+                    .then(getInfoSuccess, getInfoError);
 
                 function getInfoSuccess(response) {
                     if (response && response.data) {
@@ -571,10 +588,10 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
         function editProfileData(profileData) {
             var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            },
                 headers = {
                     'Token': authService.authData.token
                 };
@@ -583,7 +600,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 reqData.isSendingNow = true;
 
                 requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                        .then(editProfileSuccess, editProfileError);
+                    .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
                     authService.authData.email = profileData.email;
@@ -604,10 +621,10 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
         function changePassword(passwordsData) {
             var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            },
                 headers = {
                     'Token': authService.authData.token
                 };
@@ -616,7 +633,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 reqData.isSendingNow = true;
 
                 requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                        .then(editProfileSuccess, editProfileError);
+                    .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
                     reqData.isSendingNow = false;
@@ -697,48 +714,8 @@ function authController(authService, $state) {
 
     function signIn(userData) {
         authService.signIn(userData).then(() => {
-             $state.go('member', {userId: authService.authData.id});
+            $state.go('member', {userId: authService.authData.id});
         });
-    }
-}
-
-app.component('blog', {
-    templateUrl: 'build/views/blog/blog.html',
-    controller: [blogController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function blogController() {
-    const $ctrl = this;
-}
-
-app.component('chat', {
-    templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', chatController]
-});
-
-function chatController(chatService, $stateParams) {
-    const $ctrl = this;
-
-    $ctrl.chats = chatService.chats;
-    $ctrl.selectChat = selectChat;
-    $ctrl.sendMessage = sendMessage;
-
-    
-
-
-    //selectChat($stateParams.chatId);
-
-    function sendMessage(chatId) {
-        chatService.messageToExistChat($ctrl.messageText, chatId);
-        $ctrl.messageText = '';
-    }
-
-    function selectChat(id) {
-        $ctrl.selectedChat = id;
-        chatService.loadMessages(id);
     }
 }
 
@@ -747,7 +724,7 @@ app.component('notice', {
         notice: '=',
         danger: '<'
     },
-    templateUrl:'build/views/components/notice.html',
+    templateUrl: 'build/views/components/notice.html',
     controller: [noticeController]
 });
 
@@ -807,7 +784,7 @@ function layoutController(authService, $state) {
 
     function signOut() {
         authService.signOut().then(() => {
-            if($state.current.name === 'editProfile')
+            if ($state.current.name === 'editProfile')
                 $state.go('members');
         });
     }
@@ -831,6 +808,63 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
+}
+
+app.component('blog', {
+    templateUrl: 'build/views/blog/blog.html',
+    controller: [blogController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function blogController() {
+    const $ctrl = this;
+}
+
+app.component('chat', {
+    templateUrl: 'build/views/chat/chat.html',
+    controller: ['chatService', '$stateParams', chatController]
+});
+
+function chatController(chatService, $stateParams) {
+    const $ctrl = this;
+
+    $ctrl.chats = chatService.chats;
+    $ctrl.selectChat = selectChat;
+    $ctrl.sendMessage = sendMessage;
+
+    selectChat($stateParams.chatId);
+
+    function selectChat(id) {
+        $ctrl.selectedChat = id;
+
+        if (!$ctrl.chats.length)
+            chatService.selectedChat.id = id;
+        else
+            chatService.loadMessages(id);
+    }
+
+    function sendMessage(chatId) {
+        chatService.messageToExistChat($ctrl.messageText, chatId);
+        $ctrl.messageText = '';
+    }
+}
+
+app.component('profileForm', {
+    bindings: {
+        title: '@',
+        isSendingNow: '<',
+        profile: '<',
+        submitFunc: '<',
+        errors: '<'
+    },
+    templateUrl: 'build/views/components/profile-form/profile-form.html',
+    controller: [profileFormController]
+});
+
+function profileFormController() {
+    const $ctrl = this;
 }
 
 app.component('editModal', {
@@ -917,10 +951,10 @@ function postModalController(postListService) {
 
 app.component('editProfile', {
     templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', '$state', editProfileController],
+    controller: ['profileService', 'localStorageService', editProfileController],
 });
 
-function editProfileController(profileService, localStorageService, $state) {
+function editProfileController(profileService, localStorageService) {
     const $ctrl = this;
 
     let userId = localStorageService.cookie.get('id');
@@ -958,22 +992,6 @@ function profileController(profileService, $stateParams) {
     $ctrl.info = profileService.userInfo;
 }
 
-app.component('profileForm', {
-    bindings: {
-        title: '@',
-        isSendingNow: '<',
-        profile: '<',
-        submitFunc: '<',
-        errors: '<'
-    },
-    templateUrl: 'build/views/components/profile-form/profile-form.html',
-    controller: [profileFormController]
-});
-
-function profileFormController() {
-    const $ctrl = this;
-}
-
 app.directive("compareTo", compareTo);
 
 function compareTo() {
@@ -995,7 +1013,8 @@ function compareTo() {
     };
 }
 
-app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack', messageModalSwitch]);
+app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack',
+    messageModalSwitch]);
 
 function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
     return {
@@ -1009,24 +1028,29 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
                     templateUrl: 'build/views/components/message-modal/message-modal.html',
                     size: 'sm',
                     controller: modalController,
-                    controllerAs: '$ctrl'
+                    controllerAs: '$ctrl',
                 });
             });
-
             function modalController() {
                 let $ctrl = this;
-                $ctrl.chats = chatService.getChatsWithUser(scope.member.id);//сделать фильтром
+                $ctrl.chats = chatService.getChatsByUser(scope.member.id); //сделать фильтром
                 $ctrl.sendMessage = sendMessage;
+                $ctrl.close = () => {
+                    $uibModalStack.dismissAll({});
+                };
 
                 function sendMessage(messageData) {
                     if (!messageData.chatId) {
-                        chatService.messageToNewChat(messageData.text, scope.member.id).then(() => {
-                            $uibModalStack.dismissAll({});
-                        });
-                    } else {
-                        chatService.messageToExistChat(messageData.text, messageData.chatId).then(() => {
-                            $uibModalStack.dismissAll({});
-                        });
+                        chatService.messageToNewChat(messageData.text, scope.member.id)
+                            .then(() => {
+                                $uibModalStack.dismissAll({});
+                            });
+                    }
+                    else {
+                        chatService.messageToExistChat(messageData.text, messageData.chatId)
+                            .then(() => {
+                                $uibModalStack.dismissAll({});
+                            });
                     }
                 }
             }
@@ -1047,6 +1071,21 @@ app.config(['$stateProvider',
             component: 'auth',
             data: {
                 auth: "Anonymous"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('members', {
+            url: "/",
+            component: 'memberList',
+            resolve: {
+                authData: ['authService', (authService) => {
+                        return authService.authData;
+                    }
+                ]
             }
         });
     }
@@ -1083,21 +1122,6 @@ app.config(['$stateProvider',
             component: 'chat',
             data: {
                 auth: "Authorized"
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('members', {
-            url: "/",
-            component: 'memberList',
-            resolve: {
-                authData: ['authService', (authService) => {
-                        return authService.authData;
-                    }
-                ]
             }
         });
     }

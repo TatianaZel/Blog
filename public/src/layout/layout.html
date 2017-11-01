@@ -11,17 +11,29 @@
         </div>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-2">
             <ul class="nav navbar-nav navbar-right">
-                <li class="" ng-show="$ctrl.authData.token"><a ui-sref="chat({chatId: ''})">Chat</a></li>
-                <li class="membersLink"><a ui-sref="members">Members</a></li>
                 <li class="signOut cursorPointer" ng-show="$ctrl.authData.token" ng-click="$ctrl.signOut()"><a>Sign out</a></li>
                 <li class="signIn" ng-show="!$ctrl.authData.token"><a ui-sref="auth">Sign in</a></li>
             </ul>
         </div>
     </div>
 </nav>
-<div class="container logoutErrors zeroPadding">
-    <notice notice="$ctrl.errorSignOutMessages" danger="true"></notice>
+
+<div class="sidebar" ng-class="{sideBarOpened: $ctrl.sideBarOpened}">
+    <ul class="sidebar-nav nav">
+        <li class="membersLink"><a ui-sref="members">Members</a></li>
+        <li class="" ng-show="$ctrl.authData.token"><a ui-sref="chat({chatId: ''})">Chat</a></li>
+    </ul>
+    <button class="btn" ng-click="$ctrl.sideBarOpened = !$ctrl.sideBarOpened">
+        <i class="fa fa-bars" aria-hidden="true"></i>
+    </button>
 </div>
-<div class="container">
-    <ui-view></ui-view>
+
+<div class="mainContent">
+    <div class="container logoutErrors zeroPadding">
+        <notice notice="$ctrl.errorSignOutMessages" danger="true"></notice>
+    </div>
+    <div class="container">
+        <ui-view></ui-view>
+    </div>
 </div>
+

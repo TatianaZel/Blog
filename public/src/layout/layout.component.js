@@ -12,7 +12,7 @@ function layoutController(authService, $state) {
 
     function signOut() {
         authService.signOut().then(() => {
-            if($state.current.name === 'editProfile')
+            if ($state.current.name === 'editProfile')
                 $state.go('members');
         });
     }

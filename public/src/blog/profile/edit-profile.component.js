@@ -1,9 +1,9 @@
 app.component('editProfile', {
     templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', '$state', editProfileController],
+    controller: ['profileService', 'localStorageService', editProfileController],
 });
 
-function editProfileController(profileService, localStorageService, $state) {
+function editProfileController(profileService, localStorageService) {
     const $ctrl = this;
 
     let userId = localStorageService.cookie.get('id');

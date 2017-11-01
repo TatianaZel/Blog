@@ -16,14 +16,14 @@ app.factory('requestService', ['$http', '$q',
             };
 
             $http(req).then(
-                    (response) => {
-                        if (response)
-                            deferred.resolve(response);
-                    },
-                    (error) => {
-                        if (error)
-                            deferred.reject(error.data.message);
-                    });
+                (response) => {
+                if (response)
+                    deferred.resolve(response);
+            },
+                (error) => {
+                if (error)
+                    deferred.reject(error.data.message);
+            });
 
             return deferred.promise;
         }

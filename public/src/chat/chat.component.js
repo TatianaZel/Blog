@@ -10,18 +10,19 @@ function chatController(chatService, $stateParams) {
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
-    
+    selectChat($stateParams.chatId);
 
+    function selectChat(id) {
+        $ctrl.selectedChat = id;
 
-    //selectChat($stateParams.chatId);
+        if (!$ctrl.chats.length)
+            chatService.selectedChat.id = id;
+        else
+            chatService.loadMessages(id);
+    }
 
     function sendMessage(chatId) {
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';
-    }
-
-    function selectChat(id) {
-        $ctrl.selectedChat = id;
-        chatService.loadMessages(id);
     }
 }

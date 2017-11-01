@@ -15,7 +15,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
         function getUserInfo(id) {
             return new Promise(() => {
                 requestService.sendRequest(urls.members + id, 'get')
-                        .then(getInfoSuccess, getInfoError);
+                    .then(getInfoSuccess, getInfoError);
 
                 function getInfoSuccess(response) {
                     if (response && response.data) {
@@ -40,10 +40,10 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
         function editProfileData(profileData) {
             var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            },
                 headers = {
                     'Token': authService.authData.token
                 };
@@ -52,7 +52,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 reqData.isSendingNow = true;
 
                 requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                        .then(editProfileSuccess, editProfileError);
+                    .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
                     authService.authData.email = profileData.email;
@@ -73,10 +73,10 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
         function changePassword(passwordsData) {
             var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            },
                 headers = {
                     'Token': authService.authData.token
                 };
@@ -85,7 +85,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                 reqData.isSendingNow = true;
 
                 requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                        .then(editProfileSuccess, editProfileError);
+                    .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
                     reqData.isSendingNow = false;
