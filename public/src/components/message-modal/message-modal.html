@@ -2,7 +2,7 @@
     <div class="modal-header">
         <button type="button" class="close" ng-click="$ctrl.close({})" aria-hidden="true">&times;</button>
         <div class="form-group" ng-if="$ctrl.chats.length">
-            <label>Choos the dialog</label>
+            <label>Choos a dialog</label>
             <select ng-model="$ctrl.messageData.chatId" class="form-control">
                 <option value="{{chat.id}}" ng-repeat="chat in $ctrl.chats">
                     <span>{{chat.Users[0].name}} {{chat.Users[0].surname}};</span>
