@@ -370,6 +370,17 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
     }
 ]);
 
+app.factory('notificationService', ['$rootScope', '$timeout', ($rootScope, $timeout) => {
+        var notifications = [];
+
+        return {
+
+        };
+
+    }
+
+]);
+
 app.factory('requestService', ['$http', '$q',
     ($http, $q) => {
         return {
@@ -719,6 +730,47 @@ function authController(authService, $state) {
     }
 }
 
+app.component('blog', {
+    templateUrl: 'build/views/blog/blog.html',
+    controller: [blogController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function blogController() {
+    const $ctrl = this;
+}
+
+app.component('chat', {
+    templateUrl: 'build/views/chat/chat.html',
+    controller: ['chatService', '$stateParams', chatController]
+});
+
+function chatController(chatService, $stateParams) {
+    const $ctrl = this;
+
+    $ctrl.chats = chatService.chats;
+    $ctrl.selectChat = selectChat;
+    $ctrl.sendMessage = sendMessage;
+
+    selectChat($stateParams.chatId);
+
+    function selectChat(id) {
+        $ctrl.selectedChat = id;
+
+        if (!$ctrl.chats.length)
+            chatService.selectedChat.id = id;
+        else
+            chatService.loadMessages(id);
+    }
+
+    function sendMessage(chatId) {
+        chatService.messageToExistChat($ctrl.messageText, chatId);
+        $ctrl.messageText = '';
+    }
+}
+
 app.component('notice', {
     bindings: {
         notice: '=',
@@ -808,63 +860,6 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
-}
-
-app.component('blog', {
-    templateUrl: 'build/views/blog/blog.html',
-    controller: [blogController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function blogController() {
-    const $ctrl = this;
-}
-
-app.component('chat', {
-    templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', chatController]
-});
-
-function chatController(chatService, $stateParams) {
-    const $ctrl = this;
-
-    $ctrl.chats = chatService.chats;
-    $ctrl.selectChat = selectChat;
-    $ctrl.sendMessage = sendMessage;
-
-    selectChat($stateParams.chatId);
-
-    function selectChat(id) {
-        $ctrl.selectedChat = id;
-
-        if (!$ctrl.chats.length)
-            chatService.selectedChat.id = id;
-        else
-            chatService.loadMessages(id);
-    }
-
-    function sendMessage(chatId) {
-        chatService.messageToExistChat($ctrl.messageText, chatId);
-        $ctrl.messageText = '';
-    }
-}
-
-app.component('profileForm', {
-    bindings: {
-        title: '@',
-        isSendingNow: '<',
-        profile: '<',
-        submitFunc: '<',
-        errors: '<'
-    },
-    templateUrl: 'build/views/components/profile-form/profile-form.html',
-    controller: [profileFormController]
-});
-
-function profileFormController() {
-    const $ctrl = this;
 }
 
 app.component('editModal', {
@@ -992,6 +987,22 @@ function profileController(profileService, $stateParams) {
     $ctrl.info = profileService.userInfo;
 }
 
+app.component('profileForm', {
+    bindings: {
+        title: '@',
+        isSendingNow: '<',
+        profile: '<',
+        submitFunc: '<',
+        errors: '<'
+    },
+    templateUrl: 'build/views/components/profile-form/profile-form.html',
+    controller: [profileFormController]
+});
+
+function profileFormController() {
+    const $ctrl = this;
+}
+
 app.directive("compareTo", compareTo);
 
 function compareTo() {
@@ -1077,21 +1088,6 @@ app.config(['$stateProvider',
 ]);
 
 app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('members', {
-            url: "/",
-            component: 'memberList',
-            resolve: {
-                authData: ['authService', (authService) => {
-                        return authService.authData;
-                    }
-                ]
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
     function ($stateProvider) {
         $stateProvider.state('member', {
             url: "/:userId",
@@ -1122,6 +1118,21 @@ app.config(['$stateProvider',
             component: 'chat',
             data: {
                 auth: "Authorized"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('members', {
+            url: "/",
+            component: 'memberList',
+            resolve: {
+                authData: ['authService', (authService) => {
+                        return authService.authData;
+                    }
+                ]
             }
         });
     }

@@ -9,6 +9,7 @@ a {
 }
 
 .blackBorder {
+    background-color: white;
     border-radius: 5px;
     border: 1px solid lightgray;
 }
@@ -33,4 +34,8 @@ textarea {
 
 .zeroPadding {
     padding: 0;
+}
+
+body {
+    background-image: url('../img/bg.jpg');
 }
