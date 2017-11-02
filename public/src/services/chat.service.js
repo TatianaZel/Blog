@@ -1,5 +1,6 @@
-app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
-    (localStorageService, $rootScope, $anchorScroll, $location) => {
+app.factory('chatService', ['localStorageService', '$rootScope',
+    '$anchorScroll', '$location', 'notificationService',
+    (localStorageService, $rootScope, $anchorScroll, $location, notificationService) => {
         let chats = [],
             socket,
             counters = {},
@@ -35,16 +36,34 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
                 $rootScope.$digest();
 
-                socket.on('messageForClient', (data) => {
-                    setMessageToChat(data);
+                socket.on('messageForClient', (msg) => {
+                    notificationService.add(
+                        {
+                            author: msg.author.name + ' ' + msg.author.surname,
+                            text: msg.text,
+                            chatId: msg.ChatId
+                        }
+                    );
+
+                    setMessageToChat(msg);
                 });
 
                 socket.on('newChatForClient', (newChat) => {
+                    var msg = newChat.Messages[0];
+
+                    notificationService.add(
+                        {
+                            author: msg.author.name + ' ' + msg.author.surname,
+                            text: msg.text,
+                            chatId: msg.ChatId
+                        }
+                    );
+
                     addNewChat(newChat);
                 });
 
-                socket.on('messageSended', (data) => {
-                    setMessageToChat(data);
+                socket.on('messageSended', (msg) => {
+                    setMessageToChat(msg);
                     resolveMsg ? resolveMsg() : '';
                 });
 

@@ -3,9 +3,9 @@
 let app = angular
     .module('app', ['ui.router', 'ui.router.state.events',
         'LocalStorageModule', 'ui.bootstrap', 'ngAnimate'])
-    .run(['$rootScope', 'localStorageService', '$animate',
-        ($rootScope, localStorageService, $animate) => {
-            $animate.enabled(true);
+    .run(['$rootScope', 'localStorageService',
+        ($rootScope, localStorageService) => {
+            //$animate.enabled(true);
             $rootScope.$on('$stateChangeStart', (event, toState) => {
                 if (toState.data && toState.data.auth) {
                     if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {
@@ -193,8 +193,9 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
     }
 ]);
 
-app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll', '$location',
-    (localStorageService, $rootScope, $anchorScroll, $location) => {
+app.factory('chatService', ['localStorageService', '$rootScope',
+    '$anchorScroll', '$location', 'notificationService',
+    (localStorageService, $rootScope, $anchorScroll, $location, notificationService) => {
         let chats = [],
             socket,
             counters = {},
@@ -230,16 +231,34 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
 
                 $rootScope.$digest();
 
-                socket.on('messageForClient', (data) => {
-                    setMessageToChat(data);
+                socket.on('messageForClient', (msg) => {
+                    notificationService.add(
+                        {
+                            author: msg.author.name + ' ' + msg.author.surname,
+                            text: msg.text,
+                            chatId: msg.ChatId
+                        }
+                    );
+
+                    setMessageToChat(msg);
                 });
 
                 socket.on('newChatForClient', (newChat) => {
+                    var msg = newChat.Messages[0];
+
+                    notificationService.add(
+                        {
+                            author: msg.author.name + ' ' + msg.author.surname,
+                            text: msg.text,
+                            chatId: msg.ChatId
+                        }
+                    );
+
                     addNewChat(newChat);
                 });
 
-                socket.on('messageSended', (data) => {
-                    setMessageToChat(data);
+                socket.on('messageSended', (msg) => {
+                    setMessageToChat(msg);
                     resolveMsg ? resolveMsg() : '';
                 });
 
@@ -370,16 +389,36 @@ app.factory('chatService', ['localStorageService', '$rootScope', '$anchorScroll'
     }
 ]);
 
-app.factory('notificationService', ['$rootScope', '$timeout', ($rootScope, $timeout) => {
+app.factory('notificationService', ['$timeout',
+    ($timeout) => {
         var notifications = [];
         var notificationId = 0;
 
         return {
-
+            notifications: notifications,
+            add: add,
+            remove: remove
         };
 
-    }
+        function add(item) {
+            item.id = notificationId;
 
+            Array.prototype.unshift.call(notifications, item);
+            notificationId++;
+
+            $timeout(function () {
+                remove(item.id);
+            }, 7000);
+        }
+
+        function remove(id) {
+            notifications.forEach(function (elem, index) {
+                if (elem.id === id) {
+                    notifications.splice(index, 1);
+                }
+            });
+        }
+    }
 ]);
 
 app.factory('requestService', ['$http', '$q',
@@ -986,6 +1025,25 @@ function profileController(profileService, $stateParams) {
 
     $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
     $ctrl.info = profileService.userInfo;
+}
+
+app.component('notificationMessages', {
+
+    templateUrl: 'build/views/components/notification/notification.html',
+    controller: ['notificationService', '$state', notificationController]
+});
+
+function notificationController(notificationService, $state) {
+    const $ctrl = this;
+
+    $ctrl.notifications = notificationService.notifications;
+    $ctrl.remove = notificationService.remove;
+    $ctrl.openChat = openChat;
+
+    function openChat(chatId, notificationId) {
+        $state.go('chat', {chatId: chatId});
+        notificationService.remove(notificationId);
+    }
 }
 
 app.component('profileForm', {

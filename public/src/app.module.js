@@ -3,9 +3,9 @@
 let app = angular
     .module('app', ['ui.router', 'ui.router.state.events',
         'LocalStorageModule', 'ui.bootstrap', 'ngAnimate'])
-    .run(['$rootScope', 'localStorageService', '$animate',
-        ($rootScope, localStorageService, $animate) => {
-            $animate.enabled(true);
+    .run(['$rootScope', 'localStorageService',
+        ($rootScope, localStorageService) => {
+            //$animate.enabled(true);
             $rootScope.$on('$stateChangeStart', (event, toState) => {
                 if (toState.data && toState.data.auth) {
                     if (toState.data.auth === 'Anonymous' && localStorageService.cookie.get('token')) {

@@ -1,0 +1,3 @@
+<div class="notification animation breakWord" ng-repeat="notification in $ctrl.notifications" ng-click="$ctrl.openChat(notification.chatId, notification.id)">
+    <span class="type">{{notification.author}} : </span>{{notification.text}}<a ng-click="$ctrl.remove(notification.id)" class="close">x</a>
+</div>
