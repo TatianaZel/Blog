@@ -27,6 +27,8 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
 
             socket.on('successConnection', (data) => {
+                console.log(data);
+                
                 reIndexingChats(data.chats);
 
                 if (selectedChat.id !== undefined) {
@@ -161,6 +163,8 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function setMessagesToChat(chatId, messages) {
+            console.log(messages);
+            
             if (!chats[chatId])
                 return;
 

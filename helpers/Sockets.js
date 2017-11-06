@@ -21,7 +21,7 @@ function connection(socket) {
     Session.check(query.token).then((user) => {
         socket.join(user.id);
 
-        Users.prototype.getChats(user.id, Chats).then((chats) => {
+        Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
             socket.on('messageToExistChat', addMessageToExistChat);
             socket.on('messageToNewChat', addMessageToNewChat);
             socket.on('loadMessages', getMessagesByChat);
