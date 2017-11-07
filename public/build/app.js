@@ -759,6 +759,33 @@ function blogController() {
     const $ctrl = this;
 }
 
+app.component('auth', {
+    templateUrl: 'build/views/auth/auth.html',
+    controller: ['authService', '$state', authController]
+});
+
+function authController(authService, $state) {
+    const $ctrl = this;
+
+    $ctrl.errorSignInMessages = authService.errorSignInMessages;
+    $ctrl.errorSignUpMessages = authService.errorSignUpMessages;
+    $ctrl.reqAuthData = authService.reqData;
+    $ctrl.signIn = signIn;
+    $ctrl.signUp = signUp;
+
+    function signUp(userData) {
+        authService.signUp(userData).then(() => {
+            $state.go('member', {userId: authService.authData.id});
+        });
+    }
+
+    function signIn(userData) {
+        authService.signIn(userData).then(() => {
+            $state.go('member', {userId: authService.authData.id});
+        });
+    }
+}
+
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
     controller: ['chatService', '$stateParams', chatController]
@@ -785,73 +812,6 @@ function chatController(chatService, $stateParams) {
     function sendMessage(chatId) {
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';
-    }
-}
-
-app.component('layout', {
-    templateUrl: 'build/views/layout/layout.html',
-    controller: ['authService', '$state', layoutController]
-});
-
-function layoutController(authService, $state) {
-    const $ctrl = this;
-
-    $ctrl.authData = authService.authData;
-    $ctrl.errorSignOutMessages = authService.errorSignOutMessages;
-    $ctrl.signOut = signOut;
-
-    function signOut() {
-        authService.signOut().then(() => {
-            if ($state.current.name === 'editProfile')
-                $state.go('members');
-        });
-    }
-}
-
-app.component('memberList', {
-    templateUrl: 'build/views/member-list/member-list.html',
-    controller: ['memberListService', memberListController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function memberListController(memberListService) {
-    memberListService.getMembers();
-
-    const $ctrl = this;
-
-    $ctrl.members = memberListService.members;
-
-    $ctrl.filterParams = {
-        searchOptions: ['name', 'surname']
-    };
-}
-
-app.component('auth', {
-    templateUrl: 'build/views/auth/auth.html',
-    controller: ['authService', '$state', authController]
-});
-
-function authController(authService, $state) {
-    const $ctrl = this;
-
-    $ctrl.errorSignInMessages = authService.errorSignInMessages;
-    $ctrl.errorSignUpMessages = authService.errorSignUpMessages;
-    $ctrl.reqAuthData = authService.reqData;
-    $ctrl.signIn = signIn;
-    $ctrl.signUp = signUp;
-
-    function signUp(userData) {
-        authService.signUp(userData).then(() => {
-            $state.go('member', {userId: authService.authData.id});
-        });
-    }
-
-    function signIn(userData) {
-        authService.signIn(userData).then(() => {
-            $state.go('member', {userId: authService.authData.id});
-        });
     }
 }
 
@@ -904,6 +864,46 @@ function validateErrorsController() {
 
         return false;
     }
+}
+
+app.component('layout', {
+    templateUrl: 'build/views/layout/layout.html',
+    controller: ['authService', '$state', layoutController]
+});
+
+function layoutController(authService, $state) {
+    const $ctrl = this;
+
+    $ctrl.authData = authService.authData;
+    $ctrl.errorSignOutMessages = authService.errorSignOutMessages;
+    $ctrl.signOut = signOut;
+
+    function signOut() {
+        authService.signOut().then(() => {
+            if ($state.current.name === 'editProfile')
+                $state.go('members');
+        });
+    }
+}
+
+app.component('memberList', {
+    templateUrl: 'build/views/member-list/member-list.html',
+    controller: ['memberListService', memberListController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function memberListController(memberListService) {
+    memberListService.getMembers();
+
+    const $ctrl = this;
+
+    $ctrl.members = memberListService.members;
+
+    $ctrl.filterParams = {
+        searchOptions: ['name', 'surname']
+    };
 }
 
 app.component('editModal', {
@@ -1164,6 +1164,18 @@ app.config(['$stateProvider',
 
 app.config(['$stateProvider',
     ($stateProvider) => {
+        $stateProvider.state('auth', {
+            url: "/auth",
+            component: 'auth',
+            data: {
+                auth: "Anonymous"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
         $stateProvider.state('chat', {
             url: "/chat/:chatId",
             component: 'chat',
@@ -1184,18 +1196,6 @@ app.config(['$stateProvider',
                         return authService.authData;
                     }
                 ]
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('auth', {
-            url: "/auth",
-            component: 'auth',
-            data: {
-                auth: "Anonymous"
             }
         });
     }

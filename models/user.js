@@ -84,15 +84,15 @@ module.exports = function (sequelize, DataTypes) {
                                     'name',
                                     'surname'
                                 ]
-                            },
-                            {
-                                model: messageModel,
-                                required: false,
-                                where: {
-                                    status: 'new'
-                                },
-                                attributes: [[sequelize.fn('Count', 'Message.id'), 'Count']]
                             }
+//                            {
+//                                model: messageModel,
+//                                required: false,
+//                                where: {
+//                                    status: 'new'
+//                                },
+//                                attributes: [[sequelize.fn('Count', 'Message.id'), 'Count']]
+//                            }
                         ]
                     }
                 ]
