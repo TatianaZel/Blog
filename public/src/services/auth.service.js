@@ -1,19 +1,20 @@
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
+app.factory('authService', ['localStorageService', 'requestService', 'urls',
+    'chatService',
     (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
-            token: localStorageService.cookie.get('token'),
-            email: localStorageService.cookie.get('email'),
-            id: localStorageService.cookie.get('id'),
-            name: localStorageService.cookie.get('name'),
-            surname: localStorageService.cookie.get('surname')
-        },
+                token: localStorageService.cookie.get('token'),
+                email: localStorageService.cookie.get('email'),
+                id: localStorageService.cookie.get('id'),
+                name: localStorageService.cookie.get('name'),
+                surname: localStorageService.cookie.get('surname')
+            },
             reqData = {
                 isSendingNow: false
             },
@@ -39,7 +40,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
         function signIn(sendData, signUpResolve) {
             return new Promise((resolve, reject) => {
                 reqData.isSendingNow = true;
-                requestService.sendRequest(urls.signIn, 'post', null, sendData, config).then(signInSuccess, signInError);
+                requestService.sendRequest(urls.signIn, 'post', null, sendData, config)
+                    .then(signInSuccess, signInError);
 
                 function signInSuccess(response) {
                     reqData.isSendingNow = false;
@@ -63,7 +65,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                         chatService.connect(authData.userId, authData.token);
 
                         resolve();
-                    } else {
+                    }
+                    else {
                         errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
                         reject();
                     }
@@ -80,14 +83,16 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
         function signUp(sendData) {
             return new Promise((signUpResolve, reject) => {
                 reqData.isSendingNow = true;
-                requestService.sendRequest(urls.signUp, 'post', null, sendData, config).then(signUpSuccess, signUpError);
+                requestService.sendRequest(urls.signUp, 'post', null, sendData, config)
+                    .then(signUpSuccess, signUpError);
 
                 function signUpSuccess(response) {
                     reqData.isSendingNow = false;
                     if (response.config && response.config.data) {
                         signIn(JSON.parse(response.config.data), signUpResolve);
                         errorSignUpMessages.signUp = '';
-                    } else {
+                    }
+                    else {
                         errorSignUpMessages.signUp = 'Some error. Please, try sign up again.';
                         reject();
                     }
@@ -107,7 +112,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                     'Token': authData.token
                 };
 
-                requestService.sendRequest(urls.signOut, 'post', headers).then(signOutSuccess, signOutError);
+                requestService.sendRequest(urls.signOut, 'post', headers)
+                    .then(signOutSuccess, signOutError);
 
                 function signOutSuccess() {
                     chatService.disconnect();

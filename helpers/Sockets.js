@@ -33,37 +33,41 @@ function connection(socket) {
 
     function addMessageToNewChat(data) {
         Session.check(data.token).then((user) => {
-            Chats.create().then((chat) => {
-
-                Memberships
-                    .bulkCreate([
-                        {
-                            UserId: user.id,
-                            ChatId: chat.id
-                        },
-                        {
-                            UserId: data.recipientId,
-                            ChatId: chat.id
-                        }
-                    ])
-                    .then(() => {
-                        const msg = new Messages({
-                            text: data.text,
-                            ChatId: chat.id,
-                            authorId: user.id
-                        });
-
-                        msg.save().then(() => {
-                            Chats.prototype.getChat(chat.id, Users, Messages)
-                                .then((chat) => {
-                                    io.to(data.recipientId)
-                                        .emit('newChatForClient', chat);
-                                    io.to(user.id)
-                                        .emit('newChatCreated', chat);
+            Memberships
+                .prototype
+                .checkDialog(user.id, data.recipientId)
+                .then(() => {
+                    Chats.create().then((chat) => {
+                        Memberships
+                            .bulkCreate([
+                                {
+                                    UserId: user.id,
+                                    ChatId: chat.id
+                                },
+                                {
+                                    UserId: data.recipientId,
+                                    ChatId: chat.id
+                                }
+                            ])
+                            .then(() => {
+                                const msg = new Messages({
+                                    text: data.text,
+                                    ChatId: chat.id,
+                                    authorId: user.id
                                 });
-                        });
+
+                                msg.save().then(() => {
+                                    Chats.prototype.getChat(chat.id, Users, Messages)
+                                        .then((chat) => {
+                                            io.to(data.recipientId)
+                                                .emit('newChatForClient', chat);
+                                            io.to(user.id)
+                                                .emit('newChatCreated', chat);
+                                        });
+                                });
+                            });
                     });
-            });
+                });
         });
     }
 

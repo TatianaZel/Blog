@@ -18,7 +18,7 @@
 
     button {
         transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-
+        border-radius: 3px;
         position: fixed;
         padding: 5px 10px;
         top: 50%;
@@ -27,7 +27,7 @@
         color: lightgray;
         font-size: 16px;
 
-        &:focus {
+        &:focus, &:active, & {
             color: lightgray;
             border: none;
             outline: none;

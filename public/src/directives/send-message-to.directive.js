@@ -18,21 +18,23 @@ function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
             });
             function modalController() {
                 let $ctrl = this;
-                $ctrl.chats = chatService.getChatsByUser(scope.member.id); //сделать фильтром
+
                 $ctrl.sendMessage = sendMessage;
                 $ctrl.close = () => {
                     $uibModalStack.dismissAll({});
                 };
 
                 function sendMessage(messageData) {
-                    if (!messageData.chatId) {
+                    var chatWithUser = chatService.getChatsByUser(scope.member.id);
+
+                    if (!chatWithUser) {
                         chatService.messageToNewChat(messageData.text, scope.member.id)
                             .then(() => {
                                 $uibModalStack.dismissAll({});
                             });
                     }
                     else {
-                        chatService.messageToExistChat(messageData.text, messageData.chatId)
+                        chatService.messageToExistChat(messageData.text, chatWithUser.id)
                             .then(() => {
                                 $uibModalStack.dismissAll({});
                             });

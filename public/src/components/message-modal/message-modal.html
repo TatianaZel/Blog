@@ -1,19 +1,10 @@
 <form name="$ctrl.messageForm" class="modal-content" ng-submit="$ctrl.sendMessage($ctrl.messageData)">
     <div class="modal-header">
+        <b>Send message</b>
         <button type="button" class="close" ng-click="$ctrl.close({})" aria-hidden="true">&times;</button>
-        <div class="form-group" ng-if="$ctrl.chats.length">
-            <label>Choos a dialog</label>
-            <select ng-model="$ctrl.messageData.chatId" class="form-control">
-                <option value="{{chat.id}}" ng-repeat="chat in $ctrl.chats">
-                    <span>{{chat.Users[0].name}} {{chat.Users[0].surname}};</span>
-                    <span>{{chat.Users[1].name}} {{chat.Users[1].surname}}</span>
-                </option>
-            </select>
-        </div>
     </div>
     <div class="modal-body">
         <div class="form-group">
-            <label>Text</label>
             <textarea name="postText" ng-model="$ctrl.messageData.text" type="text" required class="form-control" rows="5" ng-readonly="$ctrl.blogReqData.isCreatingNow"></textarea>
         </div>
     </div>

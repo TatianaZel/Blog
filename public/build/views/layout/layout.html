@@ -17,17 +17,15 @@
         </div>
     </div>
 </nav>
-
 <div class="sidebar" ng-class="{sideBarOpened: $ctrl.sideBarOpened}">
     <ul class="sidebar-nav nav">
         <li class="membersLink"><a ui-sref="members">Members</a></li>
         <li class="" ng-show="$ctrl.authData.token"><a ui-sref="chat({chatId: ''})">Chat</a></li>
     </ul>
-    <button class="btn" ng-click="$ctrl.sideBarOpened = !$ctrl.sideBarOpened">
+    <button ng-click="$ctrl.sideBarOpened = !$ctrl.sideBarOpened">
         <i class="fa fa-bars" aria-hidden="true"></i>
     </button>
 </div>
-
 <div class="mainContent">
     <notification-messages></notification-messages>
     <div class="container logoutErrors zeroPadding">
@@ -36,6 +34,4 @@
     <div class="container">
         <ui-view></ui-view>
     </div>
-
 </div>
-

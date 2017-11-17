@@ -1,30 +1,27 @@
-<div ng-if="$ctrl.selectedChat !== undefined && $ctrl.chats[$ctrl.selectedChat]" class="col-md-6 msgColumn" id="scrollArea">
-    <blockquote class="chatItem breakWord blackBorder" ng-repeat="message in $ctrl.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
+
+<div ng-if="$ctrl.selectedChat !== undefined && $ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6 msgColumn" id="scrollArea">
+    <blockquote class="chatItem breakWord blackBorder" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
         <p>{{message.author.name}}:</p>
         <p>{{message.createdAt| date: 'short'}}</p>
         <span>{{message.text}}</span>
     </blockquote>
-    <form class="" id="bottom" ng-submit="$ctrl.sendMessage($ctrl.chats[$ctrl.selectedChat].id)">
+    <form class="" id="bottom" ng-submit="$ctrl.sendMessage($ctrl.chatsData.chats[$ctrl.selectedChat].id)">
         <div class="form-group">
             <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
         </div>
-
-        <button type="submit" class="btn btn-default msgSubmitBtn">Send</button>
+        <button ng-disabled="!$ctrl.messageText" type="submit" class="btn btn-default msgSubmitBtn">Send</button>
     </form>
 </div>
 <div ng-if="$ctrl.selectedChat === ''" class="col-md-6 zeroPadding">
     <p>Please, choose a chat</p>
 </div>
-<div ng-if="$ctrl.selectedChat !== '' && !$ctrl.chats[$ctrl.selectedChat]" class="col-md-6">
+<div ng-if="$ctrl.selectedChat !== '' && !$ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6">
     <p>This chat not exist</p>
 </div>
 <div class="col-md-6 chatColumn">
-    <div class="chatItem blackBorder" ng-repeat="chat in $ctrl.chats | orderBy : '-updatedAt'" ng-click="$ctrl.selectChat(chat.id)" ng-if="chat">
+    <div class="chatItem blackBorder"  ng-repeat="chat in $ctrl.chatsData.chats | orderBy : '-updatedAt' track by $index" ng-click="$ctrl.selectChat(chat.id)" ng-if="chat">
         <span ng-repeat="user in chat.Users">
             {{user.name}} {{user.surname}}
         </span>
-        <p>
-            updated: {{chat.updatedAt| date: 'short'}}
-        </p>
     </div>
 </div>

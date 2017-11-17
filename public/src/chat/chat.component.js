@@ -6,7 +6,7 @@ app.component('chat', {
 function chatController(chatService, $stateParams) {
     const $ctrl = this;
 
-    $ctrl.chats = chatService.chats;
+    $ctrl.chatsData = chatService.chatsData;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
 
@@ -15,7 +15,7 @@ function chatController(chatService, $stateParams) {
     function selectChat(id) {
         $ctrl.selectedChat = id;
 
-        if (!$ctrl.chats.length)
+        if (!$ctrl.chatsData.chats.length)
             chatService.selectedChat.id = id;
         else
             chatService.loadMessages(id);
