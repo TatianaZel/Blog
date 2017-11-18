@@ -474,121 +474,6 @@ var urls = {
 };
 app.constant("urls", urls);
 
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
-    (requestService, urls, authService, localStorageService) => {
-        let userInfo = {},
-            notice = {
-                errorGettingMessages: {},
-                errorProfileMessages: {},
-                errorPasswordMessages: {},
-                successProfileMessages: {},
-                successPasswordMessages: {}
-            },
-            reqData = {
-                isSendingNow: false
-            };
-
-        function getUserInfo(id) {
-            return new Promise(() => {
-                requestService.sendRequest(urls.members + id, 'get')
-                    .then(getInfoSuccess, getInfoError);
-
-                function getInfoSuccess(response) {
-                    if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
-                        userInfo.name = response.data.name;
-                        userInfo.surname = response.data.surname;
-                        userInfo.description = response.data.description;
-                        userInfo.id = response.data.id;
-                        userInfo.email = response.data.email;
-                    }
-                }
-
-                function getInfoError(error) {
-                    notice.errorGettingMessages = error;
-                    userInfo.name = '';
-                    userInfo.surname = '';
-                    userInfo.description = '';
-                    userInfo.id = '';
-                }
-            });
-        }
-
-        function editProfileData(profileData) {
-            var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    authService.authData.email = profileData.email;
-                    localStorageService.cookie.set('email', profileData.email);
-                    notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
-                    reqData.isSendingNow = false;
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-        function changePassword(passwordsData) {
-            var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
-        }
-
-        return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
-        };
-    }
-]);
-
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
         var posts = [],
             errorMessages = {},
@@ -721,6 +606,121 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
         }
     }]);
 
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
+        let userInfo = {},
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
+            },
+            reqData = {
+                isSendingNow: false
+            };
+
+        function getUserInfo(id) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + id, 'get')
+                    .then(getInfoSuccess, getInfoError);
+
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.errorGettingMessages.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
+                }
+
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                }
+            });
+        }
+
+        function editProfileData(profileData) {
+            var config = {
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
+    }
+]);
+
 app.filter('filter', () => {
     return (items, params) => {
         if (!params.searchText)
@@ -777,6 +777,18 @@ function authController(authService, $state) {
             $state.go('member', {userId: authService.authData.id});
         });
     }
+}
+
+app.component('blog', {
+    templateUrl: 'build/views/blog/blog.html',
+    controller: [blogController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function blogController() {
+    const $ctrl = this;
 }
 
 app.component('chat', {
@@ -899,97 +911,6 @@ function memberListController(memberListService) {
     };
 }
 
-app.component('blog', {
-    templateUrl: 'build/views/blog/blog.html',
-    controller: [blogController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function blogController() {
-    const $ctrl = this;
-}
-
-
-app.component('notificationMessages', {
-
-    templateUrl: 'build/views/components/notification/notification.html',
-    controller: ['notificationService', '$state', notificationController]
-});
-
-function notificationController(notificationService, $state) {
-    const $ctrl = this;
-
-    $ctrl.notifications = notificationService.notifications;
-    $ctrl.remove = notificationService.remove;
-    $ctrl.openChat = openChat;
-
-    function openChat(chatId, notificationId) {
-        $state.go('chat', {chatId: chatId});
-        notificationService.remove(notificationId);
-    }
-}
-
-app.component('profileForm', {
-    bindings: {
-        title: '@',
-        isSendingNow: '<',
-        profile: '<',
-        submitFunc: '<',
-        errors: '<'
-    },
-    templateUrl: 'build/views/components/profile-form/profile-form.html',
-    controller: [profileFormController]
-});
-
-function profileFormController() {
-    const $ctrl = this;
-}
-
-app.component('editProfile', {
-    templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', editProfileController],
-});
-
-function editProfileController(profileService, localStorageService) {
-    const $ctrl = this;
-
-    let userId = localStorageService.cookie.get('id');
-
-    profileService.getUserInfo(userId);
-
-    $ctrl.changePassword = changePassword;
-    $ctrl.editProfileData = editProfileData;
-    $ctrl.profileData = profileService.userInfo;
-    $ctrl.notice = profileService.notice;
-
-    function changePassword(data) {
-        profileService.changePassword(data);
-    }
-
-    function editProfileData(data) {
-        profileService.editProfileData(data);
-    }
-}
-
-app.component('profile', {
-    templateUrl: 'build/views/blog/profile/profile.html',
-    controller: ['profileService', '$stateParams', profileController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function profileController(profileService, $stateParams) {
-    const $ctrl = this;
-
-    profileService.getUserInfo($stateParams.userId);
-
-    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
-}
-
 app.component('editModal', {
     templateUrl: 'build/views/blog/post-list/post-modal.html',
     bindings: {
@@ -1070,6 +991,94 @@ function postModalController(postListService) {
     $ctrl.submitFunc = () => {
         postListService.createPost($ctrl.postData).then($ctrl.close);
     };
+}
+
+app.component('editProfile', {
+    templateUrl: 'build/views/blog/profile/edit-profile.html',
+    controller: ['profileService', 'localStorageService', editProfileController],
+});
+
+function editProfileController(profileService, localStorageService) {
+    const $ctrl = this;
+
+    let userId = localStorageService.cookie.get('id');
+
+    profileService.getUserInfo(userId);
+
+    $ctrl.changePassword = changePassword;
+    $ctrl.editProfileData = editProfileData;
+    $ctrl.profileData = profileService.userInfo;
+    $ctrl.notice = profileService.notice;
+
+    function changePassword(data) {
+        profileService.changePassword(data);
+    }
+
+    function editProfileData(data) {
+        profileService.editProfileData(data);
+    }
+}
+
+app.component('profile', {
+    templateUrl: 'build/views/blog/profile/profile.html',
+    controller: ['profileService', '$stateParams', profileController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function profileController(profileService, $stateParams) {
+    const $ctrl = this;
+
+    profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
+}
+
+app.component('chatBeginner', {
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: [chatBeginnerController]
+});
+
+function chatBeginnerController() {
+    const $ctrl = this;
+
+}
+
+app.component('notificationMessages', {
+
+    templateUrl: 'build/views/components/notification/notification.html',
+    controller: ['notificationService', '$state', notificationController]
+});
+
+function notificationController(notificationService, $state) {
+    const $ctrl = this;
+
+    $ctrl.notifications = notificationService.notifications;
+    $ctrl.remove = notificationService.remove;
+    $ctrl.openChat = openChat;
+
+    function openChat(chatId, notificationId) {
+        $state.go('chat', {chatId: chatId});
+        notificationService.remove(notificationId);
+    }
+}
+
+app.component('profileForm', {
+    bindings: {
+        title: '@',
+        isSendingNow: '<',
+        profile: '<',
+        submitFunc: '<',
+        errors: '<'
+    },
+    templateUrl: 'build/views/components/profile-form/profile-form.html',
+    controller: [profileFormController]
+});
+
+function profileFormController() {
+    const $ctrl = this;
 }
 
 app.directive("compareTo", compareTo);
@@ -1159,6 +1168,30 @@ app.config(['$stateProvider',
 ]);
 
 app.config(['$stateProvider',
+    function ($stateProvider) {
+        $stateProvider.state('member', {
+            url: "/:userId",
+            component: 'blog',
+            resolve: {
+                authData: ['authService',
+                    (authService) => {
+                        return authService.authData;
+                    }
+                ]
+            }
+        });
+
+        $stateProvider.state('editProfile', {
+            url: "/editProfile",
+            component: 'editProfile',
+            data: {
+                auth: "Authorized"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
     ($stateProvider) => {
         $stateProvider.state('chat', {
             url: "/chat/:chatId",
@@ -1180,30 +1213,6 @@ app.config(['$stateProvider',
                         return authService.authData;
                     }
                 ]
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
-    function ($stateProvider) {
-        $stateProvider.state('member', {
-            url: "/:userId",
-            component: 'blog',
-            resolve: {
-                authData: ['authService',
-                    (authService) => {
-                        return authService.authData;
-                    }
-                ]
-            }
-        });
-
-        $stateProvider.state('editProfile', {
-            url: "/editProfile",
-            component: 'editProfile',
-            data: {
-                auth: "Authorized"
             }
         });
     }
