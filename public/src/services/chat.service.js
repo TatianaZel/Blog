@@ -69,7 +69,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
                 socket.on('newChatCreated', (newChat) => {
                     addNewChat(newChat);
-                    resolveChat ? resolveChat() : '';
+                    resolveChat ? resolveChat(newChat) : '';
                 });
 
                 socket.removeAllListeners('successConnection');

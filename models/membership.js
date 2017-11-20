@@ -38,7 +38,7 @@ module.exports = function (sequelize) {
                     var chats = [];
 
                     memberChats.forEach((item) => {
-                        chats.push(item.id);
+                        chats.push(item.ChatId);
                     });
 
                     Membership

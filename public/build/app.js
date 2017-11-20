@@ -21,61 +21,29 @@ let app = angular
         }
     ]);
 
-app.factory('memberListService', ['requestService', 'urls',
-    (requestService, urls) => {
-        var members = [];
-
-        return {
-            getMembers: getMembers,
-            members: members
-        };
-
-        function getMembers() {
-            return new Promise((resolve, reject) => {
-                requestService.sendRequest(urls.members, 'get').then(getMembersSuccess, getMembersError);
-
-                function getMembersSuccess(res) {
-                    if (res.data) {
-                        !members.length ? Array.prototype.push.apply(members, res.data) : '';
-                        resolve();
-                    } else {
-                        //errorMessages.gettingPosts = 'No available posts.';
-                        reject();
-                    }
-                }
-
-                function getMembersError(err) {
-                    //errorMessages.gettingPosts = response;
-                    reject();
-                }
-            });
-        }
-    }
-]);
-
 app.factory('authService', ['localStorageService', 'requestService', 'urls',
     'chatService',
     (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
+            headers: {
+                'Content-Type': 'application/jsone;'
+            }
+        };
 
         var authData = {
-                token: localStorageService.cookie.get('token'),
-                email: localStorageService.cookie.get('email'),
-                id: localStorageService.cookie.get('id'),
-                name: localStorageService.cookie.get('name'),
-                surname: localStorageService.cookie.get('surname')
-            },
-            reqData = {
-                isSendingNow: false
-            },
-            errorSignInMessages = {},
-            errorSignOutMessages = {},
-            errorSignUpMessages = {};
+            token: localStorageService.cookie.get('token'),
+            email: localStorageService.cookie.get('email'),
+            id: localStorageService.cookie.get('id'),
+            name: localStorageService.cookie.get('name'),
+            surname: localStorageService.cookie.get('surname')
+        },
+        reqData = {
+            isSendingNow: false
+        },
+        errorSignInMessages = {},
+        errorSignOutMessages = {},
+        errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
             chatService.connect(authData.id, authData.token);
@@ -270,7 +238,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
                 socket.on('newChatCreated', (newChat) => {
                     addNewChat(newChat);
-                    resolveChat ? resolveChat() : '';
+                    resolveChat ? resolveChat(newChat) : '';
                 });
 
                 socket.removeAllListeners('successConnection');
@@ -473,6 +441,38 @@ var urls = {
     chat: 'http://localhost:3000/api/chat/'
 };
 app.constant("urls", urls);
+
+app.factory('memberListService', ['requestService', 'urls',
+    (requestService, urls) => {
+        var members = [];
+
+        return {
+            getMembers: getMembers,
+            members: members
+        };
+
+        function getMembers() {
+            return new Promise((resolve, reject) => {
+                requestService.sendRequest(urls.members, 'get').then(getMembersSuccess, getMembersError);
+
+                function getMembersSuccess(res) {
+                    if (res.data) {
+                        !members.length ? Array.prototype.push.apply(members, res.data) : '';
+                        resolve();
+                    } else {
+                        //errorMessages.gettingPosts = 'No available posts.';
+                        reject();
+                    }
+                }
+
+                function getMembersError(err) {
+                    //errorMessages.gettingPosts = response;
+                    reject();
+                }
+            });
+        }
+    }
+]);
 
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
         var posts = [],
@@ -752,33 +752,6 @@ app.filter('filter', () => {
     };
 });
 
-app.component('auth', {
-    templateUrl: 'build/views/auth/auth.html',
-    controller: ['authService', '$state', authController]
-});
-
-function authController(authService, $state) {
-    const $ctrl = this;
-
-    $ctrl.errorSignInMessages = authService.errorSignInMessages;
-    $ctrl.errorSignUpMessages = authService.errorSignUpMessages;
-    $ctrl.reqAuthData = authService.reqData;
-    $ctrl.signIn = signIn;
-    $ctrl.signUp = signUp;
-
-    function signUp(userData) {
-        authService.signUp(userData).then(() => {
-            $state.go('member', {userId: authService.authData.id});
-        });
-    }
-
-    function signIn(userData) {
-        authService.signIn(userData).then(() => {
-            $state.go('member', {userId: authService.authData.id});
-        });
-    }
-}
-
 app.component('blog', {
     templateUrl: 'build/views/blog/blog.html',
     controller: [blogController],
@@ -789,35 +762,6 @@ app.component('blog', {
 
 function blogController() {
     const $ctrl = this;
-}
-
-app.component('chat', {
-    templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', chatController]
-});
-
-function chatController(chatService, $stateParams) {
-    const $ctrl = this;
-
-    $ctrl.chatsData = chatService.chatsData;
-    $ctrl.selectChat = selectChat;
-    $ctrl.sendMessage = sendMessage;
-
-    selectChat($stateParams.chatId);
-
-    function selectChat(id) {
-        $ctrl.selectedChat = id;
-
-        if (!$ctrl.chatsData.chats.length)
-            chatService.selectedChat.id = id;
-        else
-            chatService.loadMessages(id);
-    }
-
-    function sendMessage(chatId) {
-        chatService.messageToExistChat($ctrl.messageText, chatId);
-        $ctrl.messageText = '';
-    }
 }
 
 app.component('notice', {
@@ -909,6 +853,70 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
+}
+
+app.component('chat', {
+    templateUrl: 'build/views/chat/chat.html',
+    controller: ['chatService', '$stateParams', '$uibModal', chatController]
+});
+
+function chatController(chatService, $stateParams, $uibModal) {
+    const $ctrl = this;
+
+    $ctrl.chatsData = chatService.chatsData;
+    $ctrl.selectChat = selectChat;
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.beginChat = beginChat;
+
+    selectChat($stateParams.chatId);
+
+    function selectChat(id) {
+        $ctrl.selectedChat = id;
+
+        if (!$ctrl.chatsData.chats.length)
+            chatService.selectedChat.id = id;
+        else
+            chatService.loadMessages(id);
+    }
+
+    function sendMessage(chatId) {
+        chatService.messageToExistChat($ctrl.messageText, chatId);
+        $ctrl.messageText = '';
+    }
+
+    function beginChat() {
+        $uibModal.open({
+            size: 'sm',
+            component: 'chatBeginner'
+        });
+    }
+}
+
+app.component('auth', {
+    templateUrl: 'build/views/auth/auth.html',
+    controller: ['authService', '$state', authController]
+});
+
+function authController(authService, $state) {
+    const $ctrl = this;
+
+    $ctrl.errorSignInMessages = authService.errorSignInMessages;
+    $ctrl.errorSignUpMessages = authService.errorSignUpMessages;
+    $ctrl.reqAuthData = authService.reqData;
+    $ctrl.signIn = signIn;
+    $ctrl.signUp = signUp;
+
+    function signUp(userData) {
+        authService.signUp(userData).then(() => {
+            $state.go('member', {userId: authService.authData.id});
+        });
+    }
+
+    function signIn(userData) {
+        authService.signIn(userData).then(() => {
+            $state.go('member', {userId: authService.authData.id});
+        });
+    }
 }
 
 app.component('editModal', {
@@ -1036,16 +1044,6 @@ function profileController(profileService, $stateParams) {
     $ctrl.info = profileService.userInfo;
 }
 
-app.component('chatBeginner', {
-    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: [chatBeginnerController]
-});
-
-function chatBeginnerController() {
-    const $ctrl = this;
-
-}
-
 app.component('notificationMessages', {
 
     templateUrl: 'build/views/components/notification/notification.html',
@@ -1079,6 +1077,45 @@ app.component('profileForm', {
 
 function profileFormController() {
     const $ctrl = this;
+}
+
+app.component('chatBeginner', {
+    bindings: {
+        resolve: '<',
+        close: '&'
+    },
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: ['memberListService', 'chatService', '$state', chatBeginnerController]
+});
+
+function chatBeginnerController(memberListService, chatService, $state) {
+    const $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.members;
+
+    memberListService.getMembers().then(() => {
+        $ctrl.members = [];
+        memberListService.members.forEach((member) => {
+            var flag = false;
+            chatService.chatsData.chats.forEach((chat) => {
+                chat.Users.forEach((user) => {
+                    if (user.id === member.id)
+                        flag = true;
+                });
+            });
+            if (!flag)
+                $ctrl.members.push(member);
+        });
+    });
+
+    function sendMessage() {
+        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
+            .then((newChat) => {
+                $ctrl.close();
+                $state.go('chat', {chatId: newChat.id});
+            });
+    }
 }
 
 app.directive("compareTo", compareTo);
@@ -1156,18 +1193,6 @@ app.config(['$urlRouterProvider',
 ]);
 
 app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('auth', {
-            url: "/auth",
-            component: 'auth',
-            data: {
-                auth: "Anonymous"
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
     function ($stateProvider) {
         $stateProvider.state('member', {
             url: "/:userId",
@@ -1193,6 +1218,21 @@ app.config(['$stateProvider',
 
 app.config(['$stateProvider',
     ($stateProvider) => {
+        $stateProvider.state('members', {
+            url: "/",
+            component: 'memberList',
+            resolve: {
+                authData: ['authService', (authService) => {
+                        return authService.authData;
+                    }
+                ]
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
         $stateProvider.state('chat', {
             url: "/chat/:chatId",
             component: 'chat',
@@ -1205,14 +1245,11 @@ app.config(['$stateProvider',
 
 app.config(['$stateProvider',
     ($stateProvider) => {
-        $stateProvider.state('members', {
-            url: "/",
-            component: 'memberList',
-            resolve: {
-                authData: ['authService', (authService) => {
-                        return authService.authData;
-                    }
-                ]
+        $stateProvider.state('auth', {
+            url: "/auth",
+            component: 'auth',
+            data: {
+                auth: "Anonymous"
             }
         });
     }
