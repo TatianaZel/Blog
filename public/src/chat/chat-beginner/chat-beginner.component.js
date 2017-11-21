@@ -4,7 +4,8 @@ app.component('chatBeginner', {
         close: '&'
     },
     templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: ['memberListService', 'chatService', '$state', chatBeginnerController]
+    controller: ['memberListService', 'chatService', '$state',
+        chatBeginnerController]
 });
 
 function chatBeginnerController(memberListService, chatService, $state) {

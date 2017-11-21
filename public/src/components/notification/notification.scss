@@ -6,13 +6,13 @@ notification-messages .notification {
     margin-top: 10px;
     font-family: Arial;
     position: relative;
-    z-index:500;
+    z-index: 500;
     padding: 15px;
     cursor: pointer;
 }
 
 .animation.ng-enter, .animation.ng-leave {
-    -webkit-transition: all 1s cubic-bezier(.41,1.85,.72,.76);
+    -webkit-transition: all 1s cubic-bezier(.11,1.95,.72,.76);
 }
 
 .animation.ng-enter {
@@ -21,44 +21,44 @@ notification-messages .notification {
 
 .animation.ng-leave {
     opacity: 1;
-    z-index:499;
+    z-index: 499;
 }
 
 .animation.ng-enter.ng-enter-active {
     opacity: 1;
-    margin-top:10px;
+    margin-top: 10px;
 }
 
 .animation.ng-leave.ng-leave-active {
     opacity: 0;
-    z-index:499;
+    z-index: 499;
 }
 
 notification-messages {
-    position:absolute;
-    z-index:500;
+    position: fixed;
+    z-index: 500;
     bottom: 30px;
     right: 0;
     margin:20px;
 }
 
 notification-messages span.type{
-    font-weight:bold;
+    font-weight: bold;
     color: #5699bc;
 }
 
-notification-messages a.close{
-    position:absolute;
-    float:right;
-    top:5px;
-    right:5px;
-    font-weight:bold;
+notification-messages a.close {
+    position: absolute;
+    float: right;
+    top: 5px;
+    right: 5px;
+    font-weight: bold;
     color: #5699bc;
-    text-decoration:none;
-    font-family:Arial;
+    text-decoration: none;
+    font-family: Arial;
 }
 
-notification-messages a.close:hover{
-    color:white;
-    cursor:pointer;
+notification-messages a.close:hover {
+    color: white;
+    cursor: pointer;
 }

@@ -21,6 +21,38 @@ let app = angular
         }
     ]);
 
+app.factory('memberListService', ['requestService', 'urls',
+    (requestService, urls) => {
+        var members = [];
+
+        return {
+            getMembers: getMembers,
+            members: members
+        };
+
+        function getMembers() {
+            return new Promise((resolve, reject) => {
+                requestService.sendRequest(urls.members, 'get').then(getMembersSuccess, getMembersError);
+
+                function getMembersSuccess(res) {
+                    if (res.data) {
+                        !members.length ? Array.prototype.push.apply(members, res.data) : '';
+                        resolve();
+                    } else {
+                        //errorMessages.gettingPosts = 'No available posts.';
+                        reject();
+                    }
+                }
+
+                function getMembersError(err) {
+                    //errorMessages.gettingPosts = response;
+                    reject();
+                }
+            });
+        }
+    }
+]);
+
 app.factory('authService', ['localStorageService', 'requestService', 'urls',
     'chatService',
     (localStorageService, requestService, urls, chatService) => {
@@ -385,7 +417,7 @@ app.factory('notificationService', ['$timeout',
 
             $timeout(function () {
                 remove(item.id);
-            }, 7000);
+            }, 3000);
         }
 
         function remove(id) {
@@ -441,38 +473,6 @@ var urls = {
     chat: 'http://localhost:3000/api/chat/'
 };
 app.constant("urls", urls);
-
-app.factory('memberListService', ['requestService', 'urls',
-    (requestService, urls) => {
-        var members = [];
-
-        return {
-            getMembers: getMembers,
-            members: members
-        };
-
-        function getMembers() {
-            return new Promise((resolve, reject) => {
-                requestService.sendRequest(urls.members, 'get').then(getMembersSuccess, getMembersError);
-
-                function getMembersSuccess(res) {
-                    if (res.data) {
-                        !members.length ? Array.prototype.push.apply(members, res.data) : '';
-                        resolve();
-                    } else {
-                        //errorMessages.gettingPosts = 'No available posts.';
-                        reject();
-                    }
-                }
-
-                function getMembersError(err) {
-                    //errorMessages.gettingPosts = response;
-                    reject();
-                }
-            });
-        }
-    }
-]);
 
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
         var posts = [],
@@ -764,6 +764,43 @@ function blogController() {
     const $ctrl = this;
 }
 
+app.component('chat', {
+    templateUrl: 'build/views/chat/chat.html',
+    controller: ['chatService', '$stateParams', '$uibModal', chatController]
+});
+
+function chatController(chatService, $stateParams, $uibModal) {
+    const $ctrl = this;
+
+    $ctrl.chatsData = chatService.chatsData;
+    $ctrl.selectChat = selectChat;
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.beginChat = beginChat;
+
+    selectChat($stateParams.chatId);
+
+    function selectChat(id) {
+        $ctrl.selectedChat = id;
+
+        if (!$ctrl.chatsData.chats.length)
+            chatService.selectedChat.id = id;
+        else
+            chatService.loadMessages(id);
+    }
+
+    function sendMessage(chatId) {
+        chatService.messageToExistChat($ctrl.messageText, chatId);
+        $ctrl.messageText = '';
+    }
+
+    function beginChat() {
+        $uibModal.open({
+            size: 'sm',
+            component: 'chatBeginner'
+        });
+    }
+}
+
 app.component('notice', {
     bindings: {
         notice: '=',
@@ -829,7 +866,7 @@ function layoutController(authService, $state) {
 
     function signOut() {
         authService.signOut().then(() => {
-            if ($state.current.name === 'editProfile')
+            if ($state.current.name === 'editProfile' || $state.current.name === 'chat')
                 $state.go('members');
         });
     }
@@ -853,43 +890,6 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
-}
-
-app.component('chat', {
-    templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', chatController]
-});
-
-function chatController(chatService, $stateParams, $uibModal) {
-    const $ctrl = this;
-
-    $ctrl.chatsData = chatService.chatsData;
-    $ctrl.selectChat = selectChat;
-    $ctrl.sendMessage = sendMessage;
-    $ctrl.beginChat = beginChat;
-
-    selectChat($stateParams.chatId);
-
-    function selectChat(id) {
-        $ctrl.selectedChat = id;
-
-        if (!$ctrl.chatsData.chats.length)
-            chatService.selectedChat.id = id;
-        else
-            chatService.loadMessages(id);
-    }
-
-    function sendMessage(chatId) {
-        chatService.messageToExistChat($ctrl.messageText, chatId);
-        $ctrl.messageText = '';
-    }
-
-    function beginChat() {
-        $uibModal.open({
-            size: 'sm',
-            component: 'chatBeginner'
-        });
-    }
 }
 
 app.component('auth', {
@@ -1044,8 +1044,80 @@ function profileController(profileService, $stateParams) {
     $ctrl.info = profileService.userInfo;
 }
 
-app.component('notificationMessages', {
+app.component('chatBeginner', {
+    bindings: {
+        resolve: '<',
+        close: '&'
+    },
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: ['memberListService', 'chatService', '$state',
+        chatBeginnerController]
+});
 
+function chatBeginnerController(memberListService, chatService, $state) {
+    const $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.members;
+
+    memberListService.getMembers().then(() => {
+        $ctrl.members = [];
+        memberListService.members.forEach((member) => {
+            var flag = false;
+            chatService.chatsData.chats.forEach((chat) => {
+                chat.Users.forEach((user) => {
+                    if (user.id === member.id)
+                        flag = true;
+                });
+            });
+            if (!flag)
+                $ctrl.members.push(member);
+        });
+    });
+
+    function sendMessage() {
+        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
+            .then((newChat) => {
+                $ctrl.close();
+                $state.go('chat', {chatId: newChat.id});
+            });
+    }
+}
+
+app.component('messageModal', {
+    templateUrl: 'build/views/components/message-modal/message-modal.html',
+    bindings: {
+        close: '&'
+    },
+    controller: ['chatService', modalController]
+});
+
+function modalController(chatService) {
+    let $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+
+    function sendMessage(messageData) {
+        $ctrl.sendingIsNow = true;
+
+        var chatWithUser = chatService.getChatsByUser(scope.member.id);
+
+        if (!chatWithUser) {
+            chatService.messageToNewChat(messageData.text, scope.member.id)
+                .then(() => {
+                    $ctrl.close();
+                });
+        }
+        else {
+            chatService.messageToExistChat(messageData.text, chatWithUser.id)
+                .then(() => {
+                    $ctrl.close();
+                });
+        }
+    }
+}
+
+app.component('notificationMessages', {
     templateUrl: 'build/views/components/notification/notification.html',
     controller: ['notificationService', '$state', notificationController]
 });
@@ -1079,45 +1151,6 @@ function profileFormController() {
     const $ctrl = this;
 }
 
-app.component('chatBeginner', {
-    bindings: {
-        resolve: '<',
-        close: '&'
-    },
-    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: ['memberListService', 'chatService', '$state', chatBeginnerController]
-});
-
-function chatBeginnerController(memberListService, chatService, $state) {
-    const $ctrl = this;
-
-    $ctrl.sendMessage = sendMessage;
-    $ctrl.members;
-
-    memberListService.getMembers().then(() => {
-        $ctrl.members = [];
-        memberListService.members.forEach((member) => {
-            var flag = false;
-            chatService.chatsData.chats.forEach((chat) => {
-                chat.Users.forEach((user) => {
-                    if (user.id === member.id)
-                        flag = true;
-                });
-            });
-            if (!flag)
-                $ctrl.members.push(member);
-        });
-    });
-
-    function sendMessage() {
-        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
-            .then((newChat) => {
-                $ctrl.close();
-                $state.go('chat', {chatId: newChat.id});
-            });
-    }
-}
-
 app.directive("compareTo", compareTo);
 
 function compareTo() {
@@ -1142,42 +1175,47 @@ function compareTo() {
 app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack',
     messageModalSwitch]);
 
-function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
+function messageModalSwitch(chatService, $uibModal) {
     return {
         restrict: 'A',
         scope: {
             member: "=sendMessageTo"
         },
         link: function (scope, element) {
+            let modal;
+
             element.bind('click', () => {
-                $uibModal.open({
+                modal = $uibModal.open({
                     templateUrl: 'build/views/components/message-modal/message-modal.html',
                     size: 'sm',
                     controller: modalController,
-                    controllerAs: '$ctrl',
+                    controllerAs: '$ctrl'
                 });
             });
+
             function modalController() {
                 let $ctrl = this;
 
                 $ctrl.sendMessage = sendMessage;
                 $ctrl.close = () => {
-                    $uibModalStack.dismissAll({});
+                    modal.close();
                 };
 
                 function sendMessage(messageData) {
+                    $ctrl.sendingIsNow = true;
+
                     var chatWithUser = chatService.getChatsByUser(scope.member.id);
 
                     if (!chatWithUser) {
                         chatService.messageToNewChat(messageData.text, scope.member.id)
                             .then(() => {
-                                $uibModalStack.dismissAll({});
+                                modal.close();
                             });
                     }
                     else {
                         chatService.messageToExistChat(messageData.text, chatWithUser.id)
                             .then(() => {
-                                $uibModalStack.dismissAll({});
+                                modal.close();
                             });
                     }
                 }
@@ -1218,6 +1256,18 @@ app.config(['$stateProvider',
 
 app.config(['$stateProvider',
     ($stateProvider) => {
+        $stateProvider.state('chat', {
+            url: "/chat/:chatId",
+            component: 'chat',
+            data: {
+                auth: "Authorized"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
         $stateProvider.state('members', {
             url: "/",
             component: 'memberList',
@@ -1226,18 +1276,6 @@ app.config(['$stateProvider',
                         return authService.authData;
                     }
                 ]
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('chat', {
-            url: "/chat/:chatId",
-            component: 'chat',
-            data: {
-                auth: "Authorized"
             }
         });
     }

@@ -17,7 +17,7 @@ app.factory('notificationService', ['$timeout',
 
             $timeout(function () {
                 remove(item.id);
-            }, 7000);
+            }, 3000);
         }
 
         function remove(id) {
