@@ -91,8 +91,8 @@ gulp.task('styles', () => {
         .pipe(prefixer())
         .pipe(gulpif(!arg.development, cssmin()))
         .pipe(concat('main.css'))
-        .pipe(gulp.dest('./public/build'))
-        .pipe(notify('Yeah! Styles done!'));
+        .pipe(gulp.dest('./public/build'));
+        //.pipe(notify('Yeah! Styles done!'));
 });
 
 gulp.task('watch', () => {

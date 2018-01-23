@@ -1,24 +1,27 @@
+body {
+    overflow: hidden;
+}
+
 .container {
     width: 50%;
 }
 
-.logoutErrors {
-    margin-top: 60px;
+.mainContainer {
+    height: 100%;    
 }
 
 .sidebar {
+    padding-top: 50px;
     transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
     z-index: 100;
     overflow: hidden;
     width: 0px;
     background: black;
     position: fixed;
-    margin-top: 50px;
     height: 100vh;
 
     button {
         transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.5s;
-
         position: fixed;
         padding: 5px 10px;
         top: 50%;
@@ -47,4 +50,19 @@
 .mainContent {
     height: 100vh;
     overflow-y: auto;
+    padding-top: 50px;
+}
+
+.mainContent::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+    background-color: #F5F5F5;
+}
+
+.mainContent::-webkit-scrollbar {
+    width: 6px;
+    background-color: #F5F5F5;
+}
+
+.mainContent::-webkit-scrollbar-thumb {
+    background-color: #000000;
 }

@@ -1,6 +1,6 @@
 <nav class="navbar navbar-inverse navbar-fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand pull-left" ui-sref="member({userId: $ctrl.authData.id})">{{$ctrl.authData.email}}</a>
+        <a class="navbar-brand pull-left" ng-show="$ctrl.authData.token" ui-sref="member({userId: $ctrl.authData.id})">{{$ctrl.authData.email}}</a>
         <div class="navbar-header pull-right">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
                 <span class="sr-only">Toggle navigation</span>
@@ -33,9 +33,7 @@
     <div class="container logoutErrors zeroPadding">
         <notice notice="$ctrl.errorSignOutMessages" danger="true"></notice>
     </div>
-    <div class="container">
+    <div class="container mainContainer">
         <ui-view></ui-view>
     </div>
-
 </div>
-
