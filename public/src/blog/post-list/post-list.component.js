@@ -1,6 +1,7 @@
 app.component('postList', {
     templateUrl: 'build/views/blog/post-list/post-list.html',
-    controller: ['postListService', '$stateParams', '$uibModal', postListController],
+    controller: ['postListService', '$stateParams', '$uibModal',
+        postListController],
     bindings: {
         authData: '<'
     }
@@ -19,8 +20,16 @@ function postListController(postListService, $stateParams, $uibModal) {
     $ctrl.openCreatingModal = openCreatingModal;
     $ctrl.openEdditingModal = openEdditingModal;
 
+    function removePost(postId) {
+        $uibModal.open({
+            size: 'sm',
+            component: 'removeModal'
+        });
+    }
+
     function openCreatingModal() {
         $uibModal.open({
+            size: 'sm',
             component: 'postModal'
         });
     }
@@ -28,6 +37,7 @@ function postListController(postListService, $stateParams, $uibModal) {
     function openEdditingModal(post) {
         postListService.editedPost = post;
         $uibModal.open({
+            size: 'sm',
             component: 'editModal'
         });
     }
