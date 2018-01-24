@@ -11,42 +11,65 @@ chat>div {
     position: relative;
 }
 
-.msgColumn form {
-    position: fixed;
-    bottom: 10px;
+.msgColumn,
+.chatColumn {
+    height: 100%;
+    max-height: 91vh;
+    overflow: hidden;
 }
 
-.chatColumn, .msgColumn {
-    height: 100%;
-    max-height: 90vh;
+.msgColumn>div,
+.chatColumn>div {
     overflow-y: auto;
 
-/*    &::-webkit-scrollbar-track {
-        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
-        border-radius: 10px;
-        background-color:  light-gray;
+    &::-webkit-scrollbar {
+        visibility: hidden;
+        width: 0;
     }
+}
+
+/*.msgColumn>div:hover,
+.chatColumn>div:hover {
+    overflow-y: auto;
 
     &::-webkit-scrollbar {
-        width: 10px;
-        background-color: light-gray;
+        width: 30px;
     }
+}*/
 
-    &::-webkit-scrollbar-thumb {
-        border-radius: 10px;
-        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-        background-color: light-gray;
-    }*/
+.msgColumn>div,
+.chatColumn>div {
+    height: 100%;
 }
+
+/*msgColumn*/
+.msgColumn {
+    padding: 15px 2% 150px 2%;
+}
+
+.msgColumn form {
+    position: absolute;
+    width: 92%;
+    bottom: 0px;
+}
+
 .msgSubmitBtn {
     width: 100%;
     margin-bottom: 20px;
 }
+
+/*chatColumn*/
+.beginChatBtn {
+    margin-bottom: 20px;
+    position: absolute;
+    width: 92.5%;
+}
+
 .chatItem {
     margin-bottom: 20px;
     cursor: pointer;
 }
-.beginChatBtn {
-    width: 100%;
-    margin-bottom: 20px;
+
+.chatColumn>div {
+    padding-top: 50px;
 }

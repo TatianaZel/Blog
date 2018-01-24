@@ -752,33 +752,6 @@ app.filter('filter', () => {
     };
 });
 
-app.component('auth', {
-    templateUrl: 'build/views/auth/auth.html',
-    controller: ['authService', '$state', authController]
-});
-
-function authController(authService, $state) {
-    const $ctrl = this;
-
-    $ctrl.errorSignInMessages = authService.errorSignInMessages;
-    $ctrl.errorSignUpMessages = authService.errorSignUpMessages;
-    $ctrl.reqAuthData = authService.reqData;
-    $ctrl.signIn = signIn;
-    $ctrl.signUp = signUp;
-
-    function signUp(userData) {
-        authService.signUp(userData).then(() => {
-            $state.go('member', {userId: authService.authData.id});
-        });
-    }
-
-    function signIn(userData) {
-        authService.signIn(userData).then(() => {
-            $state.go('member', {userId: authService.authData.id});
-        });
-    }
-}
-
 app.component('blog', {
     templateUrl: 'build/views/blog/blog.html',
     controller: [blogController],
@@ -917,6 +890,33 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
+}
+
+app.component('auth', {
+    templateUrl: 'build/views/auth/auth.html',
+    controller: ['authService', '$state', authController]
+});
+
+function authController(authService, $state) {
+    const $ctrl = this;
+
+    $ctrl.errorSignInMessages = authService.errorSignInMessages;
+    $ctrl.errorSignUpMessages = authService.errorSignUpMessages;
+    $ctrl.reqAuthData = authService.reqData;
+    $ctrl.signIn = signIn;
+    $ctrl.signUp = signUp;
+
+    function signUp(userData) {
+        authService.signUp(userData).then(() => {
+            $state.go('member', {userId: authService.authData.id});
+        });
+    }
+
+    function signIn(userData) {
+        authService.signIn(userData).then(() => {
+            $state.go('member', {userId: authService.authData.id});
+        });
+    }
 }
 
 app.component('editModal', {
@@ -1241,18 +1241,6 @@ app.config(['$urlRouterProvider',
 ]);
 
 app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('auth', {
-            url: "/auth",
-            component: 'auth',
-            data: {
-                auth: "Anonymous"
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
     function ($stateProvider) {
         $stateProvider.state('member', {
             url: "/:userId",
@@ -1298,6 +1286,18 @@ app.config(['$stateProvider',
                         return authService.authData;
                     }
                 ]
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('auth', {
+            url: "/auth",
+            component: 'auth',
+            data: {
+                auth: "Anonymous"
             }
         });
     }

@@ -1,6 +1,6 @@
-<div ng-if="$ctrl.selectedChat !== undefined && $ctrl.chats[$ctrl.selectedChat]" class="col-md-6 msgColumn blackBorder" id="scrollArea">
+<div ng-if="$ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6 msgColumn blackBorder" id="scrollArea">
     <div>
-        <blockquote class="chatMsg chatItem breakWord" ng-repeat="message in $ctrl.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
+        <blockquote class="chatMsg chatItem breakWord" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
             <p>{{message.author.name}}:</p>
             <p>{{message.createdAt| date: 'short'}}</p>
             <span>{{message.text}}</span>
@@ -13,17 +13,22 @@
         <button type="submit" class="btn btn-default msgSubmitBtn">Send</button>
     </form>
 </div>
-<div ng-if="!$ctrl.selectedChat" class="col-md-6 zeroPadding">
+
+<div ng-if="!$ctrl.selectedChat" class="col-md-6 zeroPadding msgColumn blackBorder text-center">
     <p>Please, choose a chat</p>
 </div>
-<div ng-if="$ctrl.selectedChat && !$ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6">
+
+<div ng-if="$ctrl.selectedChat && !$ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6 msgColumn blackBorder text-center">
     <p>Chat is not available</p>
 </div>
+
 <div class="col-md-6 chatColumn">
     <button class="btn btn-default beginChatBtn" ng-click="$ctrl.beginChat()">Begin chat</button>
-    <div class="chatItem blackBorder"  ng-repeat="chat in $ctrl.chatsData.chats | orderBy : '-updatedAt' track by $index" ng-click="$ctrl.selectChat(chat.id)" ng-if="chat">
-        <span ng-repeat="user in chat.Users">
-            {{user.name}} {{user.surname}}
-        </span>
+    <div>
+        <div class="chatItem blackBorder"  ng-repeat="chat in $ctrl.chatsData.chats | orderBy : '-updatedAt' track by $index" ng-click="$ctrl.selectChat(chat.id)" ng-if="chat">
+            <span ng-repeat="user in chat.Users">
+                {{user.name}} {{user.surname}}
+            </span>
+        </div>
     </div>
 </div>
