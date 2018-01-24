@@ -1,7 +1,7 @@
 app.factory('chatService', ['localStorageService', '$rootScope',
     '$anchorScroll', '$location', 'notificationService',
     (localStorageService, $rootScope, $anchorScroll, $location, notificationService) => {
-        let chats = [],
+        let chatsData = {chats: []},
             socket,
             counters = {},
             resolveMsg,
@@ -16,7 +16,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             getChatsByUser: getChatsByUser,
             loadMessages: loadMessages,
             selectedChat: selectedChat,
-            chats: chats
+            chatsData: chatsData
         };
 
         function connect() {
@@ -69,7 +69,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
                 socket.on('newChatCreated', (newChat) => {
                     addNewChat(newChat);
-                    resolveChat ? resolveChat() : '';
+                    resolveChat ? resolveChat(newChat) : '';
                 });
 
                 socket.removeAllListeners('successConnection');
@@ -78,15 +78,13 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
         function reIndexingChats(data) {
             data.forEach((item) => {
-                chats[item.id] = item;
+                chatsData.chats[item.id] = item;
                 counters[item.id] = 0;
             });
         }
 
         function disconnect() {
-            chats.forEach((item) => {
-                item = '';
-            });
+            chatsData.chats = [];
 
             for (var key in counters) {
                 counters[key] = 0;
@@ -101,6 +99,9 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function messageToNewChat(text, recipientId) {
+            if (!text)
+                return;
+
             return new Promise((resolve) => {
                 resolveChat = resolve;
 
@@ -113,6 +114,9 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function messageToExistChat(text, chatId) {
+            if (!text)
+                return;
+
             return new Promise((resolve) => {
                 resolveMsg = resolve;
                 socket.emit('messageToExistChat', {
@@ -142,16 +146,16 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
         function addNewChat(newChat) {
             counters[newChat.id] = 1;
-            chats[newChat.id] = newChat;
+            chatsData.chats[newChat.id] = newChat;
             $rootScope.$digest();
         }
 
         function setMessageToChat(data) {
-            if (!chats[data.ChatId].Messages)
-                chats[data.ChatId].Messages = [];
+            if (!chatsData.chats[data.ChatId].Messages)
+                chatsData.chats[data.ChatId].Messages = [];
 
-            chats[data.ChatId].Messages.push(data);
-            chats[data.ChatId].updatedAt = data.createdAt;
+            chatsData.chats[data.ChatId].Messages.push(data);
+            chatsData.chats[data.ChatId].updatedAt = data.createdAt;
             $rootScope.$digest();
 
             counters[data.ChatId]++;
@@ -161,15 +165,15 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function setMessagesToChat(chatId, messages) {
-            if (!chats[chatId])
+            if (!chatsData.chats[chatId])
                 return;
 
-            if (!chats[chatId].Messages)
-                chats[chatId].Messages = [];
+            if (!chatsData.chats[chatId].Messages)
+                chatsData.chats[chatId].Messages = [];
 
             counters[chatId] = counters[chatId] + messages.length + 1;
 
-            Array.prototype.push.apply(chats[chatId].Messages, messages);
+            Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
             $rootScope.$digest();
 
             $location.hash('bottom');
@@ -177,19 +181,18 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function getChatsByUser(userId) {
-            var chatsWithUser = [];
+            var chatWithUser;
 
-            chats.forEach((chat) => {
-                var flag = false;
+            chatsData.chats.forEach((chat) => {
                 chat.Users.forEach((user) => {
-                    if (user.id === userId)
-                        flag = true;
+                    if (user.id === userId) {
+                        chatWithUser = chat;
+                        return;
+                    }
                 });
-                if (flag)
-                    chatsWithUser.push(chat);
             });
 
-            return chatsWithUser;
+            return chatWithUser;
         }
     }
 ]);

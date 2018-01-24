@@ -1,0 +1,14 @@
+<form name="$ctrl.messageForm" class="modal-content" ng-submit="$ctrl.sendMessage($ctrl.messageData)">
+    <div class="modal-header">
+        <b>Send message</b>
+        <button type="button" class="close" ng-click="" aria-hidden="true">&times;</button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <textarea name="postText" type="text" required class="form-control" rows="5"></textarea>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-default">Send</button>
+    </div>
+</form>

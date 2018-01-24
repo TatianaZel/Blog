@@ -1,5 +1,4 @@
 app.component('notificationMessages', {
-
     templateUrl: 'build/views/components/notification/notification.html',
     controller: ['notificationService', '$state', notificationController]
 });

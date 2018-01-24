@@ -1,5 +1,5 @@
 node_modules
-/nbproject/private/
+/nbproject
 /public/bower_components/
 /public/Program/
 Program/

@@ -1,0 +1,24 @@
+<form name="$ctrl.messageForm" class="modal-content chatBeginner" ng-submit="$ctrl.sendMessage()">
+    <div class="modal-header">
+        <b ng-if="$ctrl.members && $ctrl.members.length">Send message</b>
+        <button type="button" class="close" ng-click="$ctrl.close()" aria-hidden="true">&times;</button>
+    </div>
+    <div class="infoMessage" ng-if="$ctrl.members && !$ctrl.members.length" class="modal-body">
+        <h1>
+            You already have chats with all users
+        </h1>
+    </div>
+    <div ng-if="$ctrl.members && $ctrl.members.length" class="modal-body">
+        <div class="form-group">
+            <select class="form-control" ng-model="$ctrl.messageData.memberId">
+                <option ng-value="member.id" ng-repeat="member in $ctrl.members">{{member.email}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <textarea name="postText" ng-model="$ctrl.messageData.text" type="text" required class="form-control" rows="5"></textarea>
+        </div>
+    </div>
+    <div ng-if="$ctrl.members.length" class="modal-footer">
+        <button type="submit" class="btn btn-default">Send</button>
+    </div>
+</form>

@@ -53,7 +53,8 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
-app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
+app.factory('authService', ['localStorageService', 'requestService', 'urls',
+    'chatService',
     (localStorageService, requestService, urls, chatService) => {
 
         var config = {
@@ -69,12 +70,12 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
             name: localStorageService.cookie.get('name'),
             surname: localStorageService.cookie.get('surname')
         },
-            reqData = {
-                isSendingNow: false
-            },
-            errorSignInMessages = {},
-            errorSignOutMessages = {},
-            errorSignUpMessages = {};
+        reqData = {
+            isSendingNow: false
+        },
+        errorSignInMessages = {},
+        errorSignOutMessages = {},
+        errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
             chatService.connect(authData.id, authData.token);
@@ -94,7 +95,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
         function signIn(sendData, signUpResolve) {
             return new Promise((resolve, reject) => {
                 reqData.isSendingNow = true;
-                requestService.sendRequest(urls.signIn, 'post', null, sendData, config).then(signInSuccess, signInError);
+                requestService.sendRequest(urls.signIn, 'post', null, sendData, config)
+                    .then(signInSuccess, signInError);
 
                 function signInSuccess(response) {
                     reqData.isSendingNow = false;
@@ -118,7 +120,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                         chatService.connect(authData.userId, authData.token);
 
                         resolve();
-                    } else {
+                    }
+                    else {
                         errorSignInMessages.signIn = 'Some error. Please, try sign in again.';
                         reject();
                     }
@@ -135,14 +138,16 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
         function signUp(sendData) {
             return new Promise((signUpResolve, reject) => {
                 reqData.isSendingNow = true;
-                requestService.sendRequest(urls.signUp, 'post', null, sendData, config).then(signUpSuccess, signUpError);
+                requestService.sendRequest(urls.signUp, 'post', null, sendData, config)
+                    .then(signUpSuccess, signUpError);
 
                 function signUpSuccess(response) {
                     reqData.isSendingNow = false;
                     if (response.config && response.config.data) {
                         signIn(JSON.parse(response.config.data), signUpResolve);
                         errorSignUpMessages.signUp = '';
-                    } else {
+                    }
+                    else {
                         errorSignUpMessages.signUp = 'Some error. Please, try sign up again.';
                         reject();
                     }
@@ -162,7 +167,8 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
                     'Token': authData.token
                 };
 
-                requestService.sendRequest(urls.signOut, 'post', headers).then(signOutSuccess, signOutError);
+                requestService.sendRequest(urls.signOut, 'post', headers)
+                    .then(signOutSuccess, signOutError);
 
                 function signOutSuccess() {
                     chatService.disconnect();
@@ -196,7 +202,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls', 'ch
 app.factory('chatService', ['localStorageService', '$rootScope',
     '$anchorScroll', '$location', 'notificationService',
     (localStorageService, $rootScope, $anchorScroll, $location, notificationService) => {
-        let chats = [],
+        let chatsData = {chats: []},
             socket,
             counters = {},
             resolveMsg,
@@ -211,7 +217,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             getChatsByUser: getChatsByUser,
             loadMessages: loadMessages,
             selectedChat: selectedChat,
-            chats: chats
+            chatsData: chatsData
         };
 
         function connect() {
@@ -264,7 +270,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
                 socket.on('newChatCreated', (newChat) => {
                     addNewChat(newChat);
-                    resolveChat ? resolveChat() : '';
+                    resolveChat ? resolveChat(newChat) : '';
                 });
 
                 socket.removeAllListeners('successConnection');
@@ -273,15 +279,13 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
         function reIndexingChats(data) {
             data.forEach((item) => {
-                chats[item.id] = item;
+                chatsData.chats[item.id] = item;
                 counters[item.id] = 0;
             });
         }
 
         function disconnect() {
-            chats.forEach((item) => {
-                item = '';
-            });
+            chatsData.chats = [];
 
             for (var key in counters) {
                 counters[key] = 0;
@@ -296,6 +300,9 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function messageToNewChat(text, recipientId) {
+            if (!text)
+                return;
+
             return new Promise((resolve) => {
                 resolveChat = resolve;
 
@@ -308,6 +315,9 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function messageToExistChat(text, chatId) {
+            if (!text)
+                return;
+
             return new Promise((resolve) => {
                 resolveMsg = resolve;
                 socket.emit('messageToExistChat', {
@@ -337,16 +347,16 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
         function addNewChat(newChat) {
             counters[newChat.id] = 1;
-            chats[newChat.id] = newChat;
+            chatsData.chats[newChat.id] = newChat;
             $rootScope.$digest();
         }
 
         function setMessageToChat(data) {
-            if (!chats[data.ChatId].Messages)
-                chats[data.ChatId].Messages = [];
+            if (!chatsData.chats[data.ChatId].Messages)
+                chatsData.chats[data.ChatId].Messages = [];
 
-            chats[data.ChatId].Messages.push(data);
-            chats[data.ChatId].updatedAt = data.createdAt;
+            chatsData.chats[data.ChatId].Messages.push(data);
+            chatsData.chats[data.ChatId].updatedAt = data.createdAt;
             $rootScope.$digest();
 
             counters[data.ChatId]++;
@@ -356,15 +366,15 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function setMessagesToChat(chatId, messages) {
-            if (!chats[chatId])
+            if (!chatsData.chats[chatId])
                 return;
 
-            if (!chats[chatId].Messages)
-                chats[chatId].Messages = [];
+            if (!chatsData.chats[chatId].Messages)
+                chatsData.chats[chatId].Messages = [];
 
             counters[chatId] = counters[chatId] + messages.length + 1;
 
-            Array.prototype.push.apply(chats[chatId].Messages, messages);
+            Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
             $rootScope.$digest();
 
             $location.hash('bottom');
@@ -372,19 +382,18 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function getChatsByUser(userId) {
-            var chatsWithUser = [];
+            var chatWithUser;
 
-            chats.forEach((chat) => {
-                var flag = false;
+            chatsData.chats.forEach((chat) => {
                 chat.Users.forEach((user) => {
-                    if (user.id === userId)
-                        flag = true;
+                    if (user.id === userId) {
+                        chatWithUser = chat;
+                        return;
+                    }
                 });
-                if (flag)
-                    chatsWithUser.push(chat);
             });
 
-            return chatsWithUser;
+            return chatWithUser;
         }
     }
 ]);
@@ -408,7 +417,7 @@ app.factory('notificationService', ['$timeout',
 
             $timeout(function () {
                 remove(item.id);
-            }, 7000);
+            }, 3000);
         }
 
         function remove(id) {
@@ -784,22 +793,23 @@ function blogController() {
 
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', chatController]
+    controller: ['chatService', '$stateParams', '$uibModal', chatController]
 });
 
-function chatController(chatService, $stateParams) {
+function chatController(chatService, $stateParams, $uibModal) {
     const $ctrl = this;
 
-    $ctrl.chats = chatService.chats;
+    $ctrl.chatsData = chatService.chatsData;
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
+    $ctrl.beginChat = beginChat;
 
     selectChat($stateParams.chatId);
 
     function selectChat(id) {
         $ctrl.selectedChat = id;
 
-        if (!$ctrl.chats.length)
+        if (!$ctrl.chatsData.chats.length)
             chatService.selectedChat.id = id;
         else
             chatService.loadMessages(id);
@@ -808,6 +818,13 @@ function chatController(chatService, $stateParams) {
     function sendMessage(chatId) {
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';
+    }
+
+    function beginChat() {
+        $uibModal.open({
+            size: 'sm',
+            component: 'chatBeginner'
+        });
     }
 }
 
@@ -876,7 +893,7 @@ function layoutController(authService, $state) {
 
     function signOut() {
         authService.signOut().then(() => {
-            if ($state.current.name === 'editProfile')
+            if ($state.current.name === 'editProfile' || $state.current.name === 'chat')
                 $state.go('members');
         });
     }
@@ -933,7 +950,8 @@ function editModalController(postListService) {
 
 app.component('postList', {
     templateUrl: 'build/views/blog/post-list/post-list.html',
-    controller: ['postListService', '$stateParams', '$uibModal', postListController],
+    controller: ['postListService', '$stateParams', '$uibModal',
+        postListController],
     bindings: {
         authData: '<'
     }
@@ -952,8 +970,16 @@ function postListController(postListService, $stateParams, $uibModal) {
     $ctrl.openCreatingModal = openCreatingModal;
     $ctrl.openEdditingModal = openEdditingModal;
 
+    function removePost(postId) {
+        $uibModal.open({
+            size: 'sm',
+            component: 'removeModal'
+        });
+    }
+
     function openCreatingModal() {
         $uibModal.open({
+            size: 'sm',
             component: 'postModal'
         });
     }
@@ -961,6 +987,7 @@ function postListController(postListService, $stateParams, $uibModal) {
     function openEdditingModal(post) {
         postListService.editedPost = post;
         $uibModal.open({
+            size: 'sm',
             component: 'editModal'
         });
     }
@@ -1027,8 +1054,80 @@ function profileController(profileService, $stateParams) {
     $ctrl.info = profileService.userInfo;
 }
 
-app.component('notificationMessages', {
+app.component('chatBeginner', {
+    bindings: {
+        resolve: '<',
+        close: '&'
+    },
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: ['memberListService', 'chatService', '$state',
+        chatBeginnerController]
+});
 
+function chatBeginnerController(memberListService, chatService, $state) {
+    const $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.members;
+
+    memberListService.getMembers().then(() => {
+        $ctrl.members = [];
+        memberListService.members.forEach((member) => {
+            var flag = false;
+            chatService.chatsData.chats.forEach((chat) => {
+                chat.Users.forEach((user) => {
+                    if (user.id === member.id)
+                        flag = true;
+                });
+            });
+            if (!flag)
+                $ctrl.members.push(member);
+        });
+    });
+
+    function sendMessage() {
+        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
+            .then((newChat) => {
+                $ctrl.close();
+                $state.go('chat', {chatId: newChat.id});
+            });
+    }
+}
+
+app.component('messageModal', {
+    templateUrl: 'build/views/components/message-modal/message-modal.html',
+    bindings: {
+        close: '&'
+    },
+    controller: ['chatService', modalController]
+});
+
+function modalController(chatService) {
+    let $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+
+    function sendMessage(messageData) {
+        $ctrl.sendingIsNow = true;
+
+        var chatWithUser = chatService.getChatsByUser(scope.member.id);
+
+        if (!chatWithUser) {
+            chatService.messageToNewChat(messageData.text, scope.member.id)
+                .then(() => {
+                    $ctrl.close();
+                });
+        }
+        else {
+            chatService.messageToExistChat(messageData.text, chatWithUser.id)
+                .then(() => {
+                    $ctrl.close();
+                });
+        }
+    }
+}
+
+app.component('notificationMessages', {
     templateUrl: 'build/views/components/notification/notification.html',
     controller: ['notificationService', '$state', notificationController]
 });
@@ -1086,40 +1185,47 @@ function compareTo() {
 app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack',
     messageModalSwitch]);
 
-function messageModalSwitch(chatService, $uibModal, $uibModalStack) {
+function messageModalSwitch(chatService, $uibModal) {
     return {
         restrict: 'A',
         scope: {
             member: "=sendMessageTo"
         },
         link: function (scope, element) {
+            let modal;
+
             element.bind('click', () => {
-                $uibModal.open({
+                modal = $uibModal.open({
                     templateUrl: 'build/views/components/message-modal/message-modal.html',
                     size: 'sm',
                     controller: modalController,
-                    controllerAs: '$ctrl',
+                    controllerAs: '$ctrl'
                 });
             });
+
             function modalController() {
                 let $ctrl = this;
-                $ctrl.chats = chatService.getChatsByUser(scope.member.id); //сделать фильтром
+
                 $ctrl.sendMessage = sendMessage;
                 $ctrl.close = () => {
-                    $uibModalStack.dismissAll({});
+                    modal.close();
                 };
 
                 function sendMessage(messageData) {
-                    if (!messageData.chatId) {
+                    $ctrl.sendingIsNow = true;
+
+                    var chatWithUser = chatService.getChatsByUser(scope.member.id);
+
+                    if (!chatWithUser) {
                         chatService.messageToNewChat(messageData.text, scope.member.id)
                             .then(() => {
-                                $uibModalStack.dismissAll({});
+                                modal.close();
                             });
                     }
                     else {
-                        chatService.messageToExistChat(messageData.text, messageData.chatId)
+                        chatService.messageToExistChat(messageData.text, chatWithUser.id)
                             .then(() => {
-                                $uibModalStack.dismissAll({});
+                                modal.close();
                             });
                     }
                 }
