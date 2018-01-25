@@ -101,8 +101,6 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
 
         function removePost(postId) {
             return new Promise(function (resolve, reject) {
-                if (!confirm("Are you sure you want to remove the post?"))
-                    return;
 
                 var headers = {
                     'Token': authService.authData.token

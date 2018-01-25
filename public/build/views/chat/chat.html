@@ -6,7 +6,7 @@
             <span>{{message.text}}</span>
         </blockquote>
     </div>
-    <form id="bottom" ng-submit="$ctrl.sendMessage($ctrl.chats[$ctrl.selectedChat].id)">
+    <form id="bottom" ng-submit="$ctrl.sendMessage($ctrl.chatsData.chats[$ctrl.selectedChat].id)">
         <div class="form-group">
             <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
         </div>

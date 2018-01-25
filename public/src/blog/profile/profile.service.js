@@ -40,10 +40,10 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
         function editProfileData(profileData) {
             var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            },
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
                 headers = {
                     'Token': authService.authData.token
                 };
@@ -73,10 +73,10 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
         function changePassword(passwordsData) {
             var config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            },
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
                 headers = {
                     'Token': authService.authData.token
                 };

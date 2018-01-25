@@ -15,15 +15,22 @@ function postListController(postListService, $stateParams, $uibModal) {
 
     $ctrl.posts = postListService.posts;
     $ctrl.userId = $stateParams.userId;
-    $ctrl.removePost = postListService.removePost;
+    $ctrl.removePost = removePost;
 
     $ctrl.openCreatingModal = openCreatingModal;
     $ctrl.openEdditingModal = openEdditingModal;
 
     function removePost(postId) {
-        $uibModal.open({
+        var rmModal = $uibModal.open({
             size: 'sm',
-            component: 'removeModal'
+            templateUrl: 'build/views/blog/post-list/remove-modal.html',
+            controllerAs: '$ctrl',
+            controller: function() {
+                this.removePost = () => {
+                    postListService.removePost(postId).then(rmModal.close);
+                };
+                this.close = rmModal.close;
+            }
         });
     }
 
