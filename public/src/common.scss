@@ -46,3 +46,15 @@ body {
 .modal-footer {
     border: none;
 }
+
+@media all and (max-width: 993px) {
+    .container {
+
+    }
+}
+
+@media all and (max-width: 400px) {
+    .container {
+        width: 100%;
+    }
+}
