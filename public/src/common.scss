@@ -47,14 +47,28 @@ body {
     border: none;
 }
 
-@media all and (max-width: 993px) {
-    .container {
+/*.modal-footer {
+    padding-top: 0;
+}*/
 
+.modal-footer button {
+    width: 100%;
+}
+
+@media all and (max-width: 920px) {
+    .container {
+        width: 80% !important;
     }
 }
 
-@media all and (max-width: 400px) {
+@media all and (max-width: 720px) {
     .container {
-        width: 100%;
+        width: 90% !important;
+    }
+}
+
+@media all and (max-width: 480px) {
+    .container {
+        width: 100% !important;
     }
 }

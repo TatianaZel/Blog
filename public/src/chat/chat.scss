@@ -64,6 +64,17 @@ chat>div {
     padding: 15px 2% 150px 2%;
 }
 
+.msgAutor {
+    margin: 0;
+    font-weight: bold;
+}
+
+.msgDate {
+    margin: 0;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
 .msgColumn form {
     position: absolute;
     width: 92%;
@@ -77,14 +88,14 @@ chat>div {
 
 /*chatColumn*/
 .chatColumn {
-    padding-top: 50px;
+    padding: 50px 1% 0 1%;
 }
 
 .beginChatBtn {
     margin-bottom: 20px;
     position: absolute;
     top: 0;
-    width: 92.5%;
+    width: 96%;
 }
 
 .chatItem {
