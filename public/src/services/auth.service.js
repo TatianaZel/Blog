@@ -3,24 +3,24 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
     (localStorageService, requestService, urls, chatService) => {
 
         var config = {
-            headers: {
-                'Content-Type': 'application/jsone;'
-            }
-        };
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
 
         var authData = {
-            token: localStorageService.cookie.get('token'),
-            email: localStorageService.cookie.get('email'),
-            id: localStorageService.cookie.get('id'),
-            name: localStorageService.cookie.get('name'),
-            surname: localStorageService.cookie.get('surname')
-        },
-        reqData = {
-            isSendingNow: false
-        },
-        errorSignInMessages = {},
-        errorSignOutMessages = {},
-        errorSignUpMessages = {};
+                token: localStorageService.cookie.get('token'),
+                email: localStorageService.cookie.get('email'),
+                id: localStorageService.cookie.get('id'),
+                name: localStorageService.cookie.get('name'),
+                surname: localStorageService.cookie.get('surname')
+            },
+            reqData = {
+                isSendingNow: false
+            },
+            errorSignInMessages = {},
+            errorSignOutMessages = {},
+            errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
             chatService.connect(authData.id, authData.token);
@@ -127,7 +127,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
                 }
             });
         }
-
+        
         function cleanAuthData() {
             localStorageService.cookie.remove('token');
             localStorageService.cookie.remove('email');

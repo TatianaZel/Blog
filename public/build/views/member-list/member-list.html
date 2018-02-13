@@ -17,7 +17,7 @@
     </div>
 </div>
 <div class="list">
-    <blockquote ng-repeat="member in $ctrl.members| filter :  $ctrl.filterParams" ng-if="$ctrl.authData.id != member.id" class="blackBorder breakWord">
+    <blockquote ng-repeat="member in $ctrl.members | filter :  $ctrl.filterParams" ng-if="$ctrl.authData.id != member.id" class="blackBorder breakWord">
         <div class="clearfix">
             <a ui-sref="member({userId: member.id})" class=""><span class="memberName">{{member.name}}&nbsp{{member.surname}}</span></a>
             <a class="pull-right" ng-if="$ctrl.authData.token" send-message-to="member"><i class="fa fa-envelope-o" aria-hidden="true"></i></a>

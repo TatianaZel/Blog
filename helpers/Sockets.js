@@ -18,18 +18,22 @@ function connection(socket) {
     if (!query)
         return;
 
-    Session.check(query.token).then((user) => {
-        socket.join(user.id);
+    Session.check(query.token)
+            .then((user) => {
+                socket.join(user.id);
 
-        Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
-            socket.on('messageToExistChat', addMessageToExistChat);
-            socket.on('messageToNewChat', addMessageToNewChat);
-            socket.on('loadMessages', getMessagesByChat);
-            io.to(user.id).emit('successConnection', {
-                chats
+                Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
+                    socket.on('messageToExistChat', addMessageToExistChat);
+                    socket.on('messageToNewChat', addMessageToNewChat);
+                    socket.on('loadMessages', getMessagesByChat);
+                    io.to(user.id).emit('successConnection', {
+                        chats
+                    });
+                });
+            })
+            .catch(() => {
+                socket.emit('error');/// start here!
             });
-        });
-    });
 
     function addMessageToNewChat(data) {
         Session.check(data.token).then((user) => {

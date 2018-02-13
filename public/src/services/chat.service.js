@@ -74,6 +74,10 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
                 socket.removeAllListeners('successConnection');
             });
+
+            socket.on('error', () => {
+                console.log('ha ha ha');
+            });
         }
 
         function reIndexingChats(data) {
