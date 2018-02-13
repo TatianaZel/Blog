@@ -33,12 +33,12 @@ chat>div {
 
     &::-webkit-scrollbar {
         visibility: visible;
-        width: 0.5em;
+        width: 5px;
     }
 
     &::-webkit-scrollbar-track {
         border-radius: 5px;
-        -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+
     }
 
     &::-webkit-scrollbar-thumb {
@@ -53,9 +53,26 @@ chat>div {
     height: 100%;
 }
 
+.beginChatBtn,
+.msgSubmitBtn {
+    background-color: white;
+    border: 2px dotted lightgray;
+}
+
 /*msgColumn*/
 .msgColumn {
     padding: 15px 2% 150px 2%;
+}
+
+.msgAutor {
+    margin: 0;
+    font-weight: bold;
+}
+
+.msgDate {
+    margin: 0;
+    font-size: 13px;
+    margin-bottom: 5px;
 }
 
 .msgColumn form {
@@ -71,14 +88,14 @@ chat>div {
 
 /*chatColumn*/
 .chatColumn {
-    padding-top: 50px;
+    padding: 50px 1% 0 1%;
 }
 
 .beginChatBtn {
     margin-bottom: 20px;
     position: absolute;
     top: 0;
-    width: 92.5%;
+    width: 96%;
 }
 
 .chatItem {

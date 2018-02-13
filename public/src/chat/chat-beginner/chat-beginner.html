@@ -10,7 +10,7 @@
     </div>
     <div ng-if="$ctrl.members && $ctrl.members.length" class="modal-body">
         <div class="form-group">
-            <select class="form-control" ng-model="$ctrl.messageData.memberId">
+            <select class="form-control" ng-model="$ctrl.messageData.memberId" ng-init="$ctrl.messageData.memberId = $ctrl.members[0].id">
                 <option ng-value="member.id" ng-repeat="member in $ctrl.members">{{member.email}}</option>
             </select>
         </div>

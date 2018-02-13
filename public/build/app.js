@@ -672,6 +672,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                     reqData.isSendingNow = false;
                     resolve();
                 }
+<<<<<<< HEAD
 
                 function editProfileError(err) {
                     reqData.isSendingNow = false;
@@ -749,11 +750,93 @@ app.filter('filter', () => {
             outerFlag = params.negative ? !outerFlag : outerFlag;
             outerFlag ? result.push(items[i]) : '';
         });
+=======
+>>>>>>> d219e7e7f6f1cb9ec430ef9d6b271fd4b3178a0d
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+<<<<<<< HEAD
+=======
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
+    }
+]);
+
+app.filter('filter', () => {
+    return (items, params) => {
+        if (!params.searchText)
+            return items;
+
+        var newItems = JSON.parse(JSON.stringify(items)),
+            result = [],
+            searchText = params.caseSensetive ? params.searchText : params.searchText.toLowerCase(),
+            searchOptions = (params.searchBy !== 'any') ? [params.searchBy] : params.searchOptions;
+
+        newItems.forEach(function (item, i) {
+            var outerFlag = false;
+
+            searchOptions.forEach(function (option) {
+                var innerFlag;
+                item[option] = params.caseSensetive ? item[option] : item[option].toLowerCase();
+                innerFlag = params.fullMatch ? (item[option] === searchText) : (item[option].indexOf(searchText) > -1);
+                if (innerFlag) {
+                    outerFlag = true;
+                    return;
+                }
+            });
+
+            outerFlag = params.negative ? !outerFlag : outerFlag;
+            outerFlag ? result.push(items[i]) : '';
+        });
 
         return result;
     };
 });
 
+>>>>>>> d219e7e7f6f1cb9ec430ef9d6b271fd4b3178a0d
 app.component('auth', {
     templateUrl: 'build/views/auth/auth.html',
     controller: ['authService', '$state', authController]
