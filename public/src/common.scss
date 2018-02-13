@@ -47,12 +47,22 @@ body {
     border: none;
 }
 
-/*.modal-footer {
-    padding-top: 0;
-}*/
-
-.modal-footer button {
+.modal-footer button,
+.modal-body button {
     width: 100%;
+}
+
+.modal-footer {
+    padding-top: 0;
+}
+
+.modal-header {
+    padding-bottom: 0;
+}
+
+.modal-header .form-group:last-child,
+.modal-body .form-group:last-child {
+    margin-bottom: 0;
 }
 
 @media all and (max-width: 920px) {

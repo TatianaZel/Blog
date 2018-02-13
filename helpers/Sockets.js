@@ -24,6 +24,7 @@ function connection(socket) {
 
                 Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
 
+                    //тут разделение на тот случай если в будущем можно будет создавать чаты с более чем двумя юзерами
                     socket.on('messageToExistChat', addMessageToExistChat);
                     socket.on('messageToNewChat', addMessageToNewChat);
 
