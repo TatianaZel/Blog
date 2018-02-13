@@ -30,7 +30,7 @@ var Session = {
                 req.session = req.headers.token;
             }
             next();
-        }).catch((err) => {
+        }).catch(() => {
             next();
         });
     },

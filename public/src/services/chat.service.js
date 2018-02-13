@@ -20,63 +20,68 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         };
 
         function connect() {
-            socket = io.connect({
-                query: {
-                    token: localStorageService.cookie.get('token')
-                }
-            });
+            return new Promise((resolve, reject) => {
+                socket = io.connect({
+                            query: {
+                                token: localStorageService.cookie.get('token')
+                            }
+                        });
 
-            socket.on('successConnection', (data) => {
-                reIndexingChats(data.chats);
+                socket.on('successConnection', (data) => {
+                    reIndexingChats(data.chats);
 
-                if (selectedChat.id !== undefined) {
-                    loadMessages(selectedChat.id);
-                    selectedChat.id = undefined;
-                }
+                    if (selectedChat.id !== undefined) {
+                        loadMessages(selectedChat.id);
+                        selectedChat.id = undefined;
+                    }
 
-                $rootScope.$digest();
+                    $rootScope.$digest();
 
-                socket.on('messageForClient', (msg) => {
-                    notificationService.add(
-                        {
-                            author: msg.author.name + ' ' + msg.author.surname,
-                            text: msg.text,
-                            chatId: msg.ChatId
-                        }
-                    );
+                    socket.on('messageForClient', (msg) => {
+                        notificationService.add(
+                            {
+                                author: msg.author.name + ' ' + msg.author.surname,
+                                text: msg.text,
+                                chatId: msg.ChatId
+                            }
+                        );
 
-                    setMessageToChat(msg);
+                        setMessageToChat(msg);
+                    });
+
+                    socket.on('newChatForClient', (newChat) => {
+                        var msg = newChat.Messages[0];
+
+                        notificationService.add(
+                            {
+                                author: msg.author.name + ' ' + msg.author.surname,
+                                text: msg.text,
+                                chatId: msg.ChatId
+                            }
+                        );
+
+                        addNewChat(newChat);
+                    });
+
+                    socket.on('messageSended', (msg) => {
+                        setMessageToChat(msg);
+                        resolveMsg ? resolveMsg() : '';
+                    });
+
+                    socket.on('newChatCreated', (newChat) => {
+                        addNewChat(newChat);
+                        resolveChat ? resolveChat(newChat) : '';
+                    });
+
+                    socket.removeAllListeners('successConnection');
+
+                    resolve();
                 });
 
-                socket.on('newChatForClient', (newChat) => {
-                    var msg = newChat.Messages[0];
-
-                    notificationService.add(
-                        {
-                            author: msg.author.name + ' ' + msg.author.surname,
-                            text: msg.text,
-                            chatId: msg.ChatId
-                        }
-                    );
-
-                    addNewChat(newChat);
+                socket.on('error', () => {
+                    socket.removeAllListeners('error');
+                    reject();
                 });
-
-                socket.on('messageSended', (msg) => {
-                    setMessageToChat(msg);
-                    resolveMsg ? resolveMsg() : '';
-                });
-
-                socket.on('newChatCreated', (newChat) => {
-                    addNewChat(newChat);
-                    resolveChat ? resolveChat(newChat) : '';
-                });
-
-                socket.removeAllListeners('successConnection');
-            });
-
-            socket.on('error', () => {
-                console.log('ha ha ha');
             });
         }
 

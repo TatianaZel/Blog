@@ -23,8 +23,10 @@ function connection(socket) {
                 socket.join(user.id);
 
                 Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
+
                     socket.on('messageToExistChat', addMessageToExistChat);
                     socket.on('messageToNewChat', addMessageToNewChat);
+
                     socket.on('loadMessages', getMessagesByChat);
                     io.to(user.id).emit('successConnection', {
                         chats
@@ -32,14 +34,14 @@ function connection(socket) {
                 });
             })
             .catch(() => {
-                socket.emit('error');/// start here!
+                socket.emit('error');
             });
 
     function addMessageToNewChat(data) {
         Session.check(data.token).then((user) => {
             Memberships
                 .prototype
-                .checkDialog(user.id, data.recipientId)
+                .checkDialog(user.id, data.recipientId)//проверяем не было ли уже создано чата между двумя этими юзерами
                 .then(() => {
                     Chats.create().then((chat) => {
                         Memberships
@@ -77,7 +79,7 @@ function connection(socket) {
 
     function addMessageToExistChat(data) {
         Session.check(data.token).then((user) => {
-            Memberships.prototype.check(user.id, data.chatId).then(() => {
+            Memberships.prototype.check(user.id, data.chatId).then(() => {//проверякм учавствует ли юзер в этом чате
 
                 const msg = new Messages({
                     text: data.text,
@@ -131,7 +133,7 @@ function connection(socket) {
                             io.to(user.id).emit('portionOfMessages', messages);
                         });
                 })
-                .catch((err) => {
+                .catch(() => {
                     io.to(user.id).emit('portionOfMessages', []);
                 });
         });

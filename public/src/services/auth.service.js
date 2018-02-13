@@ -23,7 +23,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
             errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
-            chatService.connect(authData.id, authData.token);
+            chatService.connect(authData.id, authData.token).catch(cleanAuthData);//чистим сторэдж если сессия не существует
         }
 
         return {
@@ -127,7 +127,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
                 }
             });
         }
-        
+
         function cleanAuthData() {
             localStorageService.cookie.remove('token');
             localStorageService.cookie.remove('email');

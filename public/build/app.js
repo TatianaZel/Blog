@@ -78,7 +78,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
             errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
-            chatService.connect(authData.id, authData.token);
+            chatService.connect(authData.id, authData.token).catch(cleanAuthData);//чистим сторэдж если сессия не существует
         }
 
         return {
@@ -182,7 +182,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
                 }
             });
         }
-        
+
         function cleanAuthData() {
             localStorageService.cookie.remove('token');
             localStorageService.cookie.remove('email');
@@ -221,63 +221,68 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         };
 
         function connect() {
-            socket = io.connect({
-                query: {
-                    token: localStorageService.cookie.get('token')
-                }
-            });
+            return new Promise((resolve, reject) => {
+                socket = io.connect({
+                            query: {
+                                token: localStorageService.cookie.get('token')
+                            }
+                        });
 
-            socket.on('successConnection', (data) => {
-                reIndexingChats(data.chats);
+                socket.on('successConnection', (data) => {
+                    reIndexingChats(data.chats);
 
-                if (selectedChat.id !== undefined) {
-                    loadMessages(selectedChat.id);
-                    selectedChat.id = undefined;
-                }
+                    if (selectedChat.id !== undefined) {
+                        loadMessages(selectedChat.id);
+                        selectedChat.id = undefined;
+                    }
 
-                $rootScope.$digest();
+                    $rootScope.$digest();
 
-                socket.on('messageForClient', (msg) => {
-                    notificationService.add(
-                        {
-                            author: msg.author.name + ' ' + msg.author.surname,
-                            text: msg.text,
-                            chatId: msg.ChatId
-                        }
-                    );
+                    socket.on('messageForClient', (msg) => {
+                        notificationService.add(
+                            {
+                                author: msg.author.name + ' ' + msg.author.surname,
+                                text: msg.text,
+                                chatId: msg.ChatId
+                            }
+                        );
 
-                    setMessageToChat(msg);
+                        setMessageToChat(msg);
+                    });
+
+                    socket.on('newChatForClient', (newChat) => {
+                        var msg = newChat.Messages[0];
+
+                        notificationService.add(
+                            {
+                                author: msg.author.name + ' ' + msg.author.surname,
+                                text: msg.text,
+                                chatId: msg.ChatId
+                            }
+                        );
+
+                        addNewChat(newChat);
+                    });
+
+                    socket.on('messageSended', (msg) => {
+                        setMessageToChat(msg);
+                        resolveMsg ? resolveMsg() : '';
+                    });
+
+                    socket.on('newChatCreated', (newChat) => {
+                        addNewChat(newChat);
+                        resolveChat ? resolveChat(newChat) : '';
+                    });
+
+                    socket.removeAllListeners('successConnection');
+
+                    resolve();
                 });
 
-                socket.on('newChatForClient', (newChat) => {
-                    var msg = newChat.Messages[0];
-
-                    notificationService.add(
-                        {
-                            author: msg.author.name + ' ' + msg.author.surname,
-                            text: msg.text,
-                            chatId: msg.ChatId
-                        }
-                    );
-
-                    addNewChat(newChat);
+                socket.on('error', () => {
+                    socket.removeAllListeners('error');
+                    reject();
                 });
-
-                socket.on('messageSended', (msg) => {
-                    setMessageToChat(msg);
-                    resolveMsg ? resolveMsg() : '';
-                });
-
-                socket.on('newChatCreated', (newChat) => {
-                    addNewChat(newChat);
-                    resolveChat ? resolveChat(newChat) : '';
-                });
-
-                socket.removeAllListeners('successConnection');
-            });
-
-            socket.on('error', () => {
-                console.log('ha ha ha');
             });
         }
 
@@ -478,6 +483,121 @@ var urls = {
 };
 app.constant("urls", urls);
 
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
+        let userInfo = {},
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
+            },
+            reqData = {
+                isSendingNow: false
+            };
+
+        function getUserInfo(id) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + id, 'get')
+                    .then(getInfoSuccess, getInfoError);
+
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.errorGettingMessages.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
+                }
+
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                }
+            });
+        }
+
+        function editProfileData(profileData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
+    }
+]);
+
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
         var posts = [],
             errorMessages = {},
@@ -608,203 +728,6 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
         }
     }]);
 
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
-    (requestService, urls, authService, localStorageService) => {
-        let userInfo = {},
-            notice = {
-                errorGettingMessages: {},
-                errorProfileMessages: {},
-                errorPasswordMessages: {},
-                successProfileMessages: {},
-                successPasswordMessages: {}
-            },
-            reqData = {
-                isSendingNow: false
-            };
-
-        function getUserInfo(id) {
-            return new Promise(() => {
-                requestService.sendRequest(urls.members + id, 'get')
-                    .then(getInfoSuccess, getInfoError);
-
-                function getInfoSuccess(response) {
-                    if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
-                        userInfo.name = response.data.name;
-                        userInfo.surname = response.data.surname;
-                        userInfo.description = response.data.description;
-                        userInfo.id = response.data.id;
-                        userInfo.email = response.data.email;
-                    }
-                }
-
-                function getInfoError(error) {
-                    notice.errorGettingMessages = error;
-                    userInfo.name = '';
-                    userInfo.surname = '';
-                    userInfo.description = '';
-                    userInfo.id = '';
-                }
-            });
-        }
-
-        function editProfileData(profileData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    authService.authData.email = profileData.email;
-                    localStorageService.cookie.set('email', profileData.email);
-                    notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
-                    reqData.isSendingNow = false;
-                    resolve();
-                }
-<<<<<<< HEAD
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-        function changePassword(passwordsData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
-        }
-
-        return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
-        };
-    }
-]);
-
-app.filter('filter', () => {
-    return (items, params) => {
-        if (!params.searchText)
-            return items;
-
-        var newItems = JSON.parse(JSON.stringify(items)),
-            result = [],
-            searchText = params.caseSensetive ? params.searchText : params.searchText.toLowerCase(),
-            searchOptions = (params.searchBy !== 'any') ? [params.searchBy] : params.searchOptions;
-
-        newItems.forEach(function (item, i) {
-            var outerFlag = false;
-
-            searchOptions.forEach(function (option) {
-                var innerFlag;
-                item[option] = params.caseSensetive ? item[option] : item[option].toLowerCase();
-                innerFlag = params.fullMatch ? (item[option] === searchText) : (item[option].indexOf(searchText) > -1);
-                if (innerFlag) {
-                    outerFlag = true;
-                    return;
-                }
-            });
-
-            outerFlag = params.negative ? !outerFlag : outerFlag;
-            outerFlag ? result.push(items[i]) : '';
-        });
-=======
->>>>>>> d219e7e7f6f1cb9ec430ef9d6b271fd4b3178a0d
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-<<<<<<< HEAD
-=======
-        function changePassword(passwordsData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
-        }
-
-        return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
-        };
-    }
-]);
-
 app.filter('filter', () => {
     return (items, params) => {
         if (!params.searchText)
@@ -836,7 +759,6 @@ app.filter('filter', () => {
     };
 });
 
->>>>>>> d219e7e7f6f1cb9ec430ef9d6b271fd4b3178a0d
 app.component('auth', {
     templateUrl: 'build/views/auth/auth.html',
     controller: ['authService', '$state', authController]
@@ -862,18 +784,6 @@ function authController(authService, $state) {
             $state.go('member', {userId: authService.authData.id});
         });
     }
-}
-
-app.component('blog', {
-    templateUrl: 'build/views/blog/blog.html',
-    controller: [blogController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function blogController() {
-    const $ctrl = this;
 }
 
 app.component('chat', {
@@ -1004,6 +914,135 @@ function memberListController(memberListService) {
     };
 }
 
+app.component('chatBeginner', {
+    bindings: {
+        resolve: '<',
+        close: '&'
+    },
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: ['memberListService', 'chatService', '$state',
+        chatBeginnerController]
+});
+
+function chatBeginnerController(memberListService, chatService, $state) {
+    const $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.members;
+
+    memberListService.getMembers().then(() => {
+        $ctrl.members = [];
+        memberListService.members.forEach((member) => {
+            var flag = false;
+            chatService.chatsData.chats.forEach((chat) => {
+                chat.Users.forEach((user) => {
+                    if (user.id === member.id)
+                        flag = true;
+                });
+            });
+            if (!flag)
+                $ctrl.members.push(member);
+        });
+    });
+
+    function sendMessage() {
+        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
+            .then((newChat) => {
+                $ctrl.close();
+                $state.go('chat', {chatId: newChat.id});
+            });
+    }
+}
+
+app.component('notificationMessages', {
+    templateUrl: 'build/views/components/notification/notification.html',
+    controller: ['notificationService', '$state', notificationController]
+});
+
+function notificationController(notificationService, $state) {
+    const $ctrl = this;
+
+    $ctrl.notifications = notificationService.notifications;
+    $ctrl.remove = notificationService.remove;
+    $ctrl.openChat = openChat;
+
+    function openChat(chatId, notificationId) {
+        $state.go('chat', {chatId: chatId});
+        notificationService.remove(notificationId);
+    }
+}
+
+app.component('profileForm', {
+    bindings: {
+        title: '@',
+        isSendingNow: '<',
+        profile: '<',
+        submitFunc: '<',
+        errors: '<'
+    },
+    templateUrl: 'build/views/components/profile-form/profile-form.html',
+    controller: [profileFormController]
+});
+
+function profileFormController() {
+    const $ctrl = this;
+}
+
+app.component('blog', {
+    templateUrl: 'build/views/blog/blog.html',
+    controller: [blogController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function blogController() {
+    const $ctrl = this;
+}
+
+app.component('editProfile', {
+    templateUrl: 'build/views/blog/profile/edit-profile.html',
+    controller: ['profileService', 'localStorageService', editProfileController],
+});
+
+function editProfileController(profileService, localStorageService) {
+    const $ctrl = this;
+
+    let userId = localStorageService.cookie.get('id');
+
+    profileService.getUserInfo(userId);
+
+    $ctrl.changePassword = changePassword;
+    $ctrl.editProfileData = editProfileData;
+    $ctrl.profileData = profileService.userInfo;
+    $ctrl.notice = profileService.notice;
+
+    function changePassword(data) {
+        profileService.changePassword(data);
+    }
+
+    function editProfileData(data) {
+        profileService.editProfileData(data);
+    }
+}
+
+app.component('profile', {
+    templateUrl: 'build/views/blog/profile/profile.html',
+    controller: ['profileService', '$stateParams', profileController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function profileController(profileService, $stateParams) {
+    const $ctrl = this;
+
+    profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
+}
+
 app.component('editModal', {
     templateUrl: 'build/views/blog/post-list/post-modal.html',
     bindings: {
@@ -1103,123 +1142,6 @@ function postModalController(postListService) {
     };
 }
 
-app.component('editProfile', {
-    templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', editProfileController],
-});
-
-function editProfileController(profileService, localStorageService) {
-    const $ctrl = this;
-
-    let userId = localStorageService.cookie.get('id');
-
-    profileService.getUserInfo(userId);
-
-    $ctrl.changePassword = changePassword;
-    $ctrl.editProfileData = editProfileData;
-    $ctrl.profileData = profileService.userInfo;
-    $ctrl.notice = profileService.notice;
-
-    function changePassword(data) {
-        profileService.changePassword(data);
-    }
-
-    function editProfileData(data) {
-        profileService.editProfileData(data);
-    }
-}
-
-app.component('profile', {
-    templateUrl: 'build/views/blog/profile/profile.html',
-    controller: ['profileService', '$stateParams', profileController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function profileController(profileService, $stateParams) {
-    const $ctrl = this;
-
-    profileService.getUserInfo($stateParams.userId);
-
-    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
-}
-
-app.component('chatBeginner', {
-    bindings: {
-        resolve: '<',
-        close: '&'
-    },
-    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: ['memberListService', 'chatService', '$state',
-        chatBeginnerController]
-});
-
-function chatBeginnerController(memberListService, chatService, $state) {
-    const $ctrl = this;
-
-    $ctrl.sendMessage = sendMessage;
-    $ctrl.members;
-
-    memberListService.getMembers().then(() => {
-        $ctrl.members = [];
-        memberListService.members.forEach((member) => {
-            var flag = false;
-            chatService.chatsData.chats.forEach((chat) => {
-                chat.Users.forEach((user) => {
-                    if (user.id === member.id)
-                        flag = true;
-                });
-            });
-            if (!flag)
-                $ctrl.members.push(member);
-        });
-    });
-
-    function sendMessage() {
-        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
-            .then((newChat) => {
-                $ctrl.close();
-                $state.go('chat', {chatId: newChat.id});
-            });
-    }
-}
-
-app.component('notificationMessages', {
-    templateUrl: 'build/views/components/notification/notification.html',
-    controller: ['notificationService', '$state', notificationController]
-});
-
-function notificationController(notificationService, $state) {
-    const $ctrl = this;
-
-    $ctrl.notifications = notificationService.notifications;
-    $ctrl.remove = notificationService.remove;
-    $ctrl.openChat = openChat;
-
-    function openChat(chatId, notificationId) {
-        $state.go('chat', {chatId: chatId});
-        notificationService.remove(notificationId);
-    }
-}
-
-app.component('profileForm', {
-    bindings: {
-        title: '@',
-        isSendingNow: '<',
-        profile: '<',
-        submitFunc: '<',
-        errors: '<'
-    },
-    templateUrl: 'build/views/components/profile-form/profile-form.html',
-    controller: [profileFormController]
-});
-
-function profileFormController() {
-    const $ctrl = this;
-}
-
 app.directive("compareTo", compareTo);
 
 function compareTo() {
@@ -1312,30 +1234,6 @@ app.config(['$stateProvider',
 ]);
 
 app.config(['$stateProvider',
-    function ($stateProvider) {
-        $stateProvider.state('member', {
-            url: "/:userId",
-            component: 'blog',
-            resolve: {
-                authData: ['authService',
-                    (authService) => {
-                        return authService.authData;
-                    }
-                ]
-            }
-        });
-
-        $stateProvider.state('editProfile', {
-            url: "/editProfile",
-            component: 'editProfile',
-            data: {
-                auth: "Authorized"
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
     ($stateProvider) => {
         $stateProvider.state('chat', {
             url: "/chat/:chatId",
@@ -1357,6 +1255,30 @@ app.config(['$stateProvider',
                         return authService.authData;
                     }
                 ]
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    function ($stateProvider) {
+        $stateProvider.state('member', {
+            url: "/:userId",
+            component: 'blog',
+            resolve: {
+                authData: ['authService',
+                    (authService) => {
+                        return authService.authData;
+                    }
+                ]
+            }
+        });
+
+        $stateProvider.state('editProfile', {
+            url: "/editProfile",
+            component: 'editProfile',
+            data: {
+                auth: "Authorized"
             }
         });
     }

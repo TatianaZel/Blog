@@ -54,7 +54,7 @@ module.exports = function (sequelize, DataTypes) {
                     where: {
                         email,
                         id: {
-                            $not: id
+                            $not: id//эта проверка нужна для случая когда юзер хочет отредактировать профиль и привязать новый имэйл
                         }
                     }
                 })
