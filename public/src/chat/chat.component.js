@@ -1,6 +1,9 @@
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', chatController]
+    controller: ['chatService', '$stateParams', '$uibModal', chatController],
+    bindings: {
+        authData: '<'
+    }
 });
 
 function chatController(chatService, $stateParams, $uibModal) {

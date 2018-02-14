@@ -1,14 +1,15 @@
 <form name="$ctrl.messageForm" class="modal-content" ng-submit="$ctrl.sendMessage($ctrl.messageData)">
-    <div class="modal-header">
-        <b>Send message</b>
-        <button type="button" class="close" ng-click="$ctrl.close({})" aria-hidden="true">&times;</button>
-    </div>
     <div class="modal-body">
         <div class="form-group">
-            <textarea name="postText" ng-model="$ctrl.messageData.text" type="text" required class="form-control" rows="5"></textarea>
+            <textarea placeholder="Enter your message here" name="postText" ng-model="$ctrl.messageData.text" type="text" required class="form-control" rows="5"></textarea>
         </div>
     </div>
     <div class="modal-footer">
-        <button ng-disabled="$ctrl.sendingIsNow" type="submit" class="btn btn-default">Send</button>
+        <div class="col-md-6">
+            <button ng-disabled="$ctrl.sendingIsNow || !$ctrl.messageData.text" type="submit" class="btn btn-default">Send</button>
+        </div>
+        <div class="col-md-6">
+            <button type="button" class="btn btn-default" ng-click="$ctrl.close({})" aria-hidden="true">Close</button>
+        </div>
     </div>
 </form>

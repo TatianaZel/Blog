@@ -1,6 +1,5 @@
 <form name="$ctrl.messageForm" class="modal-content chatBeginner" ng-submit="$ctrl.sendMessage()">
-    <div class="modal-header">
-        <b ng-if="$ctrl.members && $ctrl.members.length">Send message</b>
+    <div class="modal-header" ng-if="$ctrl.members && !$ctrl.members.length">
         <button type="button" class="close" ng-click="$ctrl.close()" aria-hidden="true">&times;</button>
     </div>
     <div class="infoMessage" ng-if="$ctrl.members && !$ctrl.members.length" class="modal-body">
@@ -19,6 +18,11 @@
         </div>
     </div>
     <div ng-if="$ctrl.members.length" class="modal-footer">
-        <button type="submit" class="btn btn-default">Send</button>
+        <div class="col-md-6">
+            <button ng-disabled="!$ctrl.messageData.text" type="submit" class="btn btn-default">Send</button>
+        </div>
+        <div class="col-md-6">
+            <button type="button" class="btn btn-default" ng-click="$ctrl.close()" aria-hidden="true">Close</button>
+        </div>
     </div>
 </form>

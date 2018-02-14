@@ -3,7 +3,7 @@ app.component('notice', {
         notice: '=',
         danger: '<'
     },
-    templateUrl: 'build/views/components/notice.html',
+    templateUrl: 'build/views/components/notice/notice.html',
     controller: [noticeController]
 });
 

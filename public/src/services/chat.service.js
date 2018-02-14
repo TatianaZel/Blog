@@ -169,7 +169,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
             counters[data.ChatId]++;
 
-            $location.hash('bottom');
+            $location.hash('bottom');//start here!
             $anchorScroll();
         }
 

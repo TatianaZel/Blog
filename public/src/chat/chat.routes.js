@@ -5,6 +5,13 @@ app.config(['$stateProvider',
             component: 'chat',
             data: {
                 auth: "Authorized"
+            },
+            resolve: {
+                authData: ['authService',
+                    (authService) => {
+                        return authService.authData;
+                    }
+                ]
             }
         });
     }

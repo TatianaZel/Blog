@@ -370,7 +370,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
             counters[data.ChatId]++;
 
-            $location.hash('bottom');
+            $location.hash('bottom');//start here!
             $anchorScroll();
         }
 
@@ -482,121 +482,6 @@ var urls = {
     chat: 'http://localhost:3000/api/chat/'
 };
 app.constant("urls", urls);
-
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
-    (requestService, urls, authService, localStorageService) => {
-        let userInfo = {},
-            notice = {
-                errorGettingMessages: {},
-                errorProfileMessages: {},
-                errorPasswordMessages: {},
-                successProfileMessages: {},
-                successPasswordMessages: {}
-            },
-            reqData = {
-                isSendingNow: false
-            };
-
-        function getUserInfo(id) {
-            return new Promise(() => {
-                requestService.sendRequest(urls.members + id, 'get')
-                    .then(getInfoSuccess, getInfoError);
-
-                function getInfoSuccess(response) {
-                    if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
-                        userInfo.name = response.data.name;
-                        userInfo.surname = response.data.surname;
-                        userInfo.description = response.data.description;
-                        userInfo.id = response.data.id;
-                        userInfo.email = response.data.email;
-                    }
-                }
-
-                function getInfoError(error) {
-                    notice.errorGettingMessages = error;
-                    userInfo.name = '';
-                    userInfo.surname = '';
-                    userInfo.description = '';
-                    userInfo.id = '';
-                }
-            });
-        }
-
-        function editProfileData(profileData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    authService.authData.email = profileData.email;
-                    localStorageService.cookie.set('email', profileData.email);
-                    notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
-                    reqData.isSendingNow = false;
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-        function changePassword(passwordsData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
-        }
-
-        return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
-        };
-    }
-]);
 
 app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
         var posts = [],
@@ -728,6 +613,121 @@ app.factory('postListService', ['requestService', 'authService', 'urls', functio
         }
     }]);
 
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
+        let userInfo = {},
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
+            },
+            reqData = {
+                isSendingNow: false
+            };
+
+        function getUserInfo(id) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + id, 'get')
+                    .then(getInfoSuccess, getInfoError);
+
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.errorGettingMessages.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
+                }
+
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                }
+            });
+        }
+
+        function editProfileData(profileData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
+    }
+]);
+
 app.filter('filter', () => {
     return (items, params) => {
         if (!params.searchText)
@@ -786,9 +786,24 @@ function authController(authService, $state) {
     }
 }
 
+app.component('blog', {
+    templateUrl: 'build/views/blog/blog.html',
+    controller: [blogController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function blogController() {
+    const $ctrl = this;
+}
+
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', chatController]
+    controller: ['chatService', '$stateParams', '$uibModal', chatController],
+    bindings: {
+        authData: '<'
+    }
 });
 
 function chatController(chatService, $stateParams, $uibModal) {
@@ -821,25 +836,6 @@ function chatController(chatService, $stateParams, $uibModal) {
             component: 'chatBeginner'
         });
     }
-}
-
-app.component('notice', {
-    bindings: {
-        notice: '=',
-        danger: '<'
-    },
-    templateUrl: 'build/views/components/notice.html',
-    controller: [noticeController]
-});
-
-function noticeController() {
-    const $ctrl = this;
-
-    $ctrl.$onInit = function () {
-        for (var key in $ctrl.notice) {
-            $ctrl.notice[key] = '';
-        }
-    };
 }
 
 app.component('validateErrors', {
@@ -912,135 +908,6 @@ function memberListController(memberListService) {
     $ctrl.filterParams = {
         searchOptions: ['name', 'surname']
     };
-}
-
-app.component('chatBeginner', {
-    bindings: {
-        resolve: '<',
-        close: '&'
-    },
-    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: ['memberListService', 'chatService', '$state',
-        chatBeginnerController]
-});
-
-function chatBeginnerController(memberListService, chatService, $state) {
-    const $ctrl = this;
-
-    $ctrl.sendMessage = sendMessage;
-    $ctrl.members;
-
-    memberListService.getMembers().then(() => {
-        $ctrl.members = [];
-        memberListService.members.forEach((member) => {
-            var flag = false;
-            chatService.chatsData.chats.forEach((chat) => {
-                chat.Users.forEach((user) => {
-                    if (user.id === member.id)
-                        flag = true;
-                });
-            });
-            if (!flag)
-                $ctrl.members.push(member);
-        });
-    });
-
-    function sendMessage() {
-        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
-            .then((newChat) => {
-                $ctrl.close();
-                $state.go('chat', {chatId: newChat.id});
-            });
-    }
-}
-
-app.component('notificationMessages', {
-    templateUrl: 'build/views/components/notification/notification.html',
-    controller: ['notificationService', '$state', notificationController]
-});
-
-function notificationController(notificationService, $state) {
-    const $ctrl = this;
-
-    $ctrl.notifications = notificationService.notifications;
-    $ctrl.remove = notificationService.remove;
-    $ctrl.openChat = openChat;
-
-    function openChat(chatId, notificationId) {
-        $state.go('chat', {chatId: chatId});
-        notificationService.remove(notificationId);
-    }
-}
-
-app.component('profileForm', {
-    bindings: {
-        title: '@',
-        isSendingNow: '<',
-        profile: '<',
-        submitFunc: '<',
-        errors: '<'
-    },
-    templateUrl: 'build/views/components/profile-form/profile-form.html',
-    controller: [profileFormController]
-});
-
-function profileFormController() {
-    const $ctrl = this;
-}
-
-app.component('blog', {
-    templateUrl: 'build/views/blog/blog.html',
-    controller: [blogController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function blogController() {
-    const $ctrl = this;
-}
-
-app.component('editProfile', {
-    templateUrl: 'build/views/blog/profile/edit-profile.html',
-    controller: ['profileService', 'localStorageService', editProfileController],
-});
-
-function editProfileController(profileService, localStorageService) {
-    const $ctrl = this;
-
-    let userId = localStorageService.cookie.get('id');
-
-    profileService.getUserInfo(userId);
-
-    $ctrl.changePassword = changePassword;
-    $ctrl.editProfileData = editProfileData;
-    $ctrl.profileData = profileService.userInfo;
-    $ctrl.notice = profileService.notice;
-
-    function changePassword(data) {
-        profileService.changePassword(data);
-    }
-
-    function editProfileData(data) {
-        profileService.editProfileData(data);
-    }
-}
-
-app.component('profile', {
-    templateUrl: 'build/views/blog/profile/profile.html',
-    controller: ['profileService', '$stateParams', profileController],
-    bindings: {
-        authData: '<'
-    }
-});
-
-function profileController(profileService, $stateParams) {
-    const $ctrl = this;
-
-    profileService.getUserInfo($stateParams.userId);
-
-    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
-    $ctrl.info = profileService.userInfo;
 }
 
 app.component('editModal', {
@@ -1142,6 +1009,142 @@ function postModalController(postListService) {
     };
 }
 
+app.component('editProfile', {
+    templateUrl: 'build/views/blog/profile/edit-profile.html',
+    controller: ['profileService', 'localStorageService', editProfileController],
+});
+
+function editProfileController(profileService, localStorageService) {
+    const $ctrl = this;
+
+    let userId = localStorageService.cookie.get('id');
+
+    profileService.getUserInfo(userId);
+
+    $ctrl.changePassword = changePassword;
+    $ctrl.editProfileData = editProfileData;
+    $ctrl.profileData = profileService.userInfo;
+    $ctrl.notice = profileService.notice;
+
+    function changePassword(data) {
+        profileService.changePassword(data);
+    }
+
+    function editProfileData(data) {
+        profileService.editProfileData(data);
+    }
+}
+
+app.component('profile', {
+    templateUrl: 'build/views/blog/profile/profile.html',
+    controller: ['profileService', '$stateParams', profileController],
+    bindings: {
+        authData: '<'
+    }
+});
+
+function profileController(profileService, $stateParams) {
+    const $ctrl = this;
+
+    profileService.getUserInfo($stateParams.userId);
+
+    $ctrl.errorGettingMessages = profileService.notice.errorGettingMessages;
+    $ctrl.info = profileService.userInfo;
+}
+
+app.component('chatBeginner', {
+    bindings: {
+        resolve: '<',
+        close: '&'
+    },
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: ['memberListService', 'chatService', '$state',
+        chatBeginnerController]
+});
+
+function chatBeginnerController(memberListService, chatService, $state) {
+    const $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.members;
+
+    memberListService.getMembers().then(() => {
+        $ctrl.members = [];
+        memberListService.members.forEach((member) => {
+            var flag = false;
+            chatService.chatsData.chats.forEach((chat) => {
+                chat.Users.forEach((user) => {
+                    if (user.id === member.id)
+                        flag = true;
+                });
+            });
+            if (!flag)
+                $ctrl.members.push(member);
+        });
+    });
+
+    function sendMessage() {
+        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
+            .then((newChat) => {
+                $ctrl.close();
+                $state.go('chat', {chatId: newChat.id});
+            });
+    }
+}
+
+app.component('notice', {
+    bindings: {
+        notice: '=',
+        danger: '<'
+    },
+    templateUrl: 'build/views/components/notice/notice.html',
+    controller: [noticeController]
+});
+
+function noticeController() {
+    const $ctrl = this;
+
+    $ctrl.$onInit = function () {
+        for (var key in $ctrl.notice) {
+            $ctrl.notice[key] = '';
+        }
+    };
+}
+
+app.component('notificationMessages', {
+    templateUrl: 'build/views/components/notification/notification.html',
+    controller: ['notificationService', '$state', notificationController]
+});
+
+function notificationController(notificationService, $state) {
+    const $ctrl = this;
+
+    $ctrl.notifications = notificationService.notifications;
+    $ctrl.remove = notificationService.remove;
+    $ctrl.openChat = openChat;
+
+    function openChat(chatId, notificationId) {
+        $state.go('chat', {chatId: chatId});
+        notificationService.remove(notificationId);
+    }
+}
+
+app.component('profileForm', {
+    bindings: {
+        title: '@',
+        isSendingNow: '<',
+        profile: '<',
+        submitFunc: '<',
+        errors: '<'
+    },
+    templateUrl: 'build/views/components/profile-form/profile-form.html',
+    controller: [profileFormController]
+});
+
+function profileFormController() {
+    const $ctrl = this;
+}
+
 app.directive("compareTo", compareTo);
 
 function compareTo() {
@@ -1234,33 +1237,6 @@ app.config(['$stateProvider',
 ]);
 
 app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('chat', {
-            url: "/chat/:chatId",
-            component: 'chat',
-            data: {
-                auth: "Authorized"
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
-    ($stateProvider) => {
-        $stateProvider.state('members', {
-            url: "/",
-            component: 'memberList',
-            resolve: {
-                authData: ['authService', (authService) => {
-                        return authService.authData;
-                    }
-                ]
-            }
-        });
-    }
-]);
-
-app.config(['$stateProvider',
     function ($stateProvider) {
         $stateProvider.state('member', {
             url: "/:userId",
@@ -1279,6 +1255,40 @@ app.config(['$stateProvider',
             component: 'editProfile',
             data: {
                 auth: "Authorized"
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('chat', {
+            url: "/chat/:chatId",
+            component: 'chat',
+            data: {
+                auth: "Authorized"
+            },
+            resolve: {
+                authData: ['authService',
+                    (authService) => {
+                        return authService.authData;
+                    }
+                ]
+            }
+        });
+    }
+]);
+
+app.config(['$stateProvider',
+    ($stateProvider) => {
+        $stateProvider.state('members', {
+            url: "/",
+            component: 'memberList',
+            resolve: {
+                authData: ['authService', (authService) => {
+                        return authService.authData;
+                    }
+                ]
             }
         });
     }

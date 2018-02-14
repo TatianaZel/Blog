@@ -47,6 +47,12 @@ body {
     border: none;
 }
 
+.modal-header,
+.modal-footer,
+.modal-body {
+    background-color: rgb(255, 250, 205);
+}
+
 .modal-footer button,
 .modal-body button {
     width: 100%;
@@ -58,11 +64,18 @@ body {
 
 .modal-header {
     padding-bottom: 0;
+    text-align: center;
 }
 
 .modal-header .form-group:last-child,
 .modal-body .form-group:last-child {
     margin-bottom: 0;
+}
+
+button:active,
+button:focus {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 @media all and (max-width: 920px) {

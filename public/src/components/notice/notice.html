@@ -1,0 +1,3 @@
+ <div class="alert notice" ng-class="{'alert-danger' : $ctrl.danger, 'alert-success' : !$ctrl.danger}" role="alert" ng-repeat="(key, value) in $ctrl.notice" ng-if="value">
+     <p class="text-center">{{value}}</p>
+ </div>
