@@ -18,7 +18,30 @@ chat>div {
     overflow: hidden;
 }
 
-.msgColumn>div,
+.msgColumn>div {
+    overflow-y: scroll;
+
+    &::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        border-radius: 5px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 5px;
+        background-color: white;
+        outline: 1px solid slategrey;
+    }
+}
+
+.msgColumn>div:hover {
+    &::-webkit-scrollbar-thumb {
+        background-color: lightgray;
+    }
+}
+
 .chatColumn>div {
     overflow-y: auto;
 
@@ -28,7 +51,6 @@ chat>div {
     }
 }
 
-.msgColumn>div:hover,
 .chatColumn>div:hover {
 
     &::-webkit-scrollbar {

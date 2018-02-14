@@ -24,7 +24,7 @@ function connection(socket) {
 
                 Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
 
-                    //тут разделение на тот случай если в будущем можно будет создавать чаты с более чем двумя юзерами
+                    //separation for that case if in the future it will be possible to create chats with more than two users
                     socket.on('messageToExistChat', addMessageToExistChat);
                     socket.on('messageToNewChat', addMessageToNewChat);
 
@@ -42,7 +42,7 @@ function connection(socket) {
         Session.check(data.token).then((user) => {
             Memberships
                 .prototype
-                .checkDialog(user.id, data.recipientId)//проверяем не было ли уже создано чата между двумя этими юзерами
+                .checkDialog(user.id, data.recipientId)//here we check whether it was already created a chat between the two users
                 .then(() => {
                     Chats.create().then((chat) => {
                         Memberships
@@ -80,7 +80,7 @@ function connection(socket) {
 
     function addMessageToExistChat(data) {
         Session.check(data.token).then((user) => {
-            Memberships.prototype.check(user.id, data.chatId).then(() => {//проверякм учавствует ли юзер в этом чате
+            Memberships.prototype.check(user.id, data.chatId).then(() => {//here we check whether the user is participating in this chat
 
                 const msg = new Messages({
                     text: data.text,
