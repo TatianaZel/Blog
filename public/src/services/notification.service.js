@@ -12,7 +12,7 @@ app.factory('notificationService', ['$timeout',
         function add(item) {
             item.id = notificationId;
 
-            Array.prototype.unshift.call(notifications, item);
+            notifications.push(item);
             notificationId++;
 
             $timeout(function () {

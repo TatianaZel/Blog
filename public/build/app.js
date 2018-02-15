@@ -421,7 +421,7 @@ app.factory('notificationService', ['$timeout',
         function add(item) {
             item.id = notificationId;
 
-            Array.prototype.unshift.call(notifications, item);
+            notifications.push(item);
             notificationId++;
 
             $timeout(function () {
@@ -1009,6 +1009,46 @@ function postModalController(postListService) {
     };
 }
 
+app.component('chatBeginner', {
+    bindings: {
+        resolve: '<',
+        close: '&'
+    },
+    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
+    controller: ['memberListService', 'chatService', '$state',
+        chatBeginnerController]
+});
+
+function chatBeginnerController(memberListService, chatService, $state) {
+    const $ctrl = this;
+
+    $ctrl.sendMessage = sendMessage;
+    $ctrl.members;
+
+    memberListService.getMembers().then(() => {
+        $ctrl.members = [];
+        memberListService.members.forEach((member) => {
+            var flag = false;
+            chatService.chatsData.chats.forEach((chat) => {
+                chat.Users.forEach((user) => {
+                    if (user.id === member.id)
+                        flag = true;
+                });
+            });
+            if (!flag)
+                $ctrl.members.push(member);
+        });
+    });
+
+    function sendMessage() {
+        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
+            .then((newChat) => {
+                $ctrl.close();
+                $state.go('chat', {chatId: newChat.id});
+            });
+    }
+}
+
 app.component('editProfile', {
     templateUrl: 'build/views/blog/profile/edit-profile.html',
     controller: ['profileService', 'localStorageService', editProfileController],
@@ -1052,65 +1092,6 @@ function profileController(profileService, $stateParams) {
     $ctrl.info = profileService.userInfo;
 }
 
-app.component('chatBeginner', {
-    bindings: {
-        resolve: '<',
-        close: '&'
-    },
-    templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: ['memberListService', 'chatService', '$state',
-        chatBeginnerController]
-});
-
-function chatBeginnerController(memberListService, chatService, $state) {
-    const $ctrl = this;
-
-    $ctrl.sendMessage = sendMessage;
-    $ctrl.members;
-
-    memberListService.getMembers().then(() => {
-        $ctrl.members = [];
-        memberListService.members.forEach((member) => {
-            var flag = false;
-            chatService.chatsData.chats.forEach((chat) => {
-                chat.Users.forEach((user) => {
-                    if (user.id === member.id)
-                        flag = true;
-                });
-            });
-            if (!flag)
-                $ctrl.members.push(member);
-        });
-    });
-
-    function sendMessage() {
-        chatService.messageToNewChat($ctrl.messageData.text, $ctrl.messageData.memberId)
-            .then((newChat) => {
-                $ctrl.close();
-                $state.go('chat', {chatId: newChat.id});
-            });
-    }
-}
-
-app.component('notice', {
-    bindings: {
-        notice: '=',
-        danger: '<'
-    },
-    templateUrl: 'build/views/components/notice/notice.html',
-    controller: [noticeController]
-});
-
-function noticeController() {
-    const $ctrl = this;
-
-    $ctrl.$onInit = function () {
-        for (var key in $ctrl.notice) {
-            $ctrl.notice[key] = '';
-        }
-    };
-}
-
 app.component('notificationMessages', {
     templateUrl: 'build/views/components/notification/notification.html',
     controller: ['notificationService', '$state', notificationController]
@@ -1143,6 +1124,25 @@ app.component('profileForm', {
 
 function profileFormController() {
     const $ctrl = this;
+}
+
+app.component('notice', {
+    bindings: {
+        notice: '=',
+        danger: '<'
+    },
+    templateUrl: 'build/views/components/notice/notice.html',
+    controller: [noticeController]
+});
+
+function noticeController() {
+    const $ctrl = this;
+
+    $ctrl.$onInit = function () {
+        for (var key in $ctrl.notice) {
+            $ctrl.notice[key] = '';
+        }
+    };
 }
 
 app.directive("compareTo", compareTo);

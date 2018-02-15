@@ -11,7 +11,7 @@ notification-messages .notification {
     cursor: pointer;
 }
 
-.animation.ng-enter, .animation.ng-leave {
+.animation.ng-leave {
     -webkit-transition: all 1s cubic-bezier(.11,1.95,.72,.76);
 }
 
@@ -42,7 +42,7 @@ notification-messages {
     margin:20px;
 }
 
-notification-messages span.type{
+notification-messages span.type {
     font-weight: bold;
     color: #5699bc;
 }
