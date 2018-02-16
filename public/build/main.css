@@ -5,6 +5,6 @@ chat>div{margin-top:15px}.chatItem{padding:10px}.chatMsg{border:none;position:re
 .memberName{font-size:16px;font-weight:700}
 .createLink{margin-left:5px}.transparentPost{opacity:.75}.controlBtn{cursor:pointer}
 .description,.editLink{margin-left:5px}.description{font-size:20px;font-style:italic}
+.chatBeginner .infoMessage{text-align:center;margin:50px 0;padding:0 20px}
 .notice{margin-top:20px}
 notification-messages .notification{width:200px;background:#000;color:#fff;border-radius:5px;margin-top:10px;font-family:Arial;position:relative;z-index:500;padding:15px;cursor:pointer}notification-messages a.close,notification-messages span.type{font-weight:700;color:#5699bc}.animation.ng-enter{opacity:0}.animation.ng-leave{-webkit-transition:all 1s cubic-bezier(.11,1.95,.72,.76);opacity:1;z-index:499}.animation.ng-enter.ng-enter-active{opacity:1;margin-top:10px}.animation.ng-leave.ng-leave-active{opacity:0;z-index:499}notification-messages{position:fixed;z-index:500;bottom:30px;right:0;margin:20px}notification-messages a.close{position:absolute;float:right;top:5px;right:5px;text-decoration:none;font-family:Arial}notification-messages a.close:hover{color:#fff;cursor:pointer}
-.chatBeginner .infoMessage{text-align:center;margin:50px 0;padding:0 20px}

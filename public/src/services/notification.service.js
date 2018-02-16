@@ -1,5 +1,5 @@
-app.factory('notificationService', ['$timeout',
-    ($timeout) => {
+app.factory('notificationService', ['$timeout', '$state',
+    ($timeout, $state) => {
         var notifications = [];
         var notificationId = 0;
 
@@ -10,6 +10,9 @@ app.factory('notificationService', ['$timeout',
         };
 
         function add(item) {
+            if ($state.current.name === "chat")
+                return;
+
             item.id = notificationId;
 
             notifications.push(item);

@@ -19,10 +19,10 @@
     </div>
     <div ng-if="$ctrl.members.length" class="modal-footer">
         <div class="col-md-6">
-            <button ng-disabled="!$ctrl.messageData.text" type="submit" class="btn btn-default">Send</button>
+            <button type="button" class="btn btn-default" ng-click="$ctrl.close()" aria-hidden="true">Close</button>
         </div>
         <div class="col-md-6">
-            <button type="button" class="btn btn-default" ng-click="$ctrl.close()" aria-hidden="true">Close</button>
+            <button ng-disabled="!$ctrl.messageData.text" type="submit" class="btn btn-default">Send</button>
         </div>
     </div>
 </form>

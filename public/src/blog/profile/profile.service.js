@@ -19,7 +19,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
                 function getInfoSuccess(response) {
                     if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
+                        notice.gettingUserInfo = '';
                         userInfo.name = response.data.name;
                         userInfo.surname = response.data.surname;
                         userInfo.description = response.data.description;
@@ -34,6 +34,7 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
                     userInfo.surname = '';
                     userInfo.description = '';
                     userInfo.id = '';
+                    userInfo.email = '';
                 }
             });
         }

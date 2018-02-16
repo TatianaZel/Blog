@@ -53,6 +53,252 @@ app.factory('memberListService', ['requestService', 'urls',
     }
 ]);
 
+app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
+        var posts = [],
+            errorMessages = {},
+            reqData = {
+                isCreatingNow: false,
+                removedPost: ''
+            },
+            editedPost = {},
+            config = {
+                headers: {
+                    'Content-Type': 'application/jsone;'
+                }
+            };
+
+        return {
+            getPosts: getPosts,
+            posts: posts,
+            reqData: reqData,
+            editedPost: editedPost,
+            errorMessages: errorMessages,
+            removePost: removePost,
+            createPost: createPost,
+            editPost: editPost
+        };
+
+        function getPosts(userId) {
+            return new Promise((resolve, reject) => {
+                posts.splice(0, posts.length);
+                requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
+                function getPostsSuccess(res) {
+                    if (res.data) {
+                        Array.prototype.push.apply(posts, res.data);
+                        errorMessages.gettingPosts = '';
+                        resolve();
+                    } else {
+                        errorMessages.gettingPosts = 'No available posts.';
+                        reject();
+                    }
+                }
+
+                function getPostsError(err) {
+                    errorMessages.gettingPosts = err;
+                    reject();
+                }
+            });
+        }
+
+        function createPost(sendData) {
+            return new Promise((resolve, reject) => {
+                var headers = {
+                    'Token': authService.authData.token
+                };
+
+                reqData.isCreatingNow = true;
+
+                requestService.sendRequest(urls.post, 'post', headers, sendData, config).then(createPostSuccess, createPostError);
+
+                function createPostSuccess(res) {
+                    reqData.isCreatingNow = false;
+                    if (res.data) {
+                        posts.push(res.data);
+                        errorMessages.creatingPost = '';
+                        resolve();
+                    } else {
+                        errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
+                        reject();
+                    }
+                }
+
+                function createPostError(err) {
+                    errorMessages.creatingPost = err;
+                    reqData.isCreatingNow = false;
+                    reject();
+                }
+            });
+        }
+
+        function editPost(id, sendData) {
+            return new Promise((resolve, reject) => {
+                var headers = {
+                    'Token': authService.authData.token
+                };
+
+                reqData.isCreatingNow = true;
+
+                requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
+
+                function editPostSuccess(res) {
+                    reqData.isCreatingNow = false;
+                    errorMessages.creatingPost = '';
+                    resolve();
+                }
+
+                function editPostError(err) {
+                    errorMessages.edditingPost = err;
+                    reqData.isCreatingNow = false;
+                    reject();
+                }
+            });
+        }
+
+        function removePost(postId) {
+            return new Promise(function (resolve, reject) {
+
+                var headers = {
+                    'Token': authService.authData.token
+                };
+
+                reqData.removedPost = postId;
+
+                requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
+
+                function removePostSuccess() {
+                    errorMessages.removingPost = '';
+                    for (var i = 0; i < posts.length; i++) {
+                        if (posts[i].id === reqData.removedPost) {
+                            posts.splice(i, 1);
+                        }
+                    }
+                    resolve();
+                }
+
+                function removePostError(response) {
+                    errorMessages.removingPost = response;
+                    reject();
+                }
+            });
+        }
+    }]);
+
+app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
+    (requestService, urls, authService, localStorageService) => {
+        let userInfo = {},
+            notice = {
+                errorGettingMessages: {},
+                errorProfileMessages: {},
+                errorPasswordMessages: {},
+                successProfileMessages: {},
+                successPasswordMessages: {}
+            },
+            reqData = {
+                isSendingNow: false
+            };
+
+        function getUserInfo(id) {
+            return new Promise(() => {
+                requestService.sendRequest(urls.members + id, 'get')
+                    .then(getInfoSuccess, getInfoError);
+
+                function getInfoSuccess(response) {
+                    if (response && response.data) {
+                        notice.gettingUserInfo = '';
+                        userInfo.name = response.data.name;
+                        userInfo.surname = response.data.surname;
+                        userInfo.description = response.data.description;
+                        userInfo.id = response.data.id;
+                        userInfo.email = response.data.email;
+                    }
+                }
+
+                function getInfoError(error) {
+                    notice.errorGettingMessages = error;
+                    userInfo.name = '';
+                    userInfo.surname = '';
+                    userInfo.description = '';
+                    userInfo.id = '';
+                    userInfo.email = '';
+                }
+            });
+        }
+
+        function editProfileData(profileData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    authService.authData.email = profileData.email;
+                    localStorageService.cookie.set('email', profileData.email);
+                    notice.errorProfileMessages.editProfile = '';
+                    notice.successProfileMessages.editProfile = 'Success!';
+                    reqData.isSendingNow = false;
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorProfileMessages.editProfile = err;
+                    notice.successProfileMessages.editProfile = '';
+                }
+            });
+        }
+
+        function changePassword(passwordsData) {
+            var config = {
+                    headers: {
+                        'Content-Type': 'application/jsone;'
+                    }
+                },
+                headers = {
+                    'Token': authService.authData.token
+                };
+
+            return new Promise((resolve) => {
+                reqData.isSendingNow = true;
+
+                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                    .then(editProfileSuccess, editProfileError);
+
+                function editProfileSuccess() {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = '';
+                    notice.successPasswordMessages.changePassword = 'Success!';
+                    resolve();
+                }
+
+                function editProfileError(err) {
+                    reqData.isSendingNow = false;
+                    notice.errorPasswordMessages.changePassword = err;
+                    notice.successPasswordMessages.changePassword = '';
+                }
+            });
+        }
+
+        return {
+            getUserInfo: getUserInfo,
+            editProfileData: editProfileData,
+            changePassword: changePassword,
+            userInfo: userInfo,
+            notice: notice,
+            reqData: reqData
+        };
+    }
+]);
+
 app.factory('authService', ['localStorageService', 'requestService', 'urls',
     'chatService',
     (localStorageService, requestService, urls, chatService) => {
@@ -407,8 +653,8 @@ app.factory('chatService', ['localStorageService', '$rootScope',
     }
 ]);
 
-app.factory('notificationService', ['$timeout',
-    ($timeout) => {
+app.factory('notificationService', ['$timeout', '$state',
+    ($timeout, $state) => {
         var notifications = [];
         var notificationId = 0;
 
@@ -419,6 +665,9 @@ app.factory('notificationService', ['$timeout',
         };
 
         function add(item) {
+            if ($state.current.name === "chat")
+                return;
+
             item.id = notificationId;
 
             notifications.push(item);
@@ -482,251 +731,6 @@ var urls = {
     chat: 'http://localhost:3000/api/chat/'
 };
 app.constant("urls", urls);
-
-app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
-        var posts = [],
-            errorMessages = {},
-            reqData = {
-                isCreatingNow: false,
-                removedPost: ''
-            },
-            editedPost = {},
-            config = {
-                headers: {
-                    'Content-Type': 'application/jsone;'
-                }
-            };
-
-        return {
-            getPosts: getPosts,
-            posts: posts,
-            reqData: reqData,
-            editedPost: editedPost,
-            errorMessages: errorMessages,
-            removePost: removePost,
-            createPost: createPost,
-            editPost: editPost
-        };
-
-        function getPosts(userId) {
-            return new Promise((resolve, reject) => {
-                posts.splice(0, posts.length);
-                requestService.sendRequest(urls.blog + userId, 'get').then(getPostsSuccess, getPostsError);
-                function getPostsSuccess(res) {
-                    if (res.data) {
-                        Array.prototype.push.apply(posts, res.data);
-                        errorMessages.gettingPosts = '';
-                        resolve();
-                    } else {
-                        errorMessages.gettingPosts = 'No available posts.';
-                        reject();
-                    }
-                }
-
-                function getPostsError(err) {
-                    errorMessages.gettingPosts = err;
-                    reject();
-                }
-            });
-        }
-
-        function createPost(sendData) {
-            return new Promise((resolve, reject) => {
-                var headers = {
-                    'Token': authService.authData.token
-                };
-
-                reqData.isCreatingNow = true;
-
-                requestService.sendRequest(urls.post, 'post', headers, sendData, config).then(createPostSuccess, createPostError);
-
-                function createPostSuccess(res) {
-                    reqData.isCreatingNow = false;
-                    if (res.data) {
-                        posts.push(res.data);
-                        errorMessages.creatingPost = '';
-                        resolve();
-                    } else {
-                        errorMessages.creatingPost = 'Somthing error. Please, try reload page.';
-                        reject();
-                    }
-                }
-
-                function createPostError(err) {
-                    errorMessages.creatingPost = err;
-                    reqData.isCreatingNow = false;
-                    reject();
-                }
-            });
-        }
-
-        function editPost(id, sendData) {
-            return new Promise((resolve, reject) => {
-                var headers = {
-                    'Token': authService.authData.token
-                };
-
-                reqData.isCreatingNow = true;
-
-                requestService.sendRequest(urls.post + id, 'put', headers, sendData, config).then(editPostSuccess, editPostError);
-
-                function editPostSuccess(res) {
-                    reqData.isCreatingNow = false;
-                    errorMessages.creatingPost = '';
-                    resolve();
-                }
-
-                function editPostError(err) {
-                    errorMessages.edditingPost = err;
-                    reqData.isCreatingNow = false;
-                    reject();
-                }
-            });
-        }
-
-        function removePost(postId) {
-            return new Promise(function (resolve, reject) {
-
-                var headers = {
-                    'Token': authService.authData.token
-                };
-
-                reqData.removedPost = postId;
-
-                requestService.sendRequest(urls.post + postId, 'delete', headers).then(removePostSuccess, removePostError);
-
-                function removePostSuccess() {
-                    errorMessages.removingPost = '';
-                    for (var i = 0; i < posts.length; i++) {
-                        if (posts[i].id === reqData.removedPost) {
-                            posts.splice(i, 1);
-                        }
-                    }
-                    resolve();
-                }
-
-                function removePostError(response) {
-                    errorMessages.removingPost = response;
-                    reject();
-                }
-            });
-        }
-    }]);
-
-app.factory('profileService', ['requestService', 'urls', 'authService', 'localStorageService',
-    (requestService, urls, authService, localStorageService) => {
-        let userInfo = {},
-            notice = {
-                errorGettingMessages: {},
-                errorProfileMessages: {},
-                errorPasswordMessages: {},
-                successProfileMessages: {},
-                successPasswordMessages: {}
-            },
-            reqData = {
-                isSendingNow: false
-            };
-
-        function getUserInfo(id) {
-            return new Promise(() => {
-                requestService.sendRequest(urls.members + id, 'get')
-                    .then(getInfoSuccess, getInfoError);
-
-                function getInfoSuccess(response) {
-                    if (response && response.data) {
-                        notice.errorGettingMessages.gettingUserInfo = '';
-                        userInfo.name = response.data.name;
-                        userInfo.surname = response.data.surname;
-                        userInfo.description = response.data.description;
-                        userInfo.id = response.data.id;
-                        userInfo.email = response.data.email;
-                    }
-                }
-
-                function getInfoError(error) {
-                    notice.errorGettingMessages = error;
-                    userInfo.name = '';
-                    userInfo.surname = '';
-                    userInfo.description = '';
-                    userInfo.id = '';
-                }
-            });
-        }
-
-        function editProfileData(profileData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    authService.authData.email = profileData.email;
-                    localStorageService.cookie.set('email', profileData.email);
-                    notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
-                    reqData.isSendingNow = false;
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorProfileMessages.editProfile = err;
-                    notice.successProfileMessages.editProfile = '';
-                }
-            });
-        }
-
-        function changePassword(passwordsData) {
-            var config = {
-                    headers: {
-                        'Content-Type': 'application/jsone;'
-                    }
-                },
-                headers = {
-                    'Token': authService.authData.token
-                };
-
-            return new Promise((resolve) => {
-                reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
-                    .then(editProfileSuccess, editProfileError);
-
-                function editProfileSuccess() {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
-                    resolve();
-                }
-
-                function editProfileError(err) {
-                    reqData.isSendingNow = false;
-                    notice.errorPasswordMessages.changePassword = err;
-                    notice.successPasswordMessages.changePassword = '';
-                }
-            });
-        }
-
-        return {
-            getUserInfo: getUserInfo,
-            editProfileData: editProfileData,
-            changePassword: changePassword,
-            userInfo: userInfo,
-            notice: notice,
-            reqData: reqData
-        };
-    }
-]);
 
 app.filter('filter', () => {
     return (items, params) => {
@@ -867,26 +871,6 @@ function validateErrorsController() {
             return true;
 
         return false;
-    }
-}
-
-app.component('layout', {
-    templateUrl: 'build/views/layout/layout.html',
-    controller: ['authService', '$state', layoutController]
-});
-
-function layoutController(authService, $state) {
-    const $ctrl = this;
-
-    $ctrl.authData = authService.authData;
-    $ctrl.errorSignOutMessages = authService.errorSignOutMessages;
-    $ctrl.signOut = signOut;
-
-    function signOut() {
-        authService.signOut().then(() => {
-            if ($state.current.name === 'editProfile' || $state.current.name === 'chat')
-                $state.go('members');
-        });
     }
 }
 
@@ -1143,6 +1127,26 @@ app.component('profileForm', {
 
 function profileFormController() {
     const $ctrl = this;
+}
+
+app.component('layout', {
+    templateUrl: 'build/views/layout/layout.html',
+    controller: ['authService', '$state', layoutController]
+});
+
+function layoutController(authService, $state) {
+    const $ctrl = this;
+
+    $ctrl.authData = authService.authData;
+    $ctrl.errorSignOutMessages = authService.errorSignOutMessages;
+    $ctrl.signOut = signOut;
+
+    function signOut() {
+        authService.signOut().then(() => {
+            if ($state.current.name === 'editProfile' || $state.current.name === 'chat')
+                $state.go('members');
+        });
+    }
 }
 
 app.directive("compareTo", compareTo);
