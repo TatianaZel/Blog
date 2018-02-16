@@ -1,7 +1,12 @@
 <notice errors="$ctrl.errorGettingMessages" danger="true"></notice>
-<h1 class="breakWord">{{$ctrl.info.name}}&nbsp{{$ctrl.info.surname}}</h1>
-<p ng-if="$ctrl.info.description" class="description breakWord">{{$ctrl.info.description}}</p>
-<a ng-if="$ctrl.info && $ctrl.info.id == $ctrl.authData.id" ui-sref="editProfile" class="editLink"><i class="fa fa-pencil" aria-hidden="true"></i> edit profile</a>
-<a ng-if="($ctrl.info.id != $ctrl.authData.id) && $ctrl.authData.token" class="editLink" send-message-to="$ctrl.info">
-    <i class="fa fa-envelope-o" aria-hidden="true"></i> send a message
-</a>
+<div ng-if="$ctrl.info.id">
+    <h1 class="breakWord">{{$ctrl.info.name}}&nbsp{{$ctrl.info.surname}}</h1>
+    <p ng-if="$ctrl.info.description" class="description breakWord">{{$ctrl.info.description}}</p>
+    <a ng-if="$ctrl.info && $ctrl.info.id == $ctrl.authData.id" ui-sref="editProfile" class="editLink"><i class="fa fa-pencil" aria-hidden="true"></i> edit profile</a>
+    <a ng-if="($ctrl.info.id != $ctrl.authData.id) && $ctrl.authData.token" class="editLink" send-message-to="$ctrl.info">
+        <i class="fa fa-envelope-o" aria-hidden="true"></i> send a message
+    </a>
+</div>
+<div ng-if="!$ctrl.info.id">
+    <h1 class="text-center">User not found</h1>
+</div>

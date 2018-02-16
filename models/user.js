@@ -54,7 +54,7 @@ module.exports = function (sequelize, DataTypes) {
                     where: {
                         email,
                         id: {
-                            $not: id//эта проверка нужна для случая когда юзер хочет отредактировать профиль и привязать новый имэйл
+                            $not: id//this check is needed for the case when the user wants to edit the profile and tie a new email
                         }
                     }
                 })
@@ -67,7 +67,7 @@ module.exports = function (sequelize, DataTypes) {
         );
     };
 
-    User.prototype.getChats = function (id, chatModel, messageModel) {
+    User.prototype.getChats = function (id, chatModel) {
         return new Promise((resolve) => {
             const opt = {
                 where: {
@@ -85,14 +85,6 @@ module.exports = function (sequelize, DataTypes) {
                                     'surname'
                                 ]
                             }
-//                            {
-//                                model: messageModel,
-//                                required: false,
-//                                where: {
-//                                    status: 'new'
-//                                },
-//                                attributes: [[sequelize.fn('Count', 'Message.id'), 'Count']]
-//                            }
                         ]
                     }
                 ]
