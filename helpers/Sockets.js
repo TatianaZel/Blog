@@ -35,110 +35,110 @@ function connection(socket) {
                 });
             })
             .catch(() => {
-                socket.emit('error');
+                socket.emit('errorConnection', {});
+            });
+}
+
+function addMessageToNewChat(data) {
+    Session.check(data.token).then((user) => {
+        Memberships
+            .prototype
+            .checkDialog(user.id, data.recipientId)//here we check whether it was already created a chat between the two users
+            .then(() => {
+                Chats.create().then((chat) => {
+                    Memberships
+                        .bulkCreate([
+                            {
+                                UserId: user.id,
+                                ChatId: chat.id
+                            },
+                            {
+                                UserId: data.recipientId,
+                                ChatId: chat.id
+                            }
+                        ])
+                        .then(() => {
+                            const msg = new Messages({
+                                text: data.text,
+                                ChatId: chat.id,
+                                authorId: user.id
+                            });
+
+                            msg.save().then(() => {
+                                Chats.prototype.getChat(chat.id, Users, Messages)
+                                    .then((chat) => {
+                                        io.to(data.recipientId)
+                                            .emit('newChatForClient', chat);
+                                        io.to(user.id)
+                                            .emit('newChatCreated', chat);
+                                    });
+                            });
+                        });
+                });
+            });
+    });
+}
+
+function addMessageToExistChat(data) {
+    Session.check(data.token).then((user) => {
+        Memberships.prototype.check(user.id, data.chatId).then(() => {//here we check whether the user is participating in this chat
+
+            const msg = new Messages({
+                text: data.text,
+                ChatId: data.chatId,
+                authorId: user.id
             });
 
-    function addMessageToNewChat(data) {
-        Session.check(data.token).then((user) => {
-            Memberships
-                .prototype
-                .checkDialog(user.id, data.recipientId)//here we check whether it was already created a chat between the two users
-                .then(() => {
-                    Chats.create().then((chat) => {
-                        Memberships
-                            .bulkCreate([
-                                {
-                                    UserId: user.id,
-                                    ChatId: chat.id
-                                },
-                                {
-                                    UserId: data.recipientId,
-                                    ChatId: chat.id
-                                }
-                            ])
-                            .then(() => {
-                                const msg = new Messages({
-                                    text: data.text,
-                                    ChatId: chat.id,
-                                    authorId: user.id
-                                });
+            msg.save().then(() => {
+                const msgForSending = {
+                    author: user,
+                    text: msg.text,
+                    ChatId: msg.ChatId,
+                    createdAt: msg.createdAt
+                };
 
-                                msg.save().then(() => {
-                                    Chats.prototype.getChat(chat.id, Users, Messages)
-                                        .then((chat) => {
-                                            io.to(data.recipientId)
-                                                .emit('newChatForClient', chat);
-                                            io.to(user.id)
-                                                .emit('newChatCreated', chat);
-                                        });
+                Chats
+                    .update(
+                        {},
+                        {
+                            where: {
+                                id: data.chatId
+                            }
+                        }
+                    )
+                    .then(() => {
+                        io.to(msg.authorId)
+                            .emit('messageSended', msgForSending);
+
+                        Chats.prototype
+                            .getChatUsers(data.chatId, Users)
+                            .then((users) => {
+                                users.forEach((recipient) => {
+                                    if (recipient.id != msg.authorId) {
+                                        io.to(recipient.id)
+                                            .emit('messageForClient', msgForSending);
+                                    }
                                 });
                             });
                     });
-                });
-        });
-    }
-
-    function addMessageToExistChat(data) {
-        Session.check(data.token).then((user) => {
-            Memberships.prototype.check(user.id, data.chatId).then(() => {//here we check whether the user is participating in this chat
-
-                const msg = new Messages({
-                    text: data.text,
-                    ChatId: data.chatId,
-                    authorId: user.id
-                });
-
-                msg.save().then(() => {
-                    const msgForSending = {
-                        author: user,
-                        text: msg.text,
-                        ChatId: msg.ChatId,
-                        createdAt: msg.createdAt
-                    };
-
-                    Chats
-                        .update(
-                            {},
-                            {
-                                where: {
-                                    id: data.chatId
-                                }
-                            }
-                        )
-                        .then(() => {
-                            io.to(msg.authorId)
-                                .emit('messageSended', msgForSending);
-
-                            Chats.prototype
-                                .getChatUsers(data.chatId, Users)
-                                .then((users) => {
-                                    users.forEach((recipient) => {
-                                        if (recipient.id != msg.authorId) {
-                                            io.to(recipient.id)
-                                                .emit('messageForClient', msgForSending);
-                                        }
-                                    });
-                                });
-                        });
-                });
             });
         });
-    }
+    });
+}
 
-    function getMessagesByChat(data) {
-        Session.check(data.token).then((user) => {
-            Memberships.prototype.check(user.id, data.chatId)
-                .then(() => {
-                    Messages.prototype.getMessagesByChat(data.chatId, Users, data.from)
-                        .then((messages) => {
-                            io.to(user.id).emit('portionOfMessages', messages);
-                        });
-                })
-                .catch(() => {
-                    io.to(user.id).emit('portionOfMessages', []);
-                });
-        });
-    }
+function getMessagesByChat(data) {
+    Session.check(data.token).then((user) => {
+        Memberships.prototype.check(user.id, data.chatId)
+            .then(() => {
+                Messages.prototype.getMessagesByChat(data.chatId, Users, data.from)
+                    .then((messages) => {
+                        io.to(user.id).emit('portionOfMessages', messages);
+                    });
+            })
+            .catch(() => {
+                io.to(user.id).emit('portionOfMessages', []);
+            });
+    });
 }
 
 module.exports = Chat;

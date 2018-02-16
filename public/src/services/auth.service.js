@@ -23,7 +23,7 @@ app.factory('authService', ['localStorageService', 'requestService', 'urls',
             errorSignUpMessages = {};
 
         if (authData.token && authData.id) {
-            chatService.connect(authData.id, authData.token).catch(cleanAuthData);//чистим сторэдж если сессия не существует
+            chatService.connect(authData.id, authData.token).catch(cleanAuthData);//cleaning of storage is session is not exist
         }
 
         return {

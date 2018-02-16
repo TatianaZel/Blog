@@ -27,6 +27,11 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                             }
                         });
 
+                socket.on('errorConnection', () => {
+                    socket.removeAllListeners('errorConnection');
+                    reject();
+                });
+
                 socket.on('successConnection', (data) => {
                     reIndexingChats(data.chats);
 
@@ -76,11 +81,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     socket.removeAllListeners('successConnection');
 
                     resolve();
-                });
-
-                socket.on('error', () => {
-                    socket.removeAllListeners('error');
-                    reject();
                 });
             });
         }
