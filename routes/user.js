@@ -40,7 +40,7 @@ router.get(
  * Update user by Id
  */
 router.put(
-    ['/:userId'],
+    ['/edit-profile/:userId'],
 
     ACL(),
 
@@ -64,7 +64,7 @@ router.put(
         const user = req.data.user;
 
         if (user.id !== req.userId) {
-            next(new HttpError(403, 'Unavailable action'));
+            next(new HttpError(403, 'Access denied!'));
         }
 
         Users.prototype
@@ -90,7 +90,7 @@ router.put(
  * Update user by Id
  */
 router.put(
-    ['/changePassword'],
+    ['/edit-password'],
 
     ACL(),
 
@@ -108,9 +108,7 @@ router.put(
             return next(new HttpError(412, 'Invalid input data', req.form.errors));
         }
 
-        const user = req.data.user;
-
-        Users.findById(user.id)
+        Users.findById(req.userId)
             .then((user) => {
                 if (user.password !== req.form.currentPassword) {
                     return next(new HttpError(403, 'Uncorrect password'));
@@ -132,7 +130,7 @@ router.put(
 // Params
 router.param('userId', (req, res, next, userId) => {
     if ((userId ^ 0) != userId) {
-        return next(new HttpError(416, 'Post id is not valid'));
+        return next(new HttpError(416, 'Invalid user id'));
     }
 
     Users.find({
@@ -141,7 +139,7 @@ router.param('userId', (req, res, next, userId) => {
         })
         .then((user) => {
             if (!user) {
-                return next(new HttpError(404, 'User not found'));
+                return next(new HttpError(404, 'User not exist'));
             }
 
             req.data = req.data || {};

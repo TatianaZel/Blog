@@ -4,7 +4,8 @@ var urls = {
     signUp: 'http://localhost:3000/api/auth/signup/',
     signOut: 'http://localhost:3000/api/auth/logout/',
     members: 'http://localhost:3000/api/user/',
-    changePassword: 'http://localhost:3000/api/user/changePassword/',
+    editProfile: 'http://localhost:3000/api/user/edit-profile/',
+    editPassword: 'http://localhost:3000/api/user/edit-password/',
     post: 'http://localhost:3000/api/post/',
     chat: 'http://localhost:3000/api/chat/'
 };

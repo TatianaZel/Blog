@@ -51,15 +51,15 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
             return new Promise((resolve) => {
                 reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.members + authService.authData.id, 'put', headers, profileData, config)
+                
+                requestService.sendRequest(urls.editProfile + authService.authData.id, 'put', headers, profileData, config)
                     .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
                     authService.authData.email = profileData.email;
                     localStorageService.cookie.set('email', profileData.email);
                     notice.errorProfileMessages.editProfile = '';
-                    notice.successProfileMessages.editProfile = 'Success!';
+                    notice.successProfileMessages.editProfile = 'Profile is successfully edited!';
                     reqData.isSendingNow = false;
                     resolve();
                 }
@@ -84,14 +84,14 @@ app.factory('profileService', ['requestService', 'urls', 'authService', 'localSt
 
             return new Promise((resolve) => {
                 reqData.isSendingNow = true;
-
-                requestService.sendRequest(urls.changePassword, 'put', headers, passwordsData, config)
+                console.log(urls.editPassword);
+                requestService.sendRequest(urls.editPassword, 'put', headers, passwordsData, config)
                     .then(editProfileSuccess, editProfileError);
 
                 function editProfileSuccess() {
                     reqData.isSendingNow = false;
                     notice.errorPasswordMessages.changePassword = '';
-                    notice.successPasswordMessages.changePassword = 'Success!';
+                    notice.successPasswordMessages.changePassword = 'Password is successfully edited!';
                     resolve();
                 }
 
