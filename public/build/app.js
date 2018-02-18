@@ -805,13 +805,13 @@ function blogController() {
 
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', chatController],
+    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', chatController],
     bindings: {
         authData: '<'
     }
 });
 
-function chatController(chatService, $stateParams, $uibModal) {
+function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll) {
     const $ctrl = this;
 
     $ctrl.chatsData = chatService.chatsData;
@@ -828,6 +828,9 @@ function chatController(chatService, $stateParams, $uibModal) {
             chatService.selectedChat.id = id;
         else
             chatService.loadMessages(id);
+        
+        $location.hash('bottom');
+        $anchorScroll();
     }
 
     function sendMessage(chatId) {
