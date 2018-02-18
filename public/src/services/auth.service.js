@@ -1,5 +1,4 @@
-app.factory('authService', ['localStorageService', 'requestService', 'urls',
-    'chatService',
+app.factory('authService', ['localStorageService', 'requestService', 'urls', 'chatService',
     (localStorageService, requestService, urls, chatService) => {
 
         var config = {

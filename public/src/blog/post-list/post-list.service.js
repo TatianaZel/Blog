@@ -1,4 +1,5 @@
-app.factory('postListService', ['requestService', 'authService', 'urls', function (requestService, authService, urls) {
+app.factory('postListService', ['requestService', 'authService', 'urls', 
+    (requestService, authService, urls) => {
         var posts = [],
             errorMessages = {},
             reqData = {

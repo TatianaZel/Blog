@@ -1,4 +1,4 @@
-app.directive("sendMessageTo", ['chatService', '$uibModal', '$uibModalStack',
+app.directive("sendMessageTo", ['chatService', '$uibModal',
     messageModalSwitch]);
 
 function messageModalSwitch(chatService, $uibModal) {

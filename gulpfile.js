@@ -1,17 +1,19 @@
 'use strict';
 
 const gulp = require('gulp'),
-    concat = require('gulp-concat'),
-    gulpif = require('gulp-if'),
-    arg = require('yargs').argv,
-    sourcemaps = require('gulp-sourcemaps'),
-    uglify = require('gulp-uglify'),
-    cssmin = require('gulp-cssmin'),
-    notify = require('gulp-notify'),
-    sass = require('gulp-sass'),
-    watch = require('gulp-watch'),
-    prefixer = require('gulp-autoprefixer'),
-    eslint = require('gulp-eslint');
+      concat = require('gulp-concat'),
+      gulpif = require('gulp-if'),
+      arg = require('yargs').argv,
+      sourcemaps = require('gulp-sourcemaps'),
+      uglify = require('gulp-uglify'),
+      cssmin = require('gulp-cssmin'),
+      notify = require('gulp-notify'),
+      sass = require('gulp-sass'),
+      watch = require('gulp-watch'),
+      prefixer = require('gulp-autoprefixer'),
+      eslint = require('gulp-eslint'),
+      del = require('del'),
+      ts = require('gulp-typescript');
 
 var src = {
     vendors: {
@@ -51,17 +53,25 @@ var src = {
 };
 
 gulp.task('jsVendors', () => {
-    gulp.src([src.vendors.jquery.lib, src.vendors.angular.lib,
-        src.vendors.bootstrap.ui,
-        src.vendors.bootstrap.uiTltps, src.vendors.angular.localstorage,
-        src.vendors.angular.router,
-        src.vendors.angular.stateEvents, src.vendors.angular.animate])
+    gulp.src([
+            src.vendors.jquery.lib, 
+            src.vendors.angular.lib,
+            src.vendors.bootstrap.ui,
+            src.vendors.bootstrap.uiTltps, 
+            src.vendors.angular.localstorage,
+            src.vendors.angular.router,
+            src.vendors.angular.stateEvents, 
+            src.vendors.angular.animate
+        ])
         .pipe(concat('vendor.js'))
         .pipe(gulp.dest('./public/build'));
 });
 
 gulp.task('styleVendors', () => {
-    gulp.src([src.vendors.bootstrap.lib, src.vendors.bootstrap.theme])
+    gulp.src([
+            src.vendors.bootstrap.lib, 
+            src.vendors.bootstrap.theme
+        ])
         .pipe(concat('vendor.css'))
         .pipe(gulp.dest('./public/build'));
 });
@@ -72,12 +82,27 @@ gulp.task('views', () => {
 });
 
 gulp.task('js', () => {
-    gulp.src([src.frontApp.mainModule, src.frontApp.services,
-        src.frontApp.filters,
-        src.frontApp.components, src.frontApp.directives, src.frontApp.routes])
+    gulp.src([
+            src.frontApp.mainModule, 
+            src.frontApp.services,
+            src.frontApp.filters,
+            src.frontApp.components, 
+            src.frontApp.directives, 
+            src.frontApp.routes
+        ])
         .pipe(concat('app.js'))
-//            .pipe(uglify())
-//            .pipe(gulpif(arg.development, sourcemaps.write()))
+        .pipe(ts({
+            target: "es5",
+            allowJs: true,
+            module: "commonjs",
+            moduleResolution: "node"
+        }))
+        .pipe(uglify())
+        .on('error', notify.onError({
+            title: 'js minify error!',
+            message: '<%=error.message%>'
+        }))
+        .pipe(gulpif(arg.development, sourcemaps.write()))
         .pipe(gulp.dest('./public/build'));
 });
 
@@ -92,7 +117,6 @@ gulp.task('styles', () => {
         .pipe(gulpif(!arg.development, cssmin()))
         .pipe(concat('main.css'))
         .pipe(gulp.dest('./public/build'));
-        //.pipe(notify('Yeah! Styles done!'));
 });
 
 gulp.task('watch', () => {
@@ -124,5 +148,8 @@ gulp.task('backLint', () => {
         }));
 });
 
-gulp.task('default', ['jsVendors', 'styleVendors', 'views', 'js', 'styles',
-    'backLint', 'watch']);
+gulp.task('clean', () => {
+    return del(['./public/build']);
+});
+
+gulp.task('default', ['jsVendors', 'styleVendors', 'views', 'js', 'styles', 'watch']);
