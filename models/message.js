@@ -3,11 +3,6 @@ module.exports = function (sequelize, DataTypes) {
         text: {
             type: DataTypes.STRING,
             notEmpty: true
-        },
-        status: {
-            type: DataTypes.ENUM,
-            values: ['new', 'seen'],
-            defaultValue: 'new'
         }
     });
 
