@@ -21,13 +21,15 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
         $ctrl.selectedChat.id = '';
 
     function selectChat(id) {
+        $stateParams.chatId = id;
         $ctrl.selectedChat.id = id;
         
         if ($ctrl.chatsData.chats.length) { 
             chatService.loadMessages(id);
             chatService.cleanMsgCounter(id);
         }
-                
+
+        $location.path('/chat/' + id);                
         $location.hash('bottom');
         $anchorScroll();        
     }

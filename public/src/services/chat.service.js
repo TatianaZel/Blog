@@ -3,7 +3,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
     (localStorageService, $rootScope, $anchorScroll, $location, notificationService, $state) => {
         let chatsData = {chats: []},
             socket,
-            counters = {},
             resolveMsg,
             resolveChat,
             selectedChat = {};
@@ -98,16 +97,11 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         function reIndexingChats(data) {
             data.forEach((item) => {
                 chatsData.chats[item.id] = item;
-                counters[item.id] = 0;
             });
         }
 
         function disconnect() {
             chatsData.chats = [];
-
-            for (var key in counters) {
-                counters[key] = 0;
-            }
 
             socket.removeAllListeners('messageForClient');
             socket.removeAllListeners('newChatForClient');
@@ -149,6 +143,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function loadMessages(chatId) {
+
             return new Promise((resolve) => {
                 socket.on('portionOfMessages', (data) => {
                     setMessagesToChat(chatId, data);
@@ -159,14 +154,13 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
                 socket.emit('loadMessages', {
                     token: localStorageService.cookie.get('token'),
-                    from: counters[chatId],
+                    from: chatsData.chats[chatId].Messages ? chatsData.chats[chatId].Messages.length : 0,
                     chatId: chatId
                 });
             });
         }
 
         function addNewChat(newChat) {
-            counters[newChat.id] = 1;
             chatsData.chats[newChat.id] = newChat;
             $rootScope.$digest();
         }
@@ -179,8 +173,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             chatsData.chats[data.ChatId].updatedAt = data.createdAt;
             $rootScope.$digest();
 
-            counters[data.ChatId]++;
-
             $location.hash('bottom');
             $anchorScroll();
         }
@@ -191,8 +183,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
             if (!chatsData.chats[chatId].Messages)
                 chatsData.chats[chatId].Messages = [];
-
-            counters[chatId] = counters[chatId] + messages.length + 1;
 
             Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
             $rootScope.$digest();
