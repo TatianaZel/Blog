@@ -1,6 +1,6 @@
-<div ng-if="$ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6 col-sm-6 col-xs-6 msgColumn blackBorder">
+<div ng-if="$ctrl.chatsData.chats[$ctrl.selectedChat.id]" class="col-md-6 col-sm-6 col-xs-6 msgColumn blackBorder">
     <div id="anchor">
-        <blockquote class="chatMsg chatItem breakWord" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat].Messages | orderBy : 'createdAt'">
+        <blockquote class="chatMsg chatItem breakWord" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages | orderBy : 'createdAt'">
             <p class="msgAutor">{{message.author.name}}:</p>
             <p class="msgDate">{{message.createdAt| date: 'short'}}</p>
             <span>{{message.text}}</span>
@@ -14,11 +14,11 @@
         <button type="submit" class="msgSubmitBtn btn"><b>Send</b></button>
     </form>
 </div>
-<div ng-if="!$ctrl.selectedChat" class="col-md-6 col-sm-6 col-xs-6 zeroPadding msgColumn blackBorder text-center">
-    <p><b>Please, choose a chat</b></p>
+<div ng-if="!$ctrl.selectedChat.id" class="col-md-6 col-sm-6 col-xs-6 zeroPadding msgColumn blackBorder text-center">
+    <p><b>Please, select a chat...</b></p>
 </div>
-<div ng-if="$ctrl.selectedChat && !$ctrl.chatsData.chats[$ctrl.selectedChat]" class="col-md-6 col-sm-6 col-xs-6 msgColumn blackBorder text-center">
-    <p>Chat is not available</p>
+<div ng-if="$ctrl.selectedChat.id && !$ctrl.chatsData.chats[$ctrl.selectedChat.id]" class="col-md-6 col-sm-6 col-xs-6 msgColumn blackBorder text-center">
+    <p>Chat is not available...</p>
 </div>
 <div class="col-md-6 col-sm-6 col-xs-6 chatColumn">
     <button class="beginChatBtn btn" ng-click="$ctrl.beginChat()"><b>Begin chat</b></button>
@@ -26,6 +26,9 @@
         <div class="chatItem blackBorder"  ng-repeat="chat in $ctrl.chatsData.chats | orderBy : '-updatedAt' track by $index" ng-click="$ctrl.selectChat(chat.id)" ng-if="chat">
             <span ng-repeat="user in chat.Users" ng-if="$ctrl.authData.id != user.id">
                 {{user.name}} {{user.surname}}
+            </span>
+            <span class="pull-right msgCounter" ng-if="chat.Membership.counter">
+                {{chat.Membership.counter}}
             </span>
         </div>
     </div>

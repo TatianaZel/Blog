@@ -13,19 +13,23 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     $ctrl.selectChat = selectChat;
     $ctrl.sendMessage = sendMessage;
     $ctrl.beginChat = beginChat;
+    $ctrl.selectedChat = chatService.selectedChat;
 
-    selectChat($stateParams.chatId);
+    if($stateParams.chatId)
+        selectChat($stateParams.chatId);
+    else
+        $ctrl.selectedChat.id = '';
 
     function selectChat(id) {
-        $ctrl.selectedChat = id;
-
-        if (!$ctrl.chatsData.chats.length)
-            chatService.selectedChat.id = id;
-        else
-            chatService.loadMessages(id);
+        $ctrl.selectedChat.id = id;
         
+        if ($ctrl.chatsData.chats.length) { 
+            chatService.loadMessages(id);
+            chatService.cleanMsgCounter(id);
+        }
+                
         $location.hash('bottom');
-        $anchorScroll();
+        $anchorScroll();        
     }
 
     function sendMessage(chatId) {

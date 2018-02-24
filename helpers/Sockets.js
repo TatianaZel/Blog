@@ -22,13 +22,16 @@ function connection(socket) {
             .then((user) => {
                 socket.join(user.id);
 
-                Users.prototype.getChats(user.id, Chats, Messages).then((chats) => {
+                Users.prototype.getChats(user.id, Chats).then((chats) => {                    
 
                     //separation for that case if in the future it will be possible to create chats with more than two users
                     socket.on('messageToExistChat', addMessageToExistChat);
                     socket.on('messageToNewChat', addMessageToNewChat);
 
                     socket.on('loadMessages', getMessagesByChat);
+                    
+                    socket.on('cleanMsgCounter', cleanCounter);                                      
+                    
                     io.to(user.id).emit('successConnection', {
                         chats
                     });
@@ -50,11 +53,13 @@ function addMessageToNewChat(data) {
                         .bulkCreate([
                             {
                                 UserId: user.id,
-                                ChatId: chat.id
+                                ChatId: chat.id,
+                                counter: 0
                             },
                             {
                                 UserId: data.recipientId,
-                                ChatId: chat.id
+                                ChatId: chat.id,
+                                counter: 1
                             }
                         ])
                         .then(() => {
@@ -69,6 +74,7 @@ function addMessageToNewChat(data) {
                                     .then((chat) => {
                                         io.to(data.recipientId)
                                             .emit('newChatForClient', chat);
+
                                         io.to(user.id)
                                             .emit('newChatCreated', chat);
                                     });
@@ -115,8 +121,11 @@ function addMessageToExistChat(data) {
                             .then((users) => {
                                 users.forEach((recipient) => {
                                     if (recipient.id != msg.authorId) {
-                                        io.to(recipient.id)
-                                            .emit('messageForClient', msgForSending);
+                                        Memberships.prototype
+                                                .setCounter(recipient.id, data.chatId, true)
+                                                .then(() => {
+                                                    io.to(recipient.id).emit('messageForClient', msgForSending);
+                                                });
                                     }
                                 });
                             });
@@ -137,6 +146,15 @@ function getMessagesByChat(data) {
             })
             .catch(() => {
                 io.to(user.id).emit('portionOfMessages', []);
+            });
+    });
+}
+
+function cleanCounter(data) {
+    Session.check(data.token).then((user) => {
+        Memberships.prototype.check(user.id, data.chatId)
+            .then(() => {
+                Memberships.prototype.setCounter(user.id, data.chatId, false);
             });
     });
 }

@@ -1,5 +1,7 @@
-module.exports = function (sequelize) {
-    const Membership = sequelize.define('Membership', {});
+module.exports = function (sequelize, DataTypes) {
+    const Membership = sequelize.define('Membership', {
+        counter: DataTypes.INTEGER
+    });
 
     /*
      * Checking of participation in the chat
@@ -57,6 +59,22 @@ module.exports = function (sequelize) {
                                 reject();
                         });
                 });
+        });
+    };
+    
+    Membership.prototype.setCounter = function (userId, chatId, increase) {
+         return new Promise((resolve) => {
+            Membership.update(
+                        {
+                            counter: increase ? sequelize.literal('counter + 1') : 0
+                        },
+                        {
+                            where: {
+                                UserId: userId,
+                                ChatId: chatId
+                            }
+                        }
+                    ).then(resolve);
         });
     };
 
