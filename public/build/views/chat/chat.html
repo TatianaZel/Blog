@@ -7,19 +7,22 @@
         </blockquote>
         <div id="bottom"></div>
     </div>
-    <form id="bottom" ng-submit="$ctrl.sendMessage($ctrl.chatsData.chats[$ctrl.selectedChat].id)">
+    <form id="bottom" ng-submit="$ctrl.sendMessage($ctrl.selectedChat.id)">
         <div class="form-group">
             <textarea class="form-control" ng-model="$ctrl.messageText"></textarea>
         </div>
         <button type="submit" class="msgSubmitBtn btn"><b>Send</b></button>
     </form>
 </div>
+
 <div ng-if="!$ctrl.selectedChat.id" class="col-md-6 col-sm-6 col-xs-6 zeroPadding msgColumn blackBorder text-center">
     <p><b>Please, select a chat...</b></p>
 </div>
+
 <div ng-if="$ctrl.selectedChat.id && !$ctrl.chatsData.chats[$ctrl.selectedChat.id]" class="col-md-6 col-sm-6 col-xs-6 msgColumn blackBorder text-center">
     <p>Chat is not available...</p>
 </div>
+
 <div class="col-md-6 col-sm-6 col-xs-6 chatColumn">
     <button class="beginChatBtn btn" ng-click="$ctrl.beginChat()"><b>Begin chat</b></button>
     <div>
