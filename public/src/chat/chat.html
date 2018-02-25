@@ -5,7 +5,6 @@
             <p class="msgDate">{{message.createdAt| date: 'short'}}</p>
             <span>{{message.text}}</span>
         </blockquote>
-        <div id="bottom"></div>
     </div>
     <form id="bottom" ng-submit="$ctrl.sendMessage($ctrl.selectedChat.id)">
         <div class="form-group">

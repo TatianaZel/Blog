@@ -26,7 +26,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
         if ($ctrl.chatsData.chats.length) {
 
             if (!$ctrl.chatsData.chats[id].Messages) {
-                chatService.loadMessages(id, 'bottom');
+                chatService.loadMessages(id, '1');
             } else {
                 $location.hash('1');
                 $anchorScroll();

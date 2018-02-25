@@ -37,7 +37,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     reIndexingChats(data.chats);
 
                     if (selectedChat.id) {
-                        loadMessages(selectedChat.id, 'bottom');
+                        loadMessages(selectedChat.id, '1');
                         cleanMsgCounter(selectedChat.id);
                     }
 
