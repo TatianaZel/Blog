@@ -1,12 +1,12 @@
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', chatController],
+    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', 'orderByFilter',  chatController],
     bindings: {
         authData: '<'
     }
 });
 
-function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll) {
+function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll, orderByFilter) {
     const $ctrl = this;
 
     $ctrl.chatsData = chatService.chatsData;
@@ -14,6 +14,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     $ctrl.sendMessage = sendMessage;
     $ctrl.beginChat = beginChat;
     $ctrl.selectedChat = chatService.selectedChat;
+    $ctrl.loadMessages = loadMessages;
 
     if($stateParams.chatId)
         selectChat($stateParams.chatId);
@@ -21,17 +22,22 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
         $ctrl.selectedChat.id = '';
 
     function selectChat(id) {
-        $stateParams.chatId = id;
-        $ctrl.selectedChat.id = id;
-        
-        if ($ctrl.chatsData.chats.length) { 
-            chatService.loadMessages(id);
+       
+        if ($ctrl.chatsData.chats.length) {
+
+            if (!$ctrl.chatsData.chats[id].Messages) {
+                chatService.loadMessages(id, 'bottom');
+            } else {
+                let scrollTo = orderByFilter($ctrl.chatsData.chats[id].Messages, 'createdAt').pop().id;
+                $location.hash(scrollTo);
+                $anchorScroll();
+            }
+            
             chatService.cleanMsgCounter(id);
         }
 
-        $location.path('/chat/' + id);                
-        $location.hash('bottom');
-        $anchorScroll();        
+        $ctrl.selectedChat.id = id;
+        $location.path('/chat/' + id);
     }
 
     function sendMessage(chatId) {
@@ -44,5 +50,10 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
             size: 'sm',
             component: 'chatBeginner'
         });
+    }
+    
+    function loadMessages() {
+        let scrollTo = orderByFilter($ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages, 'createdAt', true).pop().id;
+        chatService.loadMessages($ctrl.selectedChat.id, scrollTo);
     }
 }

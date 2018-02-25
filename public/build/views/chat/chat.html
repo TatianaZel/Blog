@@ -1,6 +1,6 @@
 <div ng-if="$ctrl.chatsData.chats[$ctrl.selectedChat.id]" class="col-md-6 col-sm-6 col-xs-6 msgColumn blackBorder">
-    <div id="anchor">
-        <blockquote class="chatMsg breakWord" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages | orderBy : 'createdAt'">
+    <div id="anchor" scroll-top="$ctrl.loadMessages()">
+        <blockquote id="{{message.id}}" class="chatMsg breakWord anchor" ng-repeat="message in $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages | orderBy : 'createdAt'">
             <p class="msgAutor">{{message.author.name}}:</p>
             <p class="msgDate">{{message.createdAt| date: 'short'}}</p>
             <span>{{message.text}}</span>

@@ -4,15 +4,16 @@ app.component('chatBeginner', {
         close: '&'
     },
     templateUrl: 'build/views/chat/chat-beginner/chat-beginner.html',
-    controller: ['memberListService', 'chatService', '$state',
+    controller: ['memberListService', 'chatService', '$state', 'localStorageService',
         chatBeginnerController]
 });
 
-function chatBeginnerController(memberListService, chatService, $state) {
+function chatBeginnerController(memberListService, chatService, $state, localStorageService) {
     const $ctrl = this;
 
     $ctrl.sendMessage = sendMessage;
     $ctrl.members;
+    $ctrl.userId = localStorageService.cookie.get('id');
 
     memberListService.getMembers().then(() => {
         $ctrl.members = [];
@@ -20,8 +21,10 @@ function chatBeginnerController(memberListService, chatService, $state) {
             var flag = false;
             chatService.chatsData.chats.forEach((chat) => {
                 chat.Users.forEach((user) => {
-                    if (user.id === member.id)
+                    if (user.id === member.id) {
                         flag = true;
+                        return;
+                    }
                 });
             });
             if (!flag)

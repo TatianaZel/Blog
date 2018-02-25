@@ -5,6 +5,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             socket,
             resolveMsg,
             resolveChat,
+            loading = false,
             selectedChat = {};
 
         return {
@@ -36,7 +37,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     reIndexingChats(data.chats);
 
                     if (selectedChat.id) {
-                        loadMessages(selectedChat.id);
+                        loadMessages(selectedChat.id, 'bottom');
                         cleanMsgCounter(selectedChat.id);
                     }
 
@@ -142,13 +143,18 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
         }
 
-        function loadMessages(chatId) {
+        function loadMessages(chatId, scrollTo) {
+            if (loading)
+                return;
+            
+            loading = true;
 
             return new Promise((resolve) => {
                 socket.on('portionOfMessages', (data) => {
-                    setMessagesToChat(chatId, data);
+                    setMessagesToChat(chatId, data, scrollTo);
 
                     socket.removeAllListeners('portionOfMessages');
+                    loading = false;
                     resolve();
                 });
 
@@ -177,20 +183,23 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             $anchorScroll();
         }
 
-        function setMessagesToChat(chatId, messages) {
+        function setMessagesToChat(chatId, messages, scrollTo) {
             if (!chatsData.chats[chatId])
                 return;
 
             if (!chatsData.chats[chatId].Messages)
                 chatsData.chats[chatId].Messages = [];
 
-            Array.prototype.push.apply(chatsData.chats[chatId].Messages, messages);
+            messages.forEach((m) => {
+                chatsData.chats[chatId].Messages.push(m);
+            });
+            
             $rootScope.$digest();
 
-            $location.hash('bottom');
+            $location.hash(scrollTo);
             $anchorScroll();
         }
-
+        
         function getChatsByUser(userId) {
             var chatWithUser;
 
