@@ -28,8 +28,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
             if (!$ctrl.chatsData.chats[id].Messages) {
                 chatService.loadMessages(id, 'bottom');
             } else {
-                let scrollTo = orderByFilter($ctrl.chatsData.chats[id].Messages, 'createdAt').pop().id;
-                $location.hash(scrollTo);
+                $location.hash('1');
                 $anchorScroll();
             }
             
@@ -53,7 +52,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     }
     
     function loadMessages() {
-        let scrollTo = orderByFilter($ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages, 'createdAt', true).pop().id;
+        let scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length - 1;
         chatService.loadMessages($ctrl.selectedChat.id, scrollTo);
     }
 }
