@@ -1,13 +1,15 @@
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', 'orderByFilter',  chatController],
+    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', chatController],
     bindings: {
         authData: '<'
     }
 });
 
-function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll, orderByFilter) {
+function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll) {
     const $ctrl = this;
+    
+    let scrollTo;
 
     $ctrl.chatsData = chatService.chatsData;
     $ctrl.selectChat = selectChat;
@@ -15,6 +17,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     $ctrl.beginChat = beginChat;
     $ctrl.selectedChat = chatService.selectedChat;
     $ctrl.loadMessages = loadMessages;
+    $ctrl.scrollTo = scrollTo;
 
     if($stateParams.chatId)
         selectChat($stateParams.chatId);
@@ -22,21 +25,18 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
         $ctrl.selectedChat.id = '';
 
     function selectChat(id) {
-       
+        scrollTo = '1';
+
+        $ctrl.selectedChat.id = id;
+               
         if ($ctrl.chatsData.chats.length) {
 
             if (!$ctrl.chatsData.chats[id].Messages) {
                 chatService.loadMessages(id, '1');
-            } else {
-                $location.hash('1');
-                $anchorScroll();
             }
             
             chatService.cleanMsgCounter(id);
         }
-
-        $ctrl.selectedChat.id = id;
-        $location.path('/chat/' + id);
     }
 
     function sendMessage(chatId) {
@@ -52,7 +52,14 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     }
     
     function loadMessages() {
-        let scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length - 1;
-        chatService.loadMessages($ctrl.selectedChat.id, scrollTo);
+        if ($ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages) {    
+            scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length - 1;            
+            chatService.loadMessages($ctrl.selectedChat.id, scrollTo);
+        }
+    }
+    
+    function scrollTo() {
+        $location.hash(scrollTo);
+        $anchorScroll();
     }
 }

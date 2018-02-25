@@ -143,7 +143,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
         }
 
-        function loadMessages(chatId, scrollTo) {
+        function loadMessages(chatId) {
             if (loading)
                 return;
             
@@ -151,7 +151,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
             return new Promise((resolve) => {
                 socket.on('portionOfMessages', (data) => {
-                    setMessagesToChat(chatId, data, scrollTo);
+                    setMessagesToChat(chatId, data);
 
                     socket.removeAllListeners('portionOfMessages');
                     loading = false;
@@ -183,7 +183,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             $anchorScroll();
         }
 
-        function setMessagesToChat(chatId, messages, scrollTo) {
+        function setMessagesToChat(chatId, messages) {
             if (!chatsData.chats[chatId])
                 return;
 
@@ -195,9 +195,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             });
             
             $rootScope.$digest();
-
-            $location.hash(scrollTo);
-            $anchorScroll();
         }
         
         function getChatsByUser(userId) {
