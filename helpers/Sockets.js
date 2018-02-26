@@ -22,16 +22,16 @@ function connection(socket) {
             .then((user) => {
                 socket.join(user.id);
 
-                Users.prototype.getChats(user.id, Chats).then((chats) => {                    
+                Users.prototype.getChats(user.id, Chats).then((chats) => {
 
                     //separation for that case if in the future it will be possible to create chats with more than two users
                     socket.on('messageToExistChat', addMessageToExistChat);
                     socket.on('messageToNewChat', addMessageToNewChat);
 
                     socket.on('loadMessages', getMessagesByChat);
-                    
-                    socket.on('cleanMsgCounter', cleanCounter);                                      
-                    
+
+                    socket.on('cleanMsgCounter', cleanCounter);
+
                     io.to(user.id).emit('successConnection', {
                         chats
                     });

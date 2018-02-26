@@ -8,7 +8,7 @@ app.component('chat', {
 
 function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll) {
     const $ctrl = this;
-    
+
     let scrollTo;
 
     $ctrl.chatsData = chatService.chatsData;
@@ -28,13 +28,13 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
         scrollTo = '1';
 
         $ctrl.selectedChat.id = id;
-               
+
         if ($ctrl.chatsData.chats.length) {
 
             if (!$ctrl.chatsData.chats[id].Messages) {
                 chatService.loadMessages(id, '1');
             }
-            
+
             chatService.cleanMsgCounter(id);
         }
     }
@@ -50,14 +50,14 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
             component: 'chatBeginner'
         });
     }
-    
+
     function loadMessages() {
-        if ($ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages) {    
-            scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length - 1;            
+        if ($ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages) {
+            scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length - 1;
             chatService.loadMessages($ctrl.selectedChat.id, scrollTo);
         }
     }
-    
+
     function scrollTo() {
         $location.hash(scrollTo);
         $anchorScroll();
