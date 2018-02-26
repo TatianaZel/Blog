@@ -36,8 +36,8 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                 socket.on('successConnection', (data) => {
                     reIndexingChats(data.chats);
 
-                    if (selectedChat.id) {
-                        loadMessages(selectedChat.id, '1');
+                    if (selectedChat.id && chatsData.chats[selectedChat.id]) {
+                        loadMessages(selectedChat.id);
                         cleanMsgCounter(selectedChat.id);
                     }
 
@@ -178,9 +178,6 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             chatsData.chats[data.ChatId].Messages.push(data);
             chatsData.chats[data.ChatId].updatedAt = data.createdAt;
             $rootScope.$digest();
-
-            $location.hash('bottom');
-            $anchorScroll();
         }
 
         function setMessagesToChat(chatId, messages) {
@@ -213,7 +210,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         }
 
         function cleanMsgCounter(chatId) {
-            if (!chatId) return;
+            if (!chatId || !chatsData.chats[chatId]) return;
 
             socket.emit('cleanMsgCounter', {
                 token: localStorageService.cookie.get('token'),

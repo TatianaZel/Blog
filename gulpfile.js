@@ -54,13 +54,13 @@ var src = {
 
 gulp.task('jsVendors', () => {
     gulp.src([
-            src.vendors.jquery.lib, 
+            src.vendors.jquery.lib,
             src.vendors.angular.lib,
             src.vendors.bootstrap.ui,
-            src.vendors.bootstrap.uiTltps, 
+            src.vendors.bootstrap.uiTltps,
             src.vendors.angular.localstorage,
             src.vendors.angular.router,
-            src.vendors.angular.stateEvents, 
+            src.vendors.angular.stateEvents,
             src.vendors.angular.animate
         ])
         .pipe(concat('vendor.js'))
@@ -69,7 +69,7 @@ gulp.task('jsVendors', () => {
 
 gulp.task('styleVendors', () => {
     gulp.src([
-            src.vendors.bootstrap.lib, 
+            src.vendors.bootstrap.lib,
             src.vendors.bootstrap.theme
         ])
         .pipe(concat('vendor.css'))
@@ -83,26 +83,26 @@ gulp.task('views', () => {
 
 gulp.task('js', () => {
     gulp.src([
-            src.frontApp.mainModule, 
+            src.frontApp.mainModule,
             src.frontApp.services,
             src.frontApp.filters,
-            src.frontApp.components, 
-            src.frontApp.directives, 
+            src.frontApp.components,
+            src.frontApp.directives,
             src.frontApp.routes
         ])
         .pipe(concat('app.js'))
-        .pipe(ts({
-            target: "es5",
-            allowJs: true,
-            module: "commonjs",
-            moduleResolution: "node"
-        }))
-        .pipe(uglify())
-        .on('error', notify.onError({
-            title: 'js minify error!',
-            message: '<%=error.message%>'
-        }))
-        .pipe(gulpif(arg.development, sourcemaps.write()))
+//        .pipe(ts({
+//            target: "es5",
+//            allowJs: true,
+//            module: "commonjs",
+//            moduleResolution: "node"
+//        }))
+//        .pipe(uglify())
+//        .on('error', notify.onError({
+//            title: 'js minify error!',
+//            message: '<%=error.message%>'
+//        }))
+//        .pipe(gulpif(arg.development, sourcemaps.write()))
         .pipe(gulp.dest('./public/build'));
 });
 
