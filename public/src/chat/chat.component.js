@@ -32,7 +32,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
         if ($ctrl.chatsData.chats.length) {
 
             if (!$ctrl.chatsData.chats[id].Messages) {
-                chatService.loadMessages(id, '1');
+                chatService.loadMessages(id);
             }
 
             chatService.cleanMsgCounter(id);

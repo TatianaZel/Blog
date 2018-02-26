@@ -33,7 +33,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     reject();
                 });
 
-                socket.on('successConnection', (data) => {                    
+                socket.on('successConnection', (data) => {
                     reIndexingChats(data.chats);
 
                     if (selectedChat.id) {
@@ -53,16 +53,16 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                         );
 
                         setMessageToChat(msg);
-                        
+
                         if(selectedChat.id && selectedChat.id == msg.ChatId && $state.current.name == "chat") {
                             cleanMsgCounter(msg.ChatId);
                         } else {
                             increaseMsgCounter(msg.ChatId);
                         }
-                        
+
                     });
 
-                    socket.on('newChatForClient', (newChat) => {                        
+                    socket.on('newChatForClient', (newChat) => {
                         var msg = newChat.Messages[0];
 
                         notificationService.add(
@@ -73,7 +73,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                             }
                         );
 
-                        newChat.Membership = {counter: 1};//тут новый чат приходит без мемберщипов, поэтому я решила обрабатывать эту ситуацию на стороне клиента, чтобы не нагружать сервер
+                        newChat.Membership = {counter: 1};//
                         addNewChat(newChat);
                     });
 
@@ -83,7 +83,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     });
 
                     socket.on('newChatCreated', (newChat) => {
-                        newChat.Membership = {counter: 0};//тут новый чат приходит без мемберщипов, поэтому я решила обрабатывать эту ситуацию на стороне клиента, чтобы не нагружать сервер
+                        newChat.Membership = {counter: 0};//
                         addNewChat(newChat);
                         resolveChat ? resolveChat(newChat) : '';
                     });
@@ -108,8 +108,8 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             socket.removeAllListeners('newChatForClient');
             socket.removeAllListeners('messageSended');
             socket.removeAllListeners('newChatCreated');
-            
-            selectedChat.id = '';                        
+
+            selectedChat.id = '';
 
             socket.emit('disconnect');
         }
@@ -146,7 +146,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
         function loadMessages(chatId) {
             if (loading)
                 return;
-            
+
             loading = true;
 
             return new Promise((resolve) => {
@@ -193,10 +193,10 @@ app.factory('chatService', ['localStorageService', '$rootScope',
             messages.forEach((m) => {
                 chatsData.chats[chatId].Messages.push(m);
             });
-            
+
             $rootScope.$digest();
         }
-        
+
         function getChatsByUser(userId) {
             var chatWithUser;
 
@@ -211,18 +211,18 @@ app.factory('chatService', ['localStorageService', '$rootScope',
 
             return chatWithUser;
         }
-        
-        function cleanMsgCounter(chatId) {    
+
+        function cleanMsgCounter(chatId) {
             if (!chatId) return;
-            
+
             socket.emit('cleanMsgCounter', {
                 token: localStorageService.cookie.get('token'),
                 chatId: chatId
             });
-                        
+
             chatsData.chats[chatId].Membership.counter = 0;
         };
-        
+
         function increaseMsgCounter(chatId) {
             chatsData.chats[chatId].Membership.counter++;
             $rootScope.$digest();
