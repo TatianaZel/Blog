@@ -1,12 +1,12 @@
 app.component('chat', {
     templateUrl: 'build/views/chat/chat.html',
-    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', chatController],
+    controller: ['chatService', '$stateParams', '$uibModal', '$location', '$anchorScroll', '$timeout', chatController],
     bindings: {
         authData: '<'
     }
 });
 
-function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll) {
+function chatController(chatService, $stateParams, $uibModal, $location, $anchorScroll, $timeout) {
     const $ctrl = this;
 
     let scrollTo = 1;
@@ -17,7 +17,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     $ctrl.beginChat = beginChat;
     $ctrl.selectedChat = chatService.selectedChat;
     $ctrl.loadMessages = loadMessages;
-    $ctrl.scrollTo = scrollToFunc;
+    $ctrl.scrollToFunc = scrollToFunc;
 
     if($stateParams.chatId)
         selectChat($stateParams.chatId);
@@ -57,7 +57,9 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     }
 
     function scrollToFunc() {
-        $location.hash(scrollTo);
-        $anchorScroll();
+        $timeout(() => {
+            $location.hash(scrollTo);
+            $anchorScroll();
+        }, 0);
     }
 }

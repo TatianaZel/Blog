@@ -91,18 +91,18 @@ gulp.task('js', () => {
             src.frontApp.routes
         ])
         .pipe(concat('app.js'))
-//        .pipe(ts({
-//            target: "es5",
-//            allowJs: true,
-//            module: "commonjs",
-//            moduleResolution: "node"
-//        }))
-//        .pipe(uglify())
-//        .on('error', notify.onError({
-//            title: 'js minify error!',
-//            message: '<%=error.message%>'
-//        }))
-//        .pipe(gulpif(arg.development, sourcemaps.write()))
+        .pipe(ts({
+            target: "es5",
+            allowJs: true,
+            module: "commonjs",
+            moduleResolution: "node"
+        }))
+        .pipe(uglify())
+        .on('error', notify.onError({
+            title: 'js minify error!',
+            message: '<%=error.message%>'
+        }))
+        .pipe(gulpif(arg.development, sourcemaps.write()))
         .pipe(gulp.dest('./public/build'));
 });
 
