@@ -38,6 +38,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
     }
 
     function sendMessage(chatId) {
+        scrollTo = '1';
         chatService.messageToExistChat($ctrl.messageText, chatId);
         $ctrl.messageText = '';
     }
@@ -51,7 +52,7 @@ function chatController(chatService, $stateParams, $uibModal, $location, $anchor
 
     function loadMessages() {
         if ($ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages) {
-            scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length - 1;
+            scrollTo = $ctrl.chatsData.chats[$ctrl.selectedChat.id].Messages.length;
             chatService.loadMessages($ctrl.selectedChat.id);
         }
     }

@@ -1,6 +1,6 @@
 app.factory('chatService', ['localStorageService', '$rootScope',
     '$anchorScroll', '$location', 'notificationService', '$state',
-    (localStorageService, $rootScope, $anchorScroll, $location, notificationService, $state) => {
+    (localStorageService, $rootScope, notificationService, $state) => {
         let chatsData = {chats: []},
             socket,
             resolveMsg,
