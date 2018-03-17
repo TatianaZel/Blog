@@ -1,5 +1,5 @@
-app.factory('chatService', ['localStorageService', '$rootScope',
-    '$anchorScroll', '$location', 'notificationService', '$state',
+app.factory('chatService', ['localStorageService', '$rootScope', 
+    'notificationService', '$state',
     (localStorageService, $rootScope, notificationService, $state) => {
         let chatsData = {chats: []},
             socket,
@@ -44,6 +44,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     $rootScope.$digest();
 
                     socket.on('messageForClient', (msg) => {
+                        console.log('!!!!!!');
                         notificationService.add(
                             {
                                 author: msg.author.name + ' ' + msg.author.surname,
