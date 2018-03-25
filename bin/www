@@ -26,6 +26,10 @@ var server = http.createServer(app);
  */
 var chat = require('../helpers/Sockets.js')(server);
 
+/*
+ * db sync 
+ */
+models.sequelize.sync();
 
 /**
  * Listen on provided port, on all network interfaces.

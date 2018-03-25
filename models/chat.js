@@ -1,14 +1,16 @@
 const Session = require('../helpers/HttpError');
 
-module.exports = function (sequelize) {
-    const Chat = sequelize.define('Chat', {});
+module.exports = function (sequelize, DataTypes) {
+    const Chat = sequelize.define('Chat', {
+
+    });
 
     Chat.associate = function (models) {
         Chat.hasMany(models.Message);
         Chat.belongsToMany(models.User, {through: models.Membership});
     };
 
-    Chat.prototype.getChatUsers = function (id, userModel) {
+    Chat.getChatUsers = function (id, userModel) {
         return new Promise((resolve) => {
             const opt = {
                 where: {
@@ -23,7 +25,7 @@ module.exports = function (sequelize) {
         });
     };
 
-    Chat.prototype.getChat = function (id, userModel, messageModel) {
+    Chat.getChat = function (id, userModel, messageModel) {
         return new Promise((resolve) => {
             const opt = {
                 where: {

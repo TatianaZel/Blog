@@ -11,7 +11,7 @@ module.exports = function (sequelize, DataTypes) {
         Message.belongsTo(models.User, {as: 'author'});
     };
 
-    Message.prototype.getMessagesByChat = function (id, userModel, from) {
+    Message.getMessagesByChat = function (id, userModel, from) {
         return new Promise((resolve) => {
             const opt = {
                 where: {
@@ -30,8 +30,7 @@ module.exports = function (sequelize, DataTypes) {
             Message.findAll(opt).then((messages) => {
                 if (messages) {
                     resolve(messages);
-                }
-                else {
+                } else {
                     resolve([]);
                 }
             });

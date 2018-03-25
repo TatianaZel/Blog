@@ -59,7 +59,7 @@ var Session = {
      * @returns {Promise ~resolve => session Object}
      */
     create(userId) {
-        return Sessions.prototype.setSession(userId);
+        return Sessions.setSession(userId);
     },
     /**
      * Returns all sessions of user
@@ -70,8 +70,8 @@ var Session = {
     get(token) {
         return Sessions.findOne({
             where: {
-                token,
-            },
+                token
+            }
         }).then((session) => {
             if (session) {
                 return Users.findOne({
@@ -91,8 +91,8 @@ var Session = {
      * @returns {Promise ~resolve => session Object}
      */
     kill(token) {
-        return Sessions.prototype.removeSession(token);
-    },
+        return Sessions.removeSession(token);
+    }
 };
 
 module.exports = Session;

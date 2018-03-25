@@ -31,14 +31,14 @@ router.post(
             return next(new HttpError(412, 'Invalid input data', req.form.errors));
         }
 
-        const post = new Posts({
+        let post = {
             title: req.form.title,
             text: req.form.text,
             UserId: req.userId
-        });
+        };
 
-        post
-            .save()
+        Posts
+            .create(post)
             .then(() => {
                 res.send(post);
             })

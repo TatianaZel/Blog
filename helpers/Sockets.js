@@ -22,7 +22,7 @@ function connection(socket) {
             .then((user) => {
                 socket.join(user.id);
 
-                Users.prototype.getChats(user.id, Chats).then((chats) => {
+                Users.getChats(user.id, Chats).then((chats) => {
 
                     //separation for that case if in the future it will be possible to create chats with more than two users
                     socket.on('messageToExistChat', addMessageToExistChat);
@@ -45,7 +45,6 @@ function connection(socket) {
 function addMessageToNewChat(data) {
     Session.check(data.token).then((user) => {
         Memberships
-            .prototype
             .checkDialog(user.id, data.recipientId)//here we check whether it was already created a chat between the two users
             .then(() => {
                 Chats.create().then((chat) => {
@@ -63,14 +62,14 @@ function addMessageToNewChat(data) {
                             }
                         ])
                         .then(() => {
-                            const msg = new Messages({
+                            const msg = {
                                 text: data.text,
                                 ChatId: chat.id,
                                 authorId: user.id
-                            });
+                            };
 
-                            msg.save().then(() => {
-                                Chats.prototype.getChat(chat.id, Users, Messages)
+                            Messages.create(msg).then(() => {
+                                Chats.getChat(chat.id, Users, Messages)
                                     .then((chat) => {
                                         io.to(data.recipientId)
                                             .emit('newChatForClient', chat);
@@ -87,15 +86,15 @@ function addMessageToNewChat(data) {
 
 function addMessageToExistChat(data) {
     Session.check(data.token).then((user) => {
-        Memberships.prototype.check(user.id, data.chatId).then(() => {//here we check whether the user is participating in this chat
+        Memberships.check(user.id, data.chatId).then(() => {//here we check whether the user is participating in this chat
 
-            const msg = new Messages({
+            const msg = {
                 text: data.text,
                 ChatId: data.chatId,
                 authorId: user.id
-            });
+            };
 
-            msg.save().then(() => {
+            Messages.create(msg).then(() => {
                 const msgForSending = {
                     author: user,
                     text: msg.text,
@@ -116,12 +115,12 @@ function addMessageToExistChat(data) {
                         io.to(msg.authorId)
                             .emit('messageSended', msgForSending);
 
-                        Chats.prototype
+                        Chats
                             .getChatUsers(data.chatId, Users)
                             .then((users) => {
                                 users.forEach((recipient) => {
                                     if (recipient.id != msg.authorId) {
-                                        Memberships.prototype
+                                        Memberships
                                                 .setCounter(recipient.id, data.chatId, true)
                                                 .then(() => {
                                                     io.to(recipient.id).emit('messageForClient', msgForSending);
@@ -137,9 +136,9 @@ function addMessageToExistChat(data) {
 
 function getMessagesByChat(data) {
     Session.check(data.token).then((user) => {
-        Memberships.prototype.check(user.id, data.chatId)
+        Memberships.check(user.id, data.chatId)
             .then(() => {
-                Messages.prototype.getMessagesByChat(data.chatId, Users, data.from)
+                Messages.getMessagesByChat(data.chatId, Users, data.from)
                     .then((messages) => {
                         io.to(user.id).emit('portionOfMessages', messages);
                     });
@@ -152,9 +151,9 @@ function getMessagesByChat(data) {
 
 function cleanCounter(data) {
     Session.check(data.token).then((user) => {
-        Memberships.prototype.check(user.id, data.chatId)
+        Memberships.check(user.id, data.chatId)
             .then(() => {
-                Memberships.prototype.setCounter(user.id, data.chatId, false);
+                Memberships.setCounter(user.id, data.chatId, false);
             });
     });
 }

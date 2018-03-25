@@ -33,19 +33,16 @@ router.post(
             return next(new HttpError(412, 'Invalid input data', req.form.errors));
         }
 
-        Users.prototype
+        Users
             .checkEmail(req.form.email, 0)
             .then(() => {
-                const user = new Users({
+                Users.create({
                     name: req.form.name,
                     surname: req.form.surname,
                     email: req.form.email,
                     password: req.form.password,
                     description: req.form.description,
-                });
-
-                user
-                    .save()
+                })
                     .then(() => {
                         res.send();
                     })
@@ -74,7 +71,7 @@ router.post(
 
         let user;
 
-        Users.prototype
+        Users
             .auth(req.form.email, req.form.password)
             .then((usr) => {
                 user = usr;

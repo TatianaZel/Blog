@@ -14,32 +14,32 @@ module.exports = function (sequelize, DataTypes) {
         });
     };
 
-    Session.prototype.setSession = function (userId) {
-        return new Promise((resolve, reject) => {
-            const session = new Session({
-                token: uuidv1(),
-                UserId: userId
-            });
+    Session.setSession = function (userId) {
+        let session = {
+            token: uuidv1(),
+            UserId: userId
+        };
 
-            session
-                .save()
-                .then(() => {
-                    resolve(session.token);
-                }, reject);
+        return new Promise((resolve, reject) => {
+            Session
+                    .create(session)
+                    .then(() => {
+                        resolve(session.token);
+                    }, reject);
         });
     };
 
-    Session.prototype.removeSession = function (token) {
+    Session.removeSession = function (token) {
         return new Promise((resolve, reject) => {
             Session
-                .destroy({
-                    where: {
-                        token
-                    }
-                })
-                .then(() => {
-                    resolve();
-                }, reject);
+                    .destroy({
+                        where: {
+                            token
+                        }
+                    })
+                    .then(() => {
+                        resolve();
+                    }, reject);
         });
     };
 

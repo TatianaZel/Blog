@@ -29,45 +29,45 @@ module.exports = function (sequelize, DataTypes) {
         User.belongsToMany(models.Chat, {through: models.Membership});
     };
 
-    User.prototype.auth = function (email, password) {
+    User.auth = function (email, password) {
         return new Promise((resolve, reject) => {
             User
-                .findOne({
-                    where: {
-                        email,
-                        password
-                    }
-                })
-                .then((user) => {
-                    if (user) {
-                        resolve(user);
-                    }
-                    reject(new HttpError(403, 'Wrong email or password'));
-                });
+                    .findOne({
+                        where: {
+                            email,
+                            password
+                        }
+                    })
+                    .then((user) => {
+                        if (user) {
+                            resolve(user);
+                        }
+                        reject(new HttpError(403, 'Wrong email or password'));
+                    });
         });
     };
 
-    User.prototype.checkEmail = function (email, id) {
+    User.checkEmail = function (email, id) {
         return new Promise((resolve, reject) =>
             User
-                .findOne({
-                    where: {
-                        email,
-                        id: {
-                            $not: id//this check is needed for the case when the user wants to edit the profile and tie a new email
+                    .findOne({
+                        where: {
+                            email,
+                            id: {
+                                $not: id//this check is needed for the case when the user wants to edit the profile and tie a new email
+                            }
                         }
-                    }
-                })
-                .then((user) => {
-                    if (user) {
-                        reject(new HttpError(403, 'Email alredy exists'));
-                    }
-                    resolve();
-                })
+                    })
+                    .then((user) => {
+                        if (user) {
+                            reject(new HttpError(403, 'Email alredy exists'));
+                        }
+                        resolve();
+                    })
         );
     };
 
-    User.prototype.getChats = function (id, chatModel) {
+    User.getChats = function (id, chatModel) {
         return new Promise((resolve) => {
             const opt = {
                 where: {
