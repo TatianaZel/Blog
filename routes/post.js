@@ -39,8 +39,8 @@ router.post(
 
         Posts
             .create(post)
-            .then(() => {
-                res.send(post);
+            .then((newPost) => {
+                res.send(newPost);
             })
             .catch(next);
     }

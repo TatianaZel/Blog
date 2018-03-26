@@ -1,7 +1,6 @@
 let io;
 
 const Session = require('../helpers/Session');
-
 const Users = require('../models').User;
 const Chats = require('../models').Chat;
 const Messages = require('../models').Message;
@@ -18,12 +17,14 @@ function connection(socket) {
     if (!query)
         return;
 
-    Session.check(query.token)
-            .then((user) => {
-                socket.join(user.id);
+    Session
+        .check(query.token)
+        .then((user) => {
+            socket.join(user.id);
 
-                Users.getChats(user.id, Chats).then((chats) => {
-
+            Users
+                .getChats(user.id, Chats)
+                .then((chats) => {
                     //separation for that case if in the future it will be possible to create chats with more than two users
                     socket.on('messageToExistChat', addMessageToExistChat);
                     socket.on('messageToNewChat', addMessageToNewChat);
@@ -37,19 +38,23 @@ function connection(socket) {
                     });
                 });
             })
-            .catch(() => {
-                socket.emit('errorConnection', {});
-            });
+        .catch(() => {
+            socket.emit('errorConnection', {});
+        });
 }
 
 function addMessageToNewChat(data) {
-    Session.check(data.token).then((user) => {
-        Memberships
+    Session
+        .check(data.token)
+        .then((user) => {
+            Memberships
             .checkDialog(user.id, data.recipientId)//here we check whether it was already created a chat between the two users
             .then(() => {
-                Chats.create().then((chat) => {
+                Chats
+                .create()
+                .then((chat) => {
                     Memberships
-                        .bulkCreate([
+                    .bulkCreate([
                             {
                                 UserId: user.id,
                                 ChatId: chat.id,
@@ -61,101 +66,112 @@ function addMessageToNewChat(data) {
                                 counter: 1
                             }
                         ])
-                        .then(() => {
-                            const msg = {
-                                text: data.text,
-                                ChatId: chat.id,
-                                authorId: user.id
-                            };
+                    .then(() => {
+                        const msg = {
+                            text: data.text,
+                            ChatId: chat.id,
+                            authorId: user.id
+                        };
 
-                            Messages.create(msg).then(() => {
-                                Chats.getChat(chat.id, Users, Messages)
-                                    .then((chat) => {
-                                        io.to(data.recipientId)
-                                            .emit('newChatForClient', chat);
-
-                                        io.to(user.id)
-                                            .emit('newChatCreated', chat);
-                                    });
+                        Messages
+                            .create(msg)
+                            .then(() => {
+                                Chats
+                                .getChat(chat.id, Users, Messages)
+                                .then((chat) => {
+                                    io.to(data.recipientId).emit('newChatForClient', chat);
+                                    io.to(user.id).emit('newChatCreated', chat);
+                                });
                             });
-                        });
+                    });
                 });
             });
-    });
+        });
 }
 
 function addMessageToExistChat(data) {
-    Session.check(data.token).then((user) => {
-        Memberships.check(user.id, data.chatId).then(() => {//here we check whether the user is participating in this chat
+    Session
+        .check(data.token)
+        .then((user) => {
+            Memberships
+            .check(user.id, data.chatId)
+            .then(() => {//here we check whether the user is participating in this chat
 
-            const msg = {
-                text: data.text,
-                ChatId: data.chatId,
-                authorId: user.id
-            };
-
-            Messages.create(msg).then(() => {
-                const msgForSending = {
-                    author: user,
-                    text: msg.text,
-                    ChatId: msg.ChatId,
-                    createdAt: msg.createdAt
+                let msg = {
+                    text: data.text,
+                    ChatId: data.chatId,
+                    authorId: user.id,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    author: {
+                        name: user.name,
+                        surname: user.surname
+                    }
                 };
 
-                Chats
-                    .update(
-                        {},
-                        {
-                            where: {
-                                id: data.chatId
-                            }
-                        }
-                    )
-                    .then(() => {
-                        io.to(msg.authorId)
-                            .emit('messageSended', msgForSending);
-
+                Messages
+                    .create(msg)
+                    .then((newMsg) => {
                         Chats
-                            .getChatUsers(data.chatId, Users)
-                            .then((users) => {
-                                users.forEach((recipient) => {
-                                    if (recipient.id != msg.authorId) {
-                                        Memberships
-                                                .setCounter(recipient.id, data.chatId, true)
-                                                .then(() => {
-                                                    io.to(recipient.id).emit('messageForClient', msgForSending);
-                                                });
+                            .update(
+                                {},
+                                {
+                                    where: {
+                                        id: data.chatId
                                     }
-                                });
+                                }
+                            )
+                            .then(() => {
+                                io.to(newMsg.authorId).emit('messageSended', msg);
+
+                                Chats
+                                    .getChatUsers(data.chatId, Users)
+                                    .then((users) => {
+                                        users.forEach((recipient) => {
+                                            if (recipient.id != msg.authorId) {
+                                                Memberships
+                                                        .setCounter(recipient.id, data.chatId, true)
+                                                        .then(() => {
+                                                            io.to(recipient.id).emit('messageForClient', msg);
+                                                        });
+                                            }
+                                        });
+                                    });
                             });
                     });
             });
         });
-    });
 }
 
 function getMessagesByChat(data) {
-    Session.check(data.token).then((user) => {
-        Memberships.check(user.id, data.chatId)
+    Session
+        .check(data.token)
+        .then((user) => {
+            Memberships
+            .check(user.id, data.chatId)
             .then(() => {
-                Messages.getMessagesByChat(data.chatId, Users, data.from)
-                    .then((messages) => {
-                        io.to(user.id).emit('portionOfMessages', messages);
-                    });
+                Messages
+                .getMessagesByChat(data.chatId, Users, data.from)
+                .then((messages) => {
+                    io.to(user.id).emit('portionOfMessages', messages);
+                });
             })
             .catch(() => {
                 io.to(user.id).emit('portionOfMessages', []);
             });
-    });
+        });
 }
 
 function cleanCounter(data) {
-    Session.check(data.token).then((user) => {
-        Memberships.check(user.id, data.chatId)
+    Session
+        .check(data.token)
+        .then((user) => {
+            Memberships
+            .check(user.id, data.chatId)
             .then(() => {
                 Memberships.setCounter(user.id, data.chatId, false);
             });
-    });
+        });
 }
 
 module.exports = Chat;

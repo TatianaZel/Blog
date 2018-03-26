@@ -44,7 +44,7 @@ app.factory('chatService', ['localStorageService', '$rootScope',
                     $rootScope.$digest();
 
                     socket.on('messageForClient', (msg) => {
-                        
+
                         notificationService.add(
                             {
                                 author: msg.author.name + ' ' + msg.author.surname,
