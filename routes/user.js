@@ -67,7 +67,7 @@ router.put(
             next(new HttpError(403, 'Access denied!'));
         }
 
-        Users.prototype
+        Users
             .checkEmail(req.form.email, user.id)
             .then(() => {
                 user.name = req.form.name;

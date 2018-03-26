@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "updete",
+    "password": "updete",
+    "database": "updete",
+    "host": "127.0.0.1",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "updete",
+    "password": "updete",
+    "database": "updete",
+    "host": "updete",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "updete",
+    "password": "updete",
+    "database": "updete",
+    "host": "updete",
+    "dialect": "postgres"
+  }
+}
