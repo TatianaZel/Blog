@@ -36,17 +36,18 @@ router.post(
         Users
             .checkEmail(req.form.email, 0)
             .then(() => {
-                Users.create({
+                Users
+                .create({
                     name: req.form.name,
                     surname: req.form.surname,
                     email: req.form.email,
                     password: req.form.password,
                     description: req.form.description,
                 })
-                    .then(() => {
-                        res.send();
-                    })
-                    .catch(next);
+                .then(() => {
+                    res.send();
+                })
+                .catch(next);
             })
             .catch(next);
     }

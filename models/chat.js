@@ -48,9 +48,11 @@ module.exports = function (sequelize, DataTypes) {
                 ]
             };
 
-            Chat.findOne(opt).then((chat) => {
-                resolve(chat);
-            });
+            Chat
+                .findOne(opt)
+                .then((chat) => {
+                    resolve(chat);
+                });
         });
     };
 

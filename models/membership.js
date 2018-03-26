@@ -68,7 +68,8 @@ module.exports = function (sequelize, DataTypes) {
 
     Membership.setCounter = function (userId, chatId, increase) {
         return new Promise((resolve) => {
-            Membership.update(
+            Membership
+                .update(
                     {
                         counter: increase ? sequelize.literal('counter + 1') : 0
                     },
@@ -77,8 +78,8 @@ module.exports = function (sequelize, DataTypes) {
                             UserId: userId,
                             ChatId: chatId
                         }
-                    }
-            ).then(resolve);
+                    })
+                .then(resolve);
         });
     };
 

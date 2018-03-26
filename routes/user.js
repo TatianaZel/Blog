@@ -108,7 +108,8 @@ router.put(
             return next(new HttpError(412, 'Invalid input data', req.form.errors));
         }
 
-        Users.findById(req.userId)
+        Users
+            .findById(req.userId)
             .then((user) => {
                 if (user.password !== req.form.currentPassword) {
                     return next(new HttpError(403, 'Uncorrect password'));
@@ -133,7 +134,8 @@ router.param('userId', (req, res, next, userId) => {
         return next(new HttpError(416, 'Invalid user id'));
     }
 
-    Users.find({
+    Users
+        .find({
             where: {id: userId},
             attributes: {exclude: ['password']}
         })

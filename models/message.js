@@ -27,13 +27,15 @@ module.exports = function (sequelize, DataTypes) {
                 ]
             };
 
-            Message.findAll(opt).then((messages) => {
-                if (messages) {
-                    resolve(messages);
-                } else {
-                    resolve([]);
-                }
-            });
+            Message
+                .findAll(opt)
+                .then((messages) => {
+                    if (messages) {
+                        resolve(messages);
+                    } else {
+                        resolve([]);
+                    }
+                });
         });
     };
 
