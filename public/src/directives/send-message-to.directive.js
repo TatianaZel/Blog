@@ -37,8 +37,7 @@ function messageModalSwitch(chatService, $uibModal) {
                             .then(() => {
                                 modal.close();
                             });
-                    }
-                    else {
+                    } else {
                         chatService.messageToExistChat(messageData.text, chatWithUser.id)
                             .then(() => {
                                 modal.close();

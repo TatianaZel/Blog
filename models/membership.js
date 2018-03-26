@@ -61,7 +61,7 @@ module.exports = function (sequelize, DataTypes) {
                 });
         });
     };
-    
+
     Membership.prototype.setCounter = function (userId, chatId, increase) {
          return new Promise((resolve) => {
             Membership.update(

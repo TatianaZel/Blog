@@ -13,7 +13,6 @@ app.get('/', (request, response) => {
 });
 
 const api = require('./routes/api');
-
 app.use('/api', api);
 
 // Placed here to prevent blocking /api/ calls via vreating folder `api` in ./public
